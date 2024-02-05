@@ -6,17 +6,19 @@
   
   <title>dockerfile结合go应用程序的简单应用 | FanGaoXS&#39;s blog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <meta name="description" content="dockerfile是什么Dockerfile是一种用于定义和构建Docker镜像的文本文件。它包含一系列指令和配置，用于构建一个可运行的Docker容器。 在Dockerfile中，您可以定义从哪个基础镜像开始构建、复制文件、设置环境变量、运行命令等操作。每个指令都代表一个步骤，按顺序执行，从而构建出一个完整的Docker镜像。 go buildgo build是Go语言的一个命令，用于将Go源">
+  <meta name="description" content="dockerfile是什么Dockerfile是一种用于定义和构建Docker镜像的文本文件。它包含一系列指令和配置，用于构建一个可运行的Docker容器。 在Dockerfile中，您可以定义从哪个基础镜像开始构建、复制文件、设置环境变量、运行命令等操作。每个指令都代表一个步骤，按顺序执行，从而构建出一个完整的Docker镜像。 go buildgo build是Go语言的一个命令，用于将Go">
 <meta property="og:type" content="article">
 <meta property="og:title" content="dockerfile结合go应用程序的简单应用">
 <meta property="og:url" content="https://fangaoxs.github.io/2024/02/04/back-end/docker/dockerfile/index.html">
 <meta property="og:site_name" content="FanGaoXS&#39;s blog">
-<meta property="og:description" content="dockerfile是什么Dockerfile是一种用于定义和构建Docker镜像的文本文件。它包含一系列指令和配置，用于构建一个可运行的Docker容器。 在Dockerfile中，您可以定义从哪个基础镜像开始构建、复制文件、设置环境变量、运行命令等操作。每个指令都代表一个步骤，按顺序执行，从而构建出一个完整的Docker镜像。 go buildgo build是Go语言的一个命令，用于将Go源">
+<meta property="og:description" content="dockerfile是什么Dockerfile是一种用于定义和构建Docker镜像的文本文件。它包含一系列指令和配置，用于构建一个可运行的Docker容器。 在Dockerfile中，您可以定义从哪个基础镜像开始构建、复制文件、设置环境变量、运行命令等操作。每个指令都代表一个步骤，按顺序执行，从而构建出一个完整的Docker镜像。 go buildgo build是Go语言的一个命令，用于将Go">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://fangaoxs.github.io/md_img/image-20240205112613849.png">
 <meta property="article:published_time" content="2024-02-04T09:27:39.000Z">
-<meta property="article:modified_time" content="2024-02-05T03:09:00.588Z">
+<meta property="article:modified_time" content="2024-02-05T03:26:17.346Z">
 <meta property="article:author" content="FanGaoXS">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://fangaoxs.github.io/md_img/image-20240205112613849.png">
   
     <link rel="alternate" href="/atom.xml" title="FanGaoXS's blog" type="application/atom+xml">
   
@@ -93,7 +95,8 @@
     
     <div class="e-content article-entry" itemprop="articleBody">
       
-        <h2 id="dockerfile是什么"><a href="#dockerfile是什么" class="headerlink" title="dockerfile是什么"></a>dockerfile是什么</h2><p>Dockerfile是一种用于定义和构建Docker镜像的文本文件。它包含一系列指令和配置，用于构建一个可运行的Docker容器。</p>
+        <p><img src="/md_img/image-20240205112613849.png" alt="image-20240205112613849"></p>
+<h2 id="dockerfile是什么"><a href="#dockerfile是什么" class="headerlink" title="dockerfile是什么"></a>dockerfile是什么</h2><p>Dockerfile是一种用于定义和构建Docker镜像的文本文件。它包含一系列指令和配置，用于构建一个可运行的Docker容器。</p>
 <p>在Dockerfile中，您可以定义从哪个基础镜像开始构建、复制文件、设置环境变量、运行命令等操作。每个指令都代表一个步骤，按顺序执行，从而构建出一个完整的Docker镜像。</p>
 <h2 id="go-build"><a href="#go-build" class="headerlink" title="go build"></a>go build</h2><p><code>go build</code>是Go语言的一个命令，用于将Go源代码编译成可执行文件或库。</p>
 <h2 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h2><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">FROM</span> golang:<span class="number">1.20</span> as builder</span><br><span class="line"><span class="keyword">WORKDIR</span><span class="language-bash"> /source</span></span><br><span class="line"><span class="keyword">COPY</span><span class="language-bash"> . /source</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> go build -o app .</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">FROM</span> ubuntu:noble</span><br><span class="line"><span class="keyword">COPY</span><span class="language-bash"> --from=builder /source/app /app</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> <span class="built_in">chmod</span> +x /app</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">ENV</span> APP_NAME=<span class="string">&quot;app&quot;</span></span><br><span class="line"><span class="keyword">ENV</span> APP_VERSION=<span class="string">&quot;v0.0.1&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">CMD</span><span class="language-bash"> [<span class="string">&quot;/app&quot;</span>]</span></span><br></pre></td></tr></table></figure>
