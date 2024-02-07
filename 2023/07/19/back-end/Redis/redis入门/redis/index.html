@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>Redis原理和Jedis | FanGaoXS&#39;s blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="Redis是什么？Redis 是完全开源的，遵守 BSD 协议，是一个高性能的 key-value 数据库。（B&#x2F;S架构） Redis 与其他 key - value 缓存产品有以下三个特点：  Redis支持数据的持久化，可以将内存中的数据保存在磁盘中，重启的时候可以再次加载进行使用。 Redis不仅仅支持简单的key-value类型的数据，同时还提供list，set，zset，has">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis原理和Jedis">
+<meta property="og:url" content="https://fangaoxs.github.io/2023/07/19/back-end/Redis/redis%E5%85%A5%E9%97%A8/redis/index.html">
+<meta property="og:site_name" content="FanGaoXS&#39;s blog">
+<meta property="og:description" content="Redis是什么？Redis 是完全开源的，遵守 BSD 协议，是一个高性能的 key-value 数据库。（B&#x2F;S架构） Redis 与其他 key - value 缓存产品有以下三个特点：  Redis支持数据的持久化，可以将内存中的数据保存在磁盘中，重启的时候可以再次加载进行使用。 Redis不仅仅支持简单的key-value类型的数据，同时还提供list，set，zset，has">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://fangaoxs.github.io/2023/07/19/back-end/Redis/redis%E5%85%A5%E9%97%A8/redis/image-20210915225059349.png">
+<meta property="og:image" content="https://fangaoxs.github.io/2023/07/19/back-end/Redis/redis%E5%85%A5%E9%97%A8/redis/image-20210915225208358.png">
+<meta property="og:image" content="https://fangaoxs.github.io/2023/07/19/back-end/Redis/redis%E5%85%A5%E9%97%A8/redis/image-20210915225404024.png">
+<meta property="article:published_time" content="2023-07-19T07:30:39.000Z">
+<meta property="article:modified_time" content="2024-02-07T09:32:23.487Z">
+<meta property="article:author" content="FanGaoXS">
+<meta property="article:tag" content="redis">
+<meta property="article:tag" content="jedis">
+<meta property="article:tag" content="java">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://fangaoxs.github.io/2023/07/19/back-end/Redis/redis%E5%85%A5%E9%97%A8/redis/image-20210915225059349.png">
+  
+    <link rel="alternate" href="/atom.xml" title="FanGaoXS's blog" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">FanGaoXS&#39;s blog</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        
+          <a class="nav-icon" href="/atom.xml" title="RSS 订阅"><span class="fa fa-rss"></span></a>
+        
+        <a class="nav-icon nav-search-btn" title="搜索"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="搜索"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://fangaoxs.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-back-end/Redis/redis入门/redis" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2023/07/19/back-end/Redis/redis%E5%85%A5%E9%97%A8/redis/" class="article-date">
+  <time class="dt-published" datetime="2023-07-19T07:30:39.000Z" itemprop="datePublished">2023-07-19</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      Redis原理和Jedis
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="Redis是什么？"><a href="#Redis是什么？" class="headerlink" title="Redis是什么？"></a>Redis是什么？</h2><p>Redis 是完全开源的，遵守 BSD 协议，是一个高性能的 <strong>key-value 数据库</strong>。（B&#x2F;S架构）</p>
+<p>Redis 与其他 key - value 缓存产品有以下三个特点：</p>
+<ul>
+<li>Redis支持数据的持久化，可以将内存中的数据保存在磁盘中，重启的时候可以再次加载进行使用。</li>
+<li>Redis不仅仅支持简单的key-value类型的数据，同时还提供list，set，zset，hash等数据结构的存储。</li>
+<li>Redis支持数据的备份，即master-slave模式的数据备份。</li>
+</ul>
+<h2 id="Redis的优势"><a href="#Redis的优势" class="headerlink" title="Redis的优势"></a>Redis的优势</h2><ul>
+<li><strong>性能极高</strong> – Redis能读的速度是110000次&#x2F;s,写的速度是81000次&#x2F;s 。</li>
+<li><strong>丰富的数据类型</strong> – Redis支持二进制案例的 Strings, Lists, Hashes, Sets 及 Ordered Sets 数据类型操作。</li>
+<li><strong>原子</strong> – Redis的所有操作都是原子性的，意思就是要么成功执行要么失败完全不执行。单个操作是原子性的。多个操作也支持事务，即原子性，通过MULTI和EXEC指令包起来。</li>
+<li>丰富的特性 – Redis还支持 publish&#x2F;subscribe, 通知, key 过期等等特性。</li>
+</ul>
+<h2 id="安装Redis"><a href="#安装Redis" class="headerlink" title="安装Redis"></a>安装Redis</h2><h3 id="Windows环境下安装"><a href="#Windows环境下安装" class="headerlink" title="Windows环境下安装"></a>Windows环境下安装</h3><ol>
+<li><p>下载压缩包</p>
+<p>github：<a target="_blank" rel="noopener" href="https://github.com/tporadowski/redis/releases">https://github.com/tporadowski/redis/releases</a></p>
+</li>
+<li><p>解压缩</p>
+</li>
+<li><p>配置环境变量</p>
+<p>添加REDIS_HOME系统变量：<img src="/2023/07/19/back-end/Redis/redis%E5%85%A5%E9%97%A8/redis/image-20210915225059349.png"></p>
+<p>再配置环境变量path（即在path中添加）：<img src="/2023/07/19/back-end/Redis/redis%E5%85%A5%E9%97%A8/redis/image-20210915225208358.png"></p>
+</li>
+<li><p>试运行</p>
+<p>尝试在任何地方使用cmd运行如下命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">redis-server</span><br></pre></td></tr></table></figure>
+
+<p>如果出现如下内容则证明redis安装成功并且环境变量配置成功：<img src="/2023/07/19/back-end/Redis/redis%E5%85%A5%E9%97%A8/redis/image-20210915225404024.png"></p>
+</li>
+</ol>
+<h3 id="linux环境下安装"><a href="#linux环境下安装" class="headerlink" title="linux环境下安装"></a>linux环境下安装</h3><blockquote>
+<p>Redis默认端口号：6379</p>
+</blockquote>
+<h2 id="Redis服务端"><a href="#Redis服务端" class="headerlink" title="Redis服务端"></a>Redis服务端</h2><h3 id="服务端启动Redis服务"><a href="#服务端启动Redis服务" class="headerlink" title="服务端启动Redis服务"></a>服务端启动Redis服务</h3><ol>
+<li><p>前台启动</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">redis-server</span><br></pre></td></tr></table></figure>
+
+
+</li>
+<li><p>后台启动</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">redis-server &amp;</span><br></pre></td></tr></table></figure>
+
+
+</li>
+<li><p>指定配置文件启动</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">redis-server &lt;config_name&gt; [&amp;] (是否后台启动)</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="服务端停止Redis服务"><a href="#服务端停止Redis服务" class="headerlink" title="服务端停止Redis服务"></a>服务端停止Redis服务</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">redis-cli shutdown</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="Redis客户端"><a href="#Redis客户端" class="headerlink" title="Redis客户端"></a>Redis客户端</h2><p>Redis分为客户端和服务端。客户端用于连接Redis服务，并且向Redis服务端发送命令。</p>
+<h3 id="启动cli客户端"><a href="#启动cli客户端" class="headerlink" title="启动cli客户端"></a>启动cli客户端</h3><p>使用以下命令即可启动redis的客户端程序</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">redis-cli   		<span class="comment">#默认连接127.0.0.1:6379的redis服务</span></span><br><span class="line">	[-p port]		<span class="comment">#指定端口号</span></span><br><span class="line">	[-h hostname]	<span class="comment">#指定主机地址</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="退出cli客户端"><a href="#退出cli客户端" class="headerlink" title="退出cli客户端"></a>退出cli客户端</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">exit</span> [quit]</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="Redis基本知识"><a href="#Redis基本知识" class="headerlink" title="Redis基本知识"></a>Redis基本知识</h2><h3 id="服务端测试Redis性能"><a href="#服务端测试Redis性能" class="headerlink" title="服务端测试Redis性能"></a>服务端测试Redis性能</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">redis-benchmark</span><br></pre></td></tr></table></figure>
+
+<h3 id="客户端查看Redis服务是否正常运行"><a href="#客户端查看Redis服务是否正常运行" class="headerlink" title="客户端查看Redis服务是否正常运行"></a>客户端查看Redis服务是否正常运行</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt;ping</span><br><span class="line">PONG	<span class="comment">#返回PONG说明Redis服务正常运行</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="客户端查看Redis服务的统计信息"><a href="#客户端查看Redis服务的统计信息" class="headerlink" title="客户端查看Redis服务的统计信息"></a>客户端查看Redis服务的统计信息</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt;info	<span class="comment">#返回redis服务的所有相关信息</span></span><br><span class="line">	[section]			<span class="comment">#查看具体某一指定端的信息</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="Redis数据库实例"><a href="#Redis数据库实例" class="headerlink" title="Redis数据库实例"></a>Redis数据库实例</h3><p>Redis的数据库实例只能由Redis服务来创建和维护，开发人员不能修改和自行创建数据库实例。默认情况下，Redis会自动创建16个数据库实例，并且这些数据库实例由编号来区别，由0—15来使用。Redis的数据库实例本身占用的存储空间很少。Redis客户端默认连接的是编号为0的数据库实例。</p>
+<h4 id="客户端切换数据库实例"><a href="#客户端切换数据库实例" class="headerlink" title="客户端切换数据库实例"></a>客户端切换数据库实例</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt;<span class="keyword">select</span> [index]	<span class="comment">#根据编号切换数据库实例</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="客户端查看数据库实例记录数（key的数量）"><a href="#客户端查看数据库实例记录数（key的数量）" class="headerlink" title="客户端查看数据库实例记录数（key的数量）"></a>客户端查看数据库实例记录数（key的数量）</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt;dbsize</span><br><span class="line">(<span class="built_in">integer</span>) 2					<span class="comment">#返回key的数量		</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="客户端查看当前数据库实例所有key"><a href="#客户端查看当前数据库实例所有key" class="headerlink" title="客户端查看当前数据库实例所有key"></a>客户端查看当前数据库实例所有key</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt;keys [pattern] [*] <span class="comment"># * 所有</span></span><br><span class="line">1) <span class="string">&quot;key:__rand_int__&quot;</span>	</span><br><span class="line">2) <span class="string">&quot;k1&quot;</span>						<span class="comment">#返回有哪些key</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="客户端清空当前数据库实例"><a href="#客户端清空当前数据库实例" class="headerlink" title="客户端清空当前数据库实例"></a>客户端清空当前数据库实例</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt;flushdb</span><br></pre></td></tr></table></figure>
+
+<h4 id="客户端清空所有数据库实例"><a href="#客户端清空所有数据库实例" class="headerlink" title="客户端清空所有数据库实例"></a>客户端清空所有数据库实例</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt;flushall</span><br></pre></td></tr></table></figure>
+
+<h4 id="客户端查看当前Redis服务的配置信息"><a href="#客户端查看当前Redis服务的配置信息" class="headerlink" title="客户端查看当前Redis服务的配置信息"></a>客户端查看当前Redis服务的配置信息</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt;config get [param] [*]</span><br></pre></td></tr></table></figure>
+
+<h2 id="Redis的五种数据结构"><a href="#Redis的五种数据结构" class="headerlink" title="Redis的五种数据结构"></a>Redis的五种数据结构</h2><p>Redis支持五种数据类型：string（字符串），list（列表），hash（哈希），set（集合）及zset(sorted set：有序集合)。</p>
+<h3 id="string（字符串）"><a href="#string（字符串）" class="headerlink" title="string（字符串）"></a>string（字符串）</h3><p>string是redis最基本的类型，一个key对应一个value，是<strong>二进制安全</strong>的。可以包含任何数据，比如jpg图片或者序列化的对象。</p>
+<p>最大能存储<strong>512MB</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; <span class="built_in">set</span> key value</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">127.0.0.1:6379&gt; SET runoob <span class="string">&quot;菜鸟教程&quot;</span></span><br><span class="line">127.0.0.1:6379&gt; GET runoob</span><br><span class="line"><span class="string">&quot;菜鸟教程&quot;</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="list（列表）"><a href="#list（列表）" class="headerlink" title="list（列表）"></a>list（列表）</h3><p>简单的字符串列表，按照<strong>插入顺序</strong>排序，可以添加元素到头部或者尾部</p>
+<p>列表最多可存储 2^32^ - 1 元素 (4294967295, 每个列表可存储40多亿)。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; lpush key member</span><br><span class="line">cli&gt; lrange key start end <span class="comment">#从start到end遍历key列表</span></span><br><span class="line"></span><br><span class="line">127.0.0.1:6379&gt; lpush runoob redis</span><br><span class="line">127.0.0.1:6379&gt; lpush runoob mongodb</span><br><span class="line">redis 127.0.0.1:6379&gt; lrange runoob 0 10</span><br><span class="line">1) <span class="string">&quot;mongodb&quot;</span></span><br><span class="line">2) <span class="string">&quot;redis&quot;</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="set（集合）"><a href="#set（集合）" class="headerlink" title="set（集合）"></a>set（集合）</h3><p>字符串的<strong>无序</strong>集合（基于哈希表实现，故不能插入重复的value）。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; sadd key member	<span class="comment">#成功返回1，失败返回0（如重复）</span></span><br><span class="line">cli&gt; smembers key		<span class="comment">#遍历key集合</span></span><br><span class="line"></span><br><span class="line">127.0.0.1:6379&gt; sadd runoob redis</span><br><span class="line">127.0.0.1:6379&gt; sadd runoob mongodb</span><br><span class="line">127.0.0.1:6379&gt; smembers runoob	</span><br><span class="line">1) <span class="string">&quot;redis&quot;</span></span><br><span class="line">2) <span class="string">&quot;mongodb&quot;</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="hash（哈希）"><a href="#hash（哈希）" class="headerlink" title="hash（哈希）"></a>hash（哈希）</h3><p>Redis hash 是一个 string 类型的 field 和 value 的映射表，hash 特别适合用于存储对象。</p>
+<p>每个 hash 可以存储 2^32^ -1 键值对（40多亿）。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#存入key对象，其中属性field1的值为value1，属性filed2的值为value2</span></span><br><span class="line">cli&gt; HMSET key field1 value1 field2 value2</span><br><span class="line"><span class="comment">#获取key对象中属性为filed的值value</span></span><br><span class="line">cli&gt; HGET key filed</span><br><span class="line"></span><br><span class="line">127.0.0.1:6379&gt; HMSET runoob field1 <span class="string">&quot;Hello&quot;</span> field2 <span class="string">&quot;World&quot;</span></span><br><span class="line"><span class="string">&quot;OK&quot;</span></span><br><span class="line">127.0.0.1:6379&gt; HGET runoob field1</span><br><span class="line"><span class="string">&quot;Hello&quot;</span></span><br><span class="line">127.0.0.1:6379&gt; HGET runoob field2</span><br><span class="line"><span class="string">&quot;World&quot;</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="zset（有序集合）"><a href="#zset（有序集合）" class="headerlink" title="zset（有序集合）"></a>zset（有序集合）</h3><p>Redis zset 和 set 一样也是string类型元素的集合,且<strong>不允许重复</strong>的成员。</p>
+<p>不同的是每个元素都会<strong>关联</strong>一个double类型的分数（score）。redis正是通过分数来为集合中的成员进行从小到大的排序。</p>
+<p>zset的成员是唯一的,但分数(score)却可以重复。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; zadd key score member</span><br><span class="line">cli&gt; zrangebyscore key start end <span class="comment">#根据具体分数（score必须在start和end范围内）排序</span></span><br><span class="line">cli&gt; zrange key start end		 <span class="comment">#排序（根据分数）</span></span><br><span class="line"></span><br><span class="line">redis 127.0.0.1:6379&gt; zadd runoob 0 redis</span><br><span class="line">(<span class="built_in">integer</span>) 1</span><br><span class="line">redis 127.0.0.1:6379&gt; zadd runoob 0 mongodb</span><br><span class="line">(<span class="built_in">integer</span>) 1</span><br><span class="line">redis 127.0.0.1:6379&gt; zadd runoob 0 rabbitmq</span><br><span class="line">(<span class="built_in">integer</span>) 1</span><br><span class="line">redis 127.0.0.1:6379&gt; zadd runoob 0 rabbitmq</span><br><span class="line">(<span class="built_in">integer</span>) 0</span><br><span class="line">redis 127.0.0.1:6379&gt; ZRANGEBYSCORE runoob 0 1000</span><br><span class="line">1) <span class="string">&quot;mongodb&quot;</span></span><br><span class="line">2) <span class="string">&quot;rabbitmq&quot;</span></span><br><span class="line">3) <span class="string">&quot;redis&quot;</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="Redis命令的基本语法"><a href="#Redis命令的基本语法" class="headerlink" title="Redis命令的基本语法"></a>Redis命令的基本语法</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; COMMAND KEY_NAME</span><br></pre></td></tr></table></figure>
+
+<p><strong>COMMAND</strong>是命令，<strong>KEY_NAME</strong>是键</p>
+<p>如</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt; DEL runoobkey</span><br></pre></td></tr></table></figure>
+
+<p><strong>DEL</strong>是删除命令，<strong>runoobkey</strong>是一个键，该命令的目的是删除runoobkey</p>
+<h2 id="Redis关于key的命令"><a href="#Redis关于key的命令" class="headerlink" title="Redis关于key的命令"></a><span id="redis-key">Redis关于key的命令</span></h2><h3 id="查询key的命令（keys）"><a href="#查询key的命令（keys）" class="headerlink" title="查询key的命令（keys）"></a>查询key的命令（keys）</h3><p>基本语法格式</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; keys [pattern]		<span class="comment">#pattern是匹配规则</span></span><br><span class="line">		[*]			<span class="comment">#匹配0个或者多个字符</span></span><br><span class="line">		[?]			<span class="comment">#只匹配1个字符</span></span><br><span class="line">		[[]]		<span class="comment">#只匹配[]中的1个字符</span></span><br><span class="line">		[a*]		<span class="comment">#以&#x27;a&#x27;字符开始的key</span></span><br><span class="line">		[a*b]		<span class="comment">#以&#x27;a&#x27;开始，&#x27;b&#x27;结尾的key</span></span><br></pre></td></tr></table></figure>
+
+<p>如</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt; keys *				<span class="comment">#查看所有key</span></span><br><span class="line">1) <span class="string">&quot;ageZset&quot;</span></span><br><span class="line">2) <span class="string">&quot;name&quot;</span></span><br><span class="line">3) <span class="string">&quot;osList&quot;</span></span><br><span class="line">4) <span class="string">&quot;citySet&quot;</span></span><br><span class="line">5) <span class="string">&quot;key:__rand_int__&quot;</span></span><br><span class="line">6) <span class="string">&quot;k1&quot;</span></span><br><span class="line"></span><br><span class="line">127.0.0.1:6379&gt; keys k*				<span class="comment">#查看以&#x27;k&#x27;字符开头的key</span></span><br><span class="line">1) <span class="string">&quot;key:__rand_int__&quot;</span></span><br><span class="line">2) <span class="string">&quot;k1&quot;</span></span><br><span class="line"></span><br><span class="line">127.0.0.1:6379&gt; keys a*t			<span class="comment">#查看以&#x27;a&#x27;开头，t结尾的key</span></span><br><span class="line">1) <span class="string">&quot;ageZset&quot;</span></span><br><span class="line"></span><br><span class="line">127.0.0.1:6379&gt; keys n?me			<span class="comment">#查看第1个字符为n，第34字符为me的key</span></span><br><span class="line">1) <span class="string">&quot;name&quot;</span></span><br><span class="line"></span><br><span class="line">127.0.0.1:6379&gt; keys n[abc]me 		<span class="comment">#查看第1个字符为n，第2个字符为[abc]其中一个，第34字符为me的key</span></span><br><span class="line">1) <span class="string">&quot;name&quot;</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="判断key是否存在（exists）"><a href="#判断key是否存在（exists）" class="headerlink" title="判断key是否存在（exists）"></a>判断key是否存在（exists）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; exists key	[key key key...]		<span class="comment">#判断key是否存在</span></span><br><span class="line"><span class="comment">#存在返回1（或存在的数量），否则返回0</span></span><br></pre></td></tr></table></figure>
+
+<p>如</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt; exists name</span><br><span class="line">(<span class="built_in">integer</span>) 1</span><br><span class="line">127.0.0.1:6379&gt; exists name osList ageZset citySet</span><br><span class="line">(<span class="built_in">integer</span>) 4</span><br><span class="line">127.0.0.1:6379&gt; exists name osList ageZset citySet <span class="built_in">test</span></span><br><span class="line">(<span class="built_in">integer</span>) 4</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="移动key到指定的数据库实例（move）"><a href="#移动key到指定的数据库实例（move）" class="headerlink" title="移动key到指定的数据库实例（move）"></a>移动key到指定的数据库实例（move）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; move key index					  	<span class="comment">#移动key到index数据库实例</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="查看key剩余生存时间（ttl）"><a href="#查看key剩余生存时间（ttl）" class="headerlink" title="查看key剩余生存时间（ttl）"></a>查看key剩余生存时间（ttl）</h3><p>单位是秒。（TTL：time to live）</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; ttl key							<span class="comment">#查看key的剩余生存时间</span></span><br><span class="line"><span class="comment">#返回-1，永不过期（默认）</span></span><br><span class="line"><span class="comment">#返回-2，key不存在</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="设置定key的生存时间（expire）"><a href="#设置定key的生存时间（expire）" class="headerlink" title="设置定key的生存时间（expire）"></a>设置定key的生存时间（expire）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; expire key seconds					<span class="comment">#给key设置生存时间seconds秒（超出即被删除）</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="查看key的数据类型（type）"><a href="#查看key的数据类型（type）" class="headerlink" title="查看key的数据类型（type）"></a>查看key的数据类型（type）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; <span class="built_in">type</span> key								<span class="comment">#查看key的数据类型</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="重命名key（rename）"><a href="#重命名key（rename）" class="headerlink" title="重命名key（rename）"></a>重命名key（rename）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; rename key newkey</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="删除key（del）"><a href="#删除key（del）" class="headerlink" title="删除key（del）"></a>删除key（del）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; del key [key key key...]</span><br><span class="line">	<span class="comment">#返回成功删除key的条数</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><ul>
+<li>增</li>
+<li>删<ul>
+<li>del：删除key</li>
+</ul>
+</li>
+<li>改<ul>
+<li>move：移动key</li>
+<li>expire：设置key的生存时间</li>
+<li>rename：重命名</li>
+</ul>
+</li>
+<li>查<ul>
+<li>keys：查询key</li>
+<li>exists：判断key是否存在</li>
+<li>ttl：查询key的剩余生存时间</li>
+<li>type：查看key的数据类型</li>
+</ul>
+</li>
+</ul>
+<h2 id="Redis操作string类型"><a href="#Redis操作string类型" class="headerlink" title="Redis操作string类型"></a><span id="redis-string">Redis操作string类型</span></h2><p>单key——单value</p>
+<h3 id="存string类型数据（set）"><a href="#存string类型数据（set）" class="headerlink" title="存string类型数据（set）"></a>存string类型数据（set）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; <span class="built_in">set</span> key value</span><br><span class="line">		<span class="comment">#如果key已经存在，会发生覆盖</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="取string类型数据（get）"><a href="#取string类型数据（get）" class="headerlink" title="取string类型数据（get）"></a>取string类型数据（get）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; get key</span><br></pre></td></tr></table></figure>
+
+<h3 id="追加字符串（append）"><a href="#追加字符串（append）" class="headerlink" title="追加字符串（append）"></a>追加字符串（append）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; append key value		<span class="comment">#往key中追加字符串value</span></span><br><span class="line">		<span class="comment">#返回值是追加后字符串长度</span></span><br><span class="line">		<span class="comment">#如果key不存在，相当于set</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="获取字符串长度（strlen）"><a href="#获取字符串长度（strlen）" class="headerlink" title="获取字符串长度（strlen）"></a>获取字符串长度（strlen）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; strlen key				<span class="comment">#返回key的字符串长度</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="将字符串数值进行加1运算（incr）"><a href="#将字符串数值进行加1运算（incr）" class="headerlink" title="将字符串数值进行加1运算（incr）"></a>将字符串数值进行加1运算（incr）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; incr key				<span class="comment">#key的value+1并且返回</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>Tips：</p>
+<ul>
+<li>如果key不存在，则先创建该key-value，value初始化为0然后+1</li>
+<li>key的value必须是数值，否则报错</li>
+</ul>
+</blockquote>
+<h3 id="将字符串数值进行减1运算（decr）"><a href="#将字符串数值进行减1运算（decr）" class="headerlink" title="将字符串数值进行减1运算（decr）"></a>将字符串数值进行减1运算（decr）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt;decr key</span><br></pre></td></tr></table></figure>
+
+<p>与<strong>incr</strong>同理</p>
+<h3 id="将字符串数值进行加offset（指定数值）运算（incrby）"><a href="#将字符串数值进行加offset（指定数值）运算（incrby）" class="headerlink" title="将字符串数值进行加offset（指定数值）运算（incrby）"></a>将字符串数值进行加offset（指定数值）运算（incrby）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt;incrby key offset			<span class="comment">#key的vaule+offset并且返回</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="将字符串数值进行减offset（指定数值）运算（decrby）"><a href="#将字符串数值进行减offset（指定数值）运算（decrby）" class="headerlink" title="将字符串数值进行减offset（指定数值）运算（decrby）"></a>将字符串数值进行减offset（指定数值）运算（decrby）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt;decrby key offset			<span class="comment">#key的vaule-offset并且返回</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="获取字符串中字符串（getrange）"><a href="#获取字符串中字符串（getrange）" class="headerlink" title="获取字符串中字符串（getrange）"></a>获取字符串中字符串（getrange）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cli&gt;getrange key startIndex endIndex</span><br><span class="line">				<span class="comment">#截取key中value从startIndex到endIndex		</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="设置字符串中字符串（setrange）"><a href="#设置字符串中字符串（setrange）" class="headerlink" title="设置字符串中字符串（setrange）"></a>设置字符串中字符串（setrange）</h3><p>会改变数据库中的值</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cli&gt;setrange key startIndex value</span><br><span class="line">				<span class="comment">#用value覆盖从下标为startIndex开始的字符串</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="设置字符串的同时设置生命周期（setex）"><a href="#设置字符串的同时设置生命周期（setex）" class="headerlink" title="设置字符串的同时设置生命周期（setex）"></a>设置字符串的同时设置生命周期（setex）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">cli&gt;setex key seconds value</span><br><span class="line">				<span class="comment">#给key-value设置seconds秒后过期</span></span><br><span class="line">cli&gt; setex k1 30 v1</span><br><span class="line">OK</span><br><span class="line">cli&gt; ttl k1</span><br><span class="line">(<span class="built_in">integer</span>) 27</span><br></pre></td></tr></table></figure>
+
+<h3 id="设置字符串数据当key不存在才设置，key存在则不设置（setnx）"><a href="#设置字符串数据当key不存在才设置，key存在则不设置（setnx）" class="headerlink" title="设置字符串数据当key不存在才设置，key存在则不设置（setnx）"></a>设置字符串数据当key不存在才设置，key存在则不设置（setnx）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt;setnx key value</span><br></pre></td></tr></table></figure>
+
+<h3 id="批量设置字符串数据（mset）"><a href="#批量设置字符串数据（mset）" class="headerlink" title="批量设置字符串数据（mset）"></a>批量设置字符串数据（mset）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt;mset key1 value1 key2 value2 key3 value3 ...</span><br></pre></td></tr></table></figure>
+
+<h3 id="批量获取字符串数据（mget）"><a href="#批量获取字符串数据（mget）" class="headerlink" title="批量获取字符串数据（mget）"></a>批量获取字符串数据（mget）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt;mget key1 key2 key3 ...</span><br></pre></td></tr></table></figure>
+
+<h3 id="总结-1"><a href="#总结-1" class="headerlink" title="总结"></a>总结</h3><p>Redis操作string类型</p>
+<ul>
+<li>增<ul>
+<li>set：最基本的存储string类型数据的方式（如果存在则会覆盖）</li>
+<li>setex：存储数据的同时设置生命周期</li>
+<li>setnx：如果存在则不存储</li>
+<li>mset：批量存储</li>
+</ul>
+</li>
+<li>删</li>
+<li>改<ul>
+<li>set：修改string类型的数据（如果存在则会覆盖，也就是修改）</li>
+<li>append：在原有的基础上追加数据</li>
+<li>incr：数值字符串增加</li>
+<li>decr：数值字符串减少</li>
+<li>setrange：修改字符串中指定下标的数据</li>
+</ul>
+</li>
+<li>查<ul>
+<li>get：获得数据</li>
+<li>mget：批量获得数据</li>
+<li>getrange：获得字符串中子串</li>
+<li>strlen：字符串长度</li>
+</ul>
+</li>
+</ul>
+<h2 id="Redis操作list类型"><a href="#Redis操作list类型" class="headerlink" title="Redis操作list类型"></a><span id="redis-list">Redis操作list类型</span></h2><p>单key——多有序value。顺序跟插入元素的顺序有关</p>
+<h3 id="从左侧起存list类型数据（lpush）"><a href="#从左侧起存list类型数据（lpush）" class="headerlink" title="从左侧起存list类型数据（lpush）"></a>从左侧起存list类型数据（lpush）</h3><p>依次往左侧（头部）添加元素</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">cli&gt;lpush key value [value value...]</span><br><span class="line"></span><br><span class="line">cli&gt; lpush list1 1 2 3 4</span><br><span class="line">(<span class="built_in">integer</span>) 4</span><br><span class="line"></span><br><span class="line">cli&gt; lrange list1 0 4</span><br><span class="line">1) <span class="string">&quot;4&quot;</span></span><br><span class="line">2) <span class="string">&quot;3&quot;</span></span><br><span class="line">3) <span class="string">&quot;2&quot;</span></span><br><span class="line">4) <span class="string">&quot;1&quot;</span>	</span><br><span class="line">			<span class="comment">#可以看到lpush的顺序后插入的元素在列表中越靠前</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="从右侧起存list类型数据（rpush）"><a href="#从右侧起存list类型数据（rpush）" class="headerlink" title="从右侧起存list类型数据（rpush）"></a>从右侧起存list类型数据（rpush）</h3><p>依次从右侧（尾部）添加元素</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt;rpush key value [value value...]</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="获取指定列表中指定下标区间的元素（lrange）"><a href="#获取指定列表中指定下标区间的元素（lrange）" class="headerlink" title="获取指定列表中指定下标区间的元素（lrange）"></a>获取指定列表中指定下标区间的元素（lrange）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">cli&gt;lrange key startIndex endIndex</span><br><span class="line">					<span class="comment">#获取key列表中startIndex到endIndex的元素</span></span><br><span class="line">					</span><br><span class="line">cli&gt; lrange list1 0 4</span><br><span class="line">1) <span class="string">&quot;4&quot;</span></span><br><span class="line">2) <span class="string">&quot;3&quot;</span></span><br><span class="line">3) <span class="string">&quot;2&quot;</span></span><br><span class="line">4) <span class="string">&quot;1&quot;</span>		</span><br><span class="line"></span><br><span class="line">cli&gt; lrange list1 0 -1 	<span class="comment">#获取从头到尾的全部元素，-1表示倒数第一个，即尾部</span></span><br><span class="line">1) <span class="string">&quot;4&quot;</span></span><br><span class="line">2) <span class="string">&quot;3&quot;</span></span><br><span class="line">3) <span class="string">&quot;2&quot;</span></span><br><span class="line">4) <span class="string">&quot;1&quot;</span>		</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="从指定列表中移除并返回表头（左侧）元素（lpop）"><a href="#从指定列表中移除并返回表头（左侧）元素（lpop）" class="headerlink" title="从指定列表中移除并返回表头（左侧）元素（lpop）"></a>从指定列表中移除并返回表头（左侧）元素（lpop）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; lpop key</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="从指定列表中移除并返回表尾（右侧）元素（rpop）"><a href="#从指定列表中移除并返回表尾（右侧）元素（rpop）" class="headerlink" title="从指定列表中移除并返回表尾（右侧）元素（rpop）"></a>从指定列表中移除并返回表尾（右侧）元素（rpop）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; rpop key</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="获取列表中指定下标的元素（lindex）"><a href="#获取列表中指定下标的元素（lindex）" class="headerlink" title="获取列表中指定下标的元素（lindex）"></a>获取列表中指定下标的元素（lindex）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; lindex key index</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="获取指定列表的长度（元素个数）（llen）"><a href="#获取指定列表的长度（元素个数）（llen）" class="headerlink" title="获取指定列表的长度（元素个数）（llen）"></a>获取指定列表的长度（元素个数）（llen）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; llen key</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="移除指定列表中数据（lrem）"><a href="#移除指定列表中数据（lrem）" class="headerlink" title="移除指定列表中数据（lrem）"></a>移除指定列表中数据（lrem）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">cli&gt;lrem key count value</span><br><span class="line">			<span class="comment">#移除key列表count个中值为value的元素</span></span><br><span class="line">			<span class="comment"># count &gt; 0 从左侧起移除</span></span><br><span class="line">			<span class="comment"># count &lt; 0 从右侧起移除</span></span><br><span class="line">			<span class="comment"># count = 0 移除所有</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="总结-2"><a href="#总结-2" class="headerlink" title="总结"></a>总结</h3><p>Redis操作list类型</p>
+<ul>
+<li>增<ul>
+<li>lpush：从左边添加元素</li>
+<li>rpush：从右边添加元素</li>
+</ul>
+</li>
+<li>删<ul>
+<li>lpop：从左边弹出元素</li>
+<li>rpop：从右边弹出元素</li>
+<li>lrem：移除指定元素</li>
+</ul>
+</li>
+<li>改</li>
+<li>查<ul>
+<li>lrange：遍历</li>
+<li>lindex：指定下标的元素</li>
+<li>llen：长度</li>
+</ul>
+</li>
+</ul>
+<h2 id="Redis操作set类型"><a href="#Redis操作set类型" class="headerlink" title="Redis操作set类型"></a><span id="redis-set">Redis操作set类型</span></h2><p>单key——多无序且不可重复value</p>
+<h3 id="将一个或多个元素添加到指定集合中（sadd）"><a href="#将一个或多个元素添加到指定集合中（sadd）" class="headerlink" title="将一个或多个元素添加到指定集合中（sadd）"></a>将一个或多个元素添加到指定集合中（sadd）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; sadd key value [value value ...]	<span class="comment">#若元素重复，则忽略</span></span><br><span class="line"></span><br><span class="line">cli&gt; sadd set1 a b c a</span><br><span class="line">(<span class="built_in">integer</span>) 3			<span class="comment">#成功添加元素的个数</span></span><br><span class="line">					<span class="comment">#只添加成功三个</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="获取指定集合中的元素（smembers）"><a href="#获取指定集合中的元素（smembers）" class="headerlink" title="获取指定集合中的元素（smembers）"></a>获取指定集合中的元素（smembers）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; smembers key</span><br><span class="line"></span><br><span class="line">cli&gt; smembers set1</span><br><span class="line">1) <span class="string">&quot;c&quot;</span></span><br><span class="line">2) <span class="string">&quot;b&quot;</span></span><br><span class="line">3) <span class="string">&quot;a&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="判断元素在集合中是否存在（sismember）"><a href="#判断元素在集合中是否存在（sismember）" class="headerlink" title="判断元素在集合中是否存在（sismember）"></a>判断元素在集合中是否存在（sismember）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; sismember key member</span><br><span class="line"></span><br><span class="line">(<span class="built_in">integer</span>) 1			<span class="comment">#返回1则存在</span></span><br><span class="line">(<span class="built_in">integer</span>) 0			<span class="comment">#返回0则不存在</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="获取集合的长度（scard）"><a href="#获取集合的长度（scard）" class="headerlink" title="获取集合的长度（scard）"></a>获取集合的长度（scard）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; scard key</span><br></pre></td></tr></table></figure>
+
+<h3 id="移除集合中1个或者多个元素（srem）"><a href="#移除集合中1个或者多个元素（srem）" class="headerlink" title="移除集合中1个或者多个元素（srem）"></a>移除集合中1个或者多个元素（srem）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; srem key member [member ...]</span><br><span class="line">						<span class="comment">#返回成功移除的元素的个数</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="随机获取集合中的一个或多个元素（srandmember）"><a href="#随机获取集合中的一个或多个元素（srandmember）" class="headerlink" title="随机获取集合中的一个或多个元素（srandmember）"></a>随机获取集合中的一个或多个元素（srandmember）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; srandmember key [count]	</span><br><span class="line">						<span class="comment">#count&gt;0 随机获取的元素不会重复</span></span><br><span class="line">						<span class="comment">#count&lt;0 随机获取的元素可能重复</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="随机移除集合中的一个或多个元素（spop）"><a href="#随机移除集合中的一个或多个元素（spop）" class="headerlink" title="随机移除集合中的一个或多个元素（spop）"></a>随机移除集合中的一个或多个元素（spop）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; spop key [count]</span><br></pre></td></tr></table></figure>
+
+<h3 id="将集合中的元素移动到另一集合（smove）"><a href="#将集合中的元素移动到另一集合（smove）" class="headerlink" title="将集合中的元素移动到另一集合（smove）"></a>将集合中的元素移动到另一集合（smove）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; smove <span class="built_in">source</span> dest member	<span class="comment">#将source集合中的member移动到dest集合</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="获取集合的差集（sdiff）"><a href="#获取集合的差集（sdiff）" class="headerlink" title="获取集合的差集（sdiff）"></a>获取集合的差集（sdiff）</h3><p>即一个集合中有，但是其他集合中没有的元素</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; sdiff key1 key2 [key3 ...]</span><br><span class="line">					<span class="comment">#即key1集合中有，其他集合中没有的元素</span></span><br><span class="line">					</span><br><span class="line">cli&gt; smembers set1</span><br><span class="line">1) <span class="string">&quot;f&quot;</span></span><br><span class="line">2) <span class="string">&quot;c&quot;</span></span><br><span class="line">3) <span class="string">&quot;e&quot;</span></span><br><span class="line">4) <span class="string">&quot;g&quot;</span></span><br><span class="line">5) <span class="string">&quot;a&quot;</span></span><br><span class="line">6) <span class="string">&quot;b&quot;</span></span><br><span class="line">cli&gt; smembers set2</span><br><span class="line">1) <span class="string">&quot;d&quot;</span></span><br><span class="line">2) <span class="string">&quot;c&quot;</span></span><br><span class="line">3) <span class="string">&quot;g&quot;</span></span><br><span class="line">4) <span class="string">&quot;f&quot;</span></span><br><span class="line">5) <span class="string">&quot;e&quot;</span></span><br><span class="line">6) <span class="string">&quot;i&quot;</span></span><br><span class="line">7) <span class="string">&quot;b&quot;</span></span><br><span class="line">8) <span class="string">&quot;a&quot;</span></span><br><span class="line">9) <span class="string">&quot;h&quot;</span></span><br><span class="line">cli&gt; sdiff set2 set1		<span class="comment">#set2中有hid，但是set1中没有</span></span><br><span class="line">1) <span class="string">&quot;i&quot;</span></span><br><span class="line">2) <span class="string">&quot;d&quot;</span></span><br><span class="line">3) <span class="string">&quot;h&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="获取集合的交集（sinter）"><a href="#获取集合的交集（sinter）" class="headerlink" title="获取集合的交集（sinter）"></a>获取集合的交集（sinter）</h3><p>即指定集合中都有的元素</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; sinter key key [key key...]</span><br><span class="line"></span><br><span class="line">127.0.0.1:6379&gt; smembers set1</span><br><span class="line">1) <span class="string">&quot;f&quot;</span></span><br><span class="line">2) <span class="string">&quot;c&quot;</span></span><br><span class="line">3) <span class="string">&quot;e&quot;</span></span><br><span class="line">4) <span class="string">&quot;g&quot;</span></span><br><span class="line">5) <span class="string">&quot;a&quot;</span></span><br><span class="line">6) <span class="string">&quot;b&quot;</span></span><br><span class="line">127.0.0.1:6379&gt; smembers set2</span><br><span class="line">1) <span class="string">&quot;d&quot;</span></span><br><span class="line">2) <span class="string">&quot;c&quot;</span></span><br><span class="line">3) <span class="string">&quot;g&quot;</span></span><br><span class="line">4) <span class="string">&quot;f&quot;</span></span><br><span class="line">5) <span class="string">&quot;e&quot;</span></span><br><span class="line">6) <span class="string">&quot;i&quot;</span></span><br><span class="line">7) <span class="string">&quot;b&quot;</span></span><br><span class="line">8) <span class="string">&quot;a&quot;</span></span><br><span class="line">9) <span class="string">&quot;h&quot;</span></span><br><span class="line">127.0.0.1:6379&gt; sinter set1 set2</span><br><span class="line">1) <span class="string">&quot;f&quot;</span></span><br><span class="line">2) <span class="string">&quot;c&quot;</span></span><br><span class="line">3) <span class="string">&quot;e&quot;</span></span><br><span class="line">4) <span class="string">&quot;g&quot;</span></span><br><span class="line">5) <span class="string">&quot;a&quot;</span></span><br><span class="line">6) <span class="string">&quot;b&quot;</span></span><br><span class="line">						<span class="comment">#set1和set2中都有abcefg</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="获取集合的并集（sunion）"><a href="#获取集合的并集（sunion）" class="headerlink" title="获取集合的并集（sunion）"></a>获取集合的并集（sunion）</h3><p>即指定集合中的所有元素</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; sunion key key [key key...]</span><br></pre></td></tr></table></figure>
+
+<h3 id="总结-3"><a href="#总结-3" class="headerlink" title="总结"></a>总结</h3><p>Redis操作set类型</p>
+<ul>
+<li>增<ul>
+<li>sadd：新增元素到集合中</li>
+</ul>
+</li>
+<li>删<ul>
+<li>srem：移除元素</li>
+<li>spop：弹出元素</li>
+<li>smove：移动过元素到另一集合</li>
+</ul>
+</li>
+<li>改<ul>
+<li>sadd：新增元素到集合中，如果value已经存在则会覆盖</li>
+</ul>
+</li>
+<li>查<ul>
+<li>smembers：遍历集合元素</li>
+<li>sismember：判断元素是否存在</li>
+<li>scard：集合长度</li>
+<li>srandmember：随机获取集合元素</li>
+<li>sdiff：差集</li>
+<li>sinter：交集</li>
+<li>sunion：并集</li>
+</ul>
+</li>
+</ul>
+<h2 id="Redis操作hash类型"><a href="#Redis操作hash类型" class="headerlink" title="Redis操作hash类型"></a><span id="redis-hash">Redis操作hash类型</span></h2><p>单key——field-value </p>
+<p>​					field-value </p>
+<p>​					field-value</p>
+<p>​					适合存储对象</p>
+<h3 id="将一个或多个field-value（属性—值）对存入hash表，会覆盖（hset）"><a href="#将一个或多个field-value（属性—值）对存入hash表，会覆盖（hset）" class="headerlink" title="将一个或多个field-value（属性—值）对存入hash表，会覆盖（hset）"></a>将一个或多个field-value（属性—值）对存入hash表，会覆盖（hset）</h3><p>如果key中的filed之前是<strong>存在</strong>的，则会强制覆盖（使用hsetnx不会强制覆盖）</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; hset key field1 value1 [field2 value2 ...]</span><br><span class="line"></span><br><span class="line">cli&gt; hset student1 name wqk age 20</span><br><span class="line">(<span class="built_in">integer</span>) 2</span><br></pre></td></tr></table></figure>
+
+<h3 id="获取指定hash表中指定field值（hget）"><a href="#获取指定hash表中指定field值（hget）" class="headerlink" title="获取指定hash表中指定field值（hget）"></a>获取指定hash表中指定field值（hget）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; hget key field			<span class="comment">#获取key哈希表中field的值</span></span><br><span class="line"></span><br><span class="line">cli&gt; hget student1 name</span><br><span class="line"><span class="string">&quot;wqk&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="批量获取指定hash表中field的值（hmget）"><a href="#批量获取指定hash表中field的值（hmget）" class="headerlink" title="批量获取指定hash表中field的值（hmget）"></a>批量获取指定hash表中field的值（hmget）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; hmget key field1 [field2 field3 ...]</span><br><span class="line"></span><br><span class="line">cli&gt; hmget student1 name age</span><br><span class="line">1) <span class="string">&quot;wqk&quot;</span></span><br><span class="line">2) <span class="string">&quot;20&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="获取hash表中所有的field和value（hgetall）"><a href="#获取hash表中所有的field和value（hgetall）" class="headerlink" title="获取hash表中所有的field和value（hgetall）"></a>获取hash表中所有的field和value（hgetall）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; hgetall key</span><br><span class="line"></span><br><span class="line">cli&gt; hgetall student1</span><br><span class="line">1) <span class="string">&quot;name&quot;</span></span><br><span class="line">2) <span class="string">&quot;wqk&quot;</span></span><br><span class="line">3) <span class="string">&quot;age&quot;</span></span><br><span class="line">4) <span class="string">&quot;20&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="移除hash表中指定一个或者多个field（hdel）"><a href="#移除hash表中指定一个或者多个field（hdel）" class="headerlink" title="移除hash表中指定一个或者多个field（hdel）"></a>移除hash表中指定一个或者多个field（hdel）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; hdel key field1 [field2 field3 ...]</span><br></pre></td></tr></table></figure>
+
+<h3 id="统计hash表中field数量（hlen）"><a href="#统计hash表中field数量（hlen）" class="headerlink" title="统计hash表中field数量（hlen）"></a>统计hash表中field数量（hlen）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; hlen key</span><br></pre></td></tr></table></figure>
+
+<h3 id="判断hash表中是否存在某field（hexists）"><a href="#判断hash表中是否存在某field（hexists）" class="headerlink" title="判断hash表中是否存在某field（hexists）"></a>判断hash表中是否存在某field（hexists）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; hexists key field</span><br><span class="line">				<span class="comment">#返回0表示不存在，1表示存在</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="获取hash表中所有的field列表（hkeys）"><a href="#获取hash表中所有的field列表（hkeys）" class="headerlink" title="获取hash表中所有的field列表（hkeys）"></a>获取hash表中所有的field列表（hkeys）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; hkeys key</span><br><span class="line"></span><br><span class="line">cli&gt; hkeys student2</span><br><span class="line">1) <span class="string">&quot;id&quot;</span></span><br><span class="line">2) <span class="string">&quot;name&quot;</span></span><br><span class="line">3) <span class="string">&quot;age&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="获取hash表中所有的value（hvals）"><a href="#获取hash表中所有的value（hvals）" class="headerlink" title="获取hash表中所有的value（hvals）"></a>获取hash表中所有的value（hvals）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; hvals key</span><br><span class="line"></span><br><span class="line">cli&gt; hvals student2</span><br><span class="line">1) <span class="string">&quot;10001&quot;</span></span><br><span class="line">2) <span class="string">&quot;test&quot;</span></span><br><span class="line">3) <span class="string">&quot;18&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="对hash表中指定field的value进行整数加法运算（hincrby）"><a href="#对hash表中指定field的value进行整数加法运算（hincrby）" class="headerlink" title="对hash表中指定field的value进行整数加法运算（hincrby）"></a>对hash表中指定field的value进行整数加法运算（hincrby）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; hincrby key field incrment</span><br><span class="line">	<span class="comment">#对key哈希表中的field属性的值进行加incrment值运算</span></span><br><span class="line">				</span><br><span class="line">cli&gt; hget student2 age</span><br><span class="line"><span class="string">&quot;18&quot;</span></span><br><span class="line"></span><br><span class="line">cli&gt; hincrby student2 age 2 </span><br><span class="line">(<span class="built_in">integer</span>) 20</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="对hash表中指定field的value进行浮点数加法运算（hincrbyfloat）"><a href="#对hash表中指定field的value进行浮点数加法运算（hincrbyfloat）" class="headerlink" title="对hash表中指定field的value进行浮点数加法运算（hincrbyfloat）"></a>对hash表中指定field的value进行浮点数加法运算（hincrbyfloat）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; hincrbyfloat key field incrment</span><br><span class="line"></span><br><span class="line">cli&gt; hset student2 score 85</span><br><span class="line">(<span class="built_in">integer</span>) 1</span><br><span class="line">cli&gt; hincrbyfloat student2 score 1.5</span><br><span class="line"><span class="string">&quot;86.5&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="将一个或多个field-value（属性—值）对存入hash表，不会覆盖（hsetnx）"><a href="#将一个或多个field-value（属性—值）对存入hash表，不会覆盖（hsetnx）" class="headerlink" title="将一个或多个field-value（属性—值）对存入hash表，不会覆盖（hsetnx）"></a>将一个或多个field-value（属性—值）对存入hash表，不会覆盖（hsetnx）</h3><p>如果key的field已经存在则放弃设置</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; hsetnx key filed1 value1 [field2 value2]</span><br></pre></td></tr></table></figure>
+
+<h3 id="总结-4"><a href="#总结-4" class="headerlink" title="总结"></a>总结</h3><p>Redis操作hash类型</p>
+<ul>
+<li>增<ul>
+<li>hset：存入hash类型数据</li>
+<li>hsetnx：存入数据，如果存在则不存入</li>
+</ul>
+</li>
+<li>删<ul>
+<li>hdel：删除hash表中field及其value</li>
+</ul>
+</li>
+<li>改<ul>
+<li>hset：存入hash类型数据，如果field存在则会覆盖</li>
+<li>hincrby：value是数值，则会增加</li>
+</ul>
+</li>
+<li>查<ul>
+<li>hget：获取hash表中指定field的value</li>
+<li>hmget：批量获取hash表中指定field的value</li>
+<li>hgetall：获取hash表中所有field及其value</li>
+<li>hlen：获取hash表中field的数量</li>
+<li>hexists：判断hash表中该field是否存在</li>
+<li>hkeys：获取hash表中所有field</li>
+<li>hvals：获取hash表中所有value</li>
+</ul>
+</li>
+</ul>
+<h2 id="Redis操作zset类型"><a href="#Redis操作zset类型" class="headerlink" title="Redis操作zset类型"></a><span id="redis-zset">Redis操作zset类型</span></h2><p>有序集合。顺序跟score有关</p>
+<h3 id="将一个或多个member及其score值加入有序集合（zadd）"><a href="#将一个或多个member及其score值加入有序集合（zadd）" class="headerlink" title="将一个或多个member及其score值加入有序集合（zadd）"></a>将一个或多个member及其score值加入有序集合（zadd）</h3><p>score必须是数值。如果member<strong>已经存在</strong>，则会覆盖</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; zadd key score member [score member]</span><br><span class="line"></span><br><span class="line">cli&gt; zadd zset1 95 wqk 90 lk 98 zp</span><br><span class="line">(<span class="built_in">integer</span>) 3</span><br></pre></td></tr></table></figure>
+
+<h3 id="获取有序集合中指定下标区间的元素（zrange）"><a href="#获取有序集合中指定下标区间的元素（zrange）" class="headerlink" title="获取有序集合中指定下标区间的元素（zrange）"></a>获取有序集合中指定下标区间的元素（zrange）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; zrange key startIndex endIndex [withscores] <span class="comment">#获取key集合startIndex到endIndex区间的元素（是否显示分数）</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="获取有序集合中指定分数区间（闭区间）的元素（zrangebyscore）"><a href="#获取有序集合中指定分数区间（闭区间）的元素（zrangebyscore）" class="headerlink" title="获取有序集合中指定分数区间（闭区间）的元素（zrangebyscore）"></a>获取有序集合中指定分数区间（闭区间）的元素（zrangebyscore）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; zrangebyscore key min max [withscores] <span class="comment">#获取key集合min到max分数区间的元素（是否显示分数）</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="删除有序集合中一个或者多个元素（zrem）"><a href="#删除有序集合中一个或者多个元素（zrem）" class="headerlink" title="删除有序集合中一个或者多个元素（zrem）"></a>删除有序集合中一个或者多个元素（zrem）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; zrem key member [member]</span><br></pre></td></tr></table></figure>
+
+<h3 id="获取有序集合中元素个数（zcard）"><a href="#获取有序集合中元素个数（zcard）" class="headerlink" title="获取有序集合中元素个数（zcard）"></a>获取有序集合中元素个数（zcard）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; zcard key</span><br></pre></td></tr></table></figure>
+
+<h3 id="获取有序集合中分数在指定区间的元素个数（zcount）"><a href="#获取有序集合中分数在指定区间的元素个数（zcount）" class="headerlink" title="获取有序集合中分数在指定区间的元素个数（zcount）"></a>获取有序集合中分数在指定区间的元素个数（zcount）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; zcount key min max		<span class="comment">#获取key有序集合中min到max区间的元素个数</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="获取有序集合中指定元素的排名（升序）（zrank）"><a href="#获取有序集合中指定元素的排名（升序）（zrank）" class="headerlink" title="获取有序集合中指定元素的排名（升序）（zrank）"></a>获取有序集合中指定元素的排名（升序）（zrank）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; zrank key member</span><br></pre></td></tr></table></figure>
+
+<h3 id="获取有序集合中指定元素的排名（降序）（zrevrank）"><a href="#获取有序集合中指定元素的排名（降序）（zrevrank）" class="headerlink" title="获取有序集合中指定元素的排名（降序）（zrevrank）"></a>获取有序集合中指定元素的排名（降序）（zrevrank）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; zrevrank key member</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="获取有序集合指定元素的分数（zscore）"><a href="#获取有序集合指定元素的分数（zscore）" class="headerlink" title="获取有序集合指定元素的分数（zscore）"></a>获取有序集合指定元素的分数（zscore）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; zscore key member</span><br></pre></td></tr></table></figure>
+
+<h3 id="总结-5"><a href="#总结-5" class="headerlink" title="总结"></a>总结</h3><p>Redis操作zset类型</p>
+<ul>
+<li>增<ul>
+<li>zadd：往集合中存入元素</li>
+</ul>
+</li>
+<li>删<ul>
+<li>zrem：移除集合中的元素</li>
+</ul>
+</li>
+<li>改</li>
+<li>查<ul>
+<li>zrange：遍历集合元素</li>
+<li>zrangebyscore：根据score遍历集合元素</li>
+<li>zcard：集合元素个数</li>
+<li>zcount：指定分数区间元素个数</li>
+<li>zrank：元素的排名（正序）</li>
+<li>zrevrank：元素的排名（倒序）</li>
+<li>zscore：元素的分数</li>
+</ul>
+</li>
+</ul>
+<h2 id="Redis配置文件"><a href="#Redis配置文件" class="headerlink" title="Redis配置文件"></a>Redis配置文件</h2><p>Redis根目录下有个默认的配置文件：<code>.\redis.conf</code>，里面有一些redis默认的配置参数</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; redis-server [config_name]	<span class="comment">#默认使用默认的配置的文件</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="网络配置"><a href="#网络配置" class="headerlink" title="网络配置"></a>网络配置</h3><ul>
+<li><p>port</p>
+<p>指定redis服务所使用的端口号，<strong>默认6379</strong></p>
+</li>
+<li><p>bind</p>
+<p>指定客户端连接redis服务时，所能使用的主机地址，<strong>默认是redis服务所在主机名</strong>，一般情况下都需要指定主机名</p>
+</li>
+<li><p>tcp-keeplive</p>
+<p>TCP连接保活策略，单位是秒。指的是Redis服务端会在指定秒内向连接他的客户端发送一次ACK请求，以确保连接有效。<strong>默认是60秒</strong></p>
+</li>
+</ul>
+<p>如果以上配置在配置文件中生效，则在客户端中连接需使用：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">redis-cli -h <span class="built_in">bind</span> -p 6380</span><br></pre></td></tr></table></figure>
+
+<h3 id="常规配置"><a href="#常规配置" class="headerlink" title="常规配置"></a>常规配置</h3><ul>
+<li><p>loglevel</p>
+<p>配置日志级别，分为四个级别：debug、verbose、notice、warning。<strong>默认是notice</strong></p>
+</li>
+<li><p>logfile</p>
+<p>日志文件持久化存储的地方。<strong>默认不会持久化，只会输出到终端</strong></p>
+</li>
+<li><p>databases</p>
+<p>配置Redis服务默认创建的数据库实例个数。<strong>默认是16个</strong>。</p>
+</li>
+</ul>
+<h3 id="安全配置"><a href="#安全配置" class="headerlink" title="安全配置"></a>安全配置</h3><ul>
+<li><p>requirepass</p>
+<p>配置Redis客户端访问Redis服务时的密码，需要<code>protected-mode = yes</code>时生效</p>
+</li>
+</ul>
+<p>如配置了requirepass，则在客户端连接中需使用：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">redis-cli [-h hostname] [-p port] [-a <span class="built_in">pwd</span>]</span><br></pre></td></tr></table></figure>
+
+<h2 id="Redis数据持久化"><a href="#Redis数据持久化" class="headerlink" title="Redis数据持久化"></a>Redis数据持久化</h2><p>Redis提供持久化策略，可以在适当的时机采用适当的手段把内存中的数据持久化的磁盘。</p>
+<h3 id="RDB策略（Redis默认启用的持久化策略）"><a href="#RDB策略（Redis默认启用的持久化策略）" class="headerlink" title="RDB策略（Redis默认启用的持久化策略）"></a>RDB策略（Redis默认启用的持久化策略）</h3><p>RDB（Redis DataBase）策略是指，在<strong>指定时间间隔</strong>内，Redis服务执行<strong>指定次数</strong>的写操作，会自动触发一次持久化操作。如需修改可以在redis的配置文件中修改RDB相关的配置（<code>dbfilename</code>持久化数据的文件名，默认是dump.rdb，<code>dir</code>持久化数据的目录，默认是<code>./</code>，即根目录）。</p>
+<h3 id="AOF策略"><a href="#AOF策略" class="headerlink" title="AOF策略"></a>AOF策略</h3><p>记录每一次Redis服务的<strong>完整写操作</strong>进入日志，每次Redis服务启动时，都会重新执行一遍完整的操作日志以便恢复数据。效率不高，默认不开启AOF（<code>appendonly</code>配置是否开启AOF策略，<code>appendfilename</code>配置操作日志文件）。</p>
+<h2 id="Redis事务"><a href="#Redis事务" class="headerlink" title="Redis事务"></a>Redis事务</h2><p>数据库事务：一组对数据库的操作一起执行，保证操作的原子性，要么同时成功，要么同时失败。</p>
+<p>Redis事务：允许一组Redis命令放在一起，将命令序列化，然后按队列执行，保证部分原子性。</p>
+<h3 id="multi"><a href="#multi" class="headerlink" title="multi"></a>multi</h3><p>标记一个Redis事务的开始（与exec成对存在）。</p>
+<h3 id="exec"><a href="#exec" class="headerlink" title="exec"></a>exec</h3><p>标记一个Redis事务的结束（与multi成对存在），即立即开始执行上述事务。</p>
+<p>一个完整的Redis事务的输入格式应该是如下</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; multi				<span class="comment">#标识事务开始了</span></span><br><span class="line">cli&gt; <span class="built_in">set</span> k1 v1			<span class="comment">#操作1</span></span><br><span class="line">cli&gt; <span class="built_in">set</span> k2 v2			<span class="comment">#操作2</span></span><br><span class="line">cli&gt; <span class="built_in">exec</span>				<span class="comment">#标识事务结束了（即立即开始执行）</span></span><br></pre></td></tr></table></figure>
+
+
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; multi</span><br><span class="line">OK		<span class="comment">#事务开启</span></span><br><span class="line">cli&gt; <span class="built_in">set</span> str1 value1</span><br><span class="line">QUEUED	<span class="comment">#操作1加入队列</span></span><br><span class="line">cli&gt; <span class="built_in">set</span> str2 value2</span><br><span class="line">QUEUED	<span class="comment">#操作2加入队列</span></span><br><span class="line">cli&gt; <span class="built_in">exec</span></span><br><span class="line">1) OK	<span class="comment">#操作1执行结果</span></span><br><span class="line">2) OK	<span class="comment">#操作2执行结果</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><strong>Tips：</strong></p>
+<p>Redis事务不是脚本命令。而是在cli执行<code>multi</code>后接着<strong>一行一行输入</strong>操作的命令（操作会插入队列），最后执行<code>exec</code>才会按队列执行上述操作。为保证事务的<strong>部分</strong>原子性，Redis事务遵循以下两则规则：</p>
+<ol>
+<li><p>输入事务操作过程中如果发生错误，则事务输入失败，即事务无法被创建。即<code>multi</code>和<code>exec</code>中间操作语句有错误则事务无法被创建。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; multi		</span><br><span class="line">cli&gt; <span class="built_in">set</span> k1 v1	</span><br><span class="line">cli&gt; seta k2 v2		<span class="comment">#操作2：命令错误</span></span><br><span class="line">cli&gt; <span class="built_in">exec</span></span><br><span class="line">                  </span><br><span class="line">					<span class="comment">#该事务无法被创建：操作的命令错误</span></span><br></pre></td></tr></table></figure>
+
+
+</li>
+<li><p>如果上述规则没有发生错误，则在最后执行操作队列时，即使其中一项操作执行异常仍会继续执行其余操作。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; multi</span><br><span class="line">cli&gt; <span class="built_in">set</span> k1 v1</span><br><span class="line">cli&gt; incr k1		</span><br><span class="line">cli&gt; <span class="built_in">exec</span></span><br><span class="line">					<span class="comment">#事务会被创建，即使incr的执行结果异常</span></span><br></pre></td></tr></table></figure></li>
+</ol>
+</blockquote>
+<h3 id="discard"><a href="#discard" class="headerlink" title="discard"></a>discard</h3><p>清除已经存在于操作队列中的命令</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; multi</span><br><span class="line">OK</span><br><span class="line">cli&gt; <span class="built_in">set</span> k5 v5</span><br><span class="line">QUEUED</span><br><span class="line">cli&gt; <span class="built_in">set</span> k6 v6</span><br><span class="line">QUEUED</span><br><span class="line">cli&gt; discard					<span class="comment">#清空上述操作队列</span></span><br><span class="line">OK</span><br><span class="line">cli&gt; <span class="built_in">exec</span></span><br><span class="line">(error) ERR EXEC without MULTI			<span class="comment">#exec执行失败的原因是操作命令的队列被清空</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="watch"><a href="#watch" class="headerlink" title="watch"></a>watch</h3><p>在事务开启前（<code>multi</code>）监控某一个键，在事务执行的过程中监控的键的值发生变化，则此次事务放弃执行；否则正常执行。</p>
+<p>用以下事务来模拟一个场景：钱包A余额50，钱包B余额50，钱包B向钱包A转账50，那么最后钱包B余额0，钱包A余额100。并发情况下假如多个钱包需要向钱包B转账，那么就会发生错误。所以需要监控该次事务执行前的version是否还是该version。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; <span class="built_in">set</span> balanceA 50</span><br><span class="line">OK</span><br><span class="line">cli&gt; <span class="built_in">set</span> balanceB 50</span><br><span class="line">OK</span><br><span class="line">cli&gt; <span class="built_in">set</span> verison 1</span><br><span class="line">OK</span><br><span class="line">cli&gt; watch version			<span class="comment">#监控version的值</span></span><br><span class="line">OK</span><br><span class="line">cli&gt; multi</span><br><span class="line">OK</span><br><span class="line">cli&gt; incrby balanceA 50</span><br><span class="line">QUEUED</span><br><span class="line">cli&gt; decrby balanceB 50</span><br><span class="line">QUEUED</span><br><span class="line">cli&gt; incr version</span><br><span class="line">QUEUED</span><br><span class="line">cli&gt; <span class="built_in">exec</span></span><br><span class="line">1) (<span class="built_in">integer</span>) 100</span><br><span class="line">2) (<span class="built_in">integer</span>) 0</span><br><span class="line">3) (<span class="built_in">integer</span>) 2</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><strong>Tips</strong></p>
+<p>watch就是类似于乐观锁，A事务执行前查询一个键（该键会在其他事务进行该事务后发生改变，即标识此次事务执行成功），如果该键在A事务执行过程中发生了改变（说明其他事务对数据进行了操作），即A事务应该不执行，如果该键没有发生改变，则A事务正常执行。</p>
+</blockquote>
+<h3 id="unwatch"><a href="#unwatch" class="headerlink" title="unwatch"></a>unwatch</h3><p>放弃监控的所有键。</p>
+<h2 id="Redis消息的发布与订阅（了解）"><a href="#Redis消息的发布与订阅（了解）" class="headerlink" title="Redis消息的发布与订阅（了解）"></a>Redis消息的发布与订阅（了解）</h2><p>Redis<strong>客户端</strong>订阅频道，订阅了同一频道的客户端可以发送或者收到来自同一频道的消息。（消息中间件）</p>
+<h4 id="subscribe"><a href="#subscribe" class="headerlink" title="subscribe"></a>subscribe</h4><p>订阅频道（以便接收消息）</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; subscribe channel [channel ...]			<span class="comment">#可以订阅多个频道</span></span><br></pre></td></tr></table></figure>
+
+<p>client1：</p>
+<p>订阅了ch1频道</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; subscribe ch1</span><br><span class="line">Reading messages... (press Ctrl-C to quit)</span><br><span class="line">1) <span class="string">&quot;subscribe&quot;</span></span><br><span class="line">2) <span class="string">&quot;ch1&quot;</span></span><br><span class="line">3) (<span class="built_in">integer</span>) 1</span><br></pre></td></tr></table></figure>
+
+<p>client2：</p>
+<p>订阅了ch1频道</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; subscribe ch1</span><br><span class="line">Reading messages... (press Ctrl-C to quit)</span><br><span class="line">1) <span class="string">&quot;subscribe&quot;</span></span><br><span class="line">2) <span class="string">&quot;ch1&quot;</span></span><br><span class="line">3) (<span class="built_in">integer</span>) 1</span><br></pre></td></tr></table></figure>
+
+<p>此时client1和client2都订阅了ch1频道，如果有客户端往ch1频道发送消息，那么client1和client2都会收到</p>
+<h3 id="psubscribe"><a href="#psubscribe" class="headerlink" title="psubscribe"></a>psubscribe</h3><p>订阅频道（支持通配符）</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; psubscribe pattern [pattern ...]</span><br><span class="line"></span><br><span class="line">cli&gt; psubscribe news*			<span class="comment">#订阅以news开头的频道</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="publish"><a href="#publish" class="headerlink" title="publish"></a>publish</h3><p>往频道上发布消息</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; publish channel message			<span class="comment">#往channel频道发送message消息</span></span><br></pre></td></tr></table></figure>
+
+<p>client3向ch1频道发送消息：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; publish ch1 Hello,Redis!</span><br><span class="line">(<span class="built_in">integer</span>) 2</span><br></pre></td></tr></table></figure>
+
+<p>此时client1和client2就会收到来自client3的消息：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">1) <span class="string">&quot;message&quot;</span></span><br><span class="line">2) <span class="string">&quot;ch1&quot;</span></span><br><span class="line">3) <span class="string">&quot;Hello,Redis!&quot;</span>            </span><br></pre></td></tr></table></figure>
+
+<h2 id="Redis主从复制"><a href="#Redis主从复制" class="headerlink" title="Redis主从复制"></a>Redis主从复制</h2><h3 id="搭建一主二从的Redis集群并启动"><a href="#搭建一主二从的Redis集群并启动" class="headerlink" title="搭建一主二从的Redis集群并启动"></a>搭建一主二从的Redis集群并启动</h3><p>实际开发中应分别在三台不同的服务器上部署三个Redis服务，这里为了方便演示选择在同一台服务器启动三个配置文件不同的Redis服务来模拟，三个Redis服务端口号分别是6379、6380、6381，三份配置文件名命名为：<code>redis_6379.conf</code>、<code>redis_6380.conf</code>、<code>redis_6381.conf</code>。</p>
+<p>redis_6379.conf：</p>
+<figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">port</span> <span class="string">6379						#修改端口号</span></span><br><span class="line"><span class="attr">logfile</span> <span class="string">&quot;redis_6379.log&quot;		#修改生成的日志文件名</span></span><br><span class="line"><span class="attr">dbfilename</span> <span class="string">redis_6379.rdb		#修改持久化的文件名</span></span><br></pre></td></tr></table></figure>
+
+<p>同理，redis_6380.conf和redis_6381.conf也需要修改以上配置</p>
+<blockquote>
+<p><strong>Tips</strong></p>
+<p>需要修改日志和持久化文件的文件名，不然可能会造成数据冲突。</p>
+</blockquote>
+<p>接下来使用<code>redis-server &lt;config_name&gt;</code>分别启动三个Redis服务</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">redis-server redis_6379.conf</span><br><span class="line">redis-server redis_6380.conf</span><br><span class="line">redis-server redis_6381.conf</span><br></pre></td></tr></table></figure>
+
+<h3 id="使用cli分别连接三台Redis服务"><a href="#使用cli分别连接三台Redis服务" class="headerlink" title="使用cli分别连接三台Redis服务"></a>使用cli分别连接三台Redis服务</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">redis-cli -p 6379</span><br><span class="line">redis-cli -p 6380</span><br><span class="line">redis-cli -p 6381</span><br></pre></td></tr></table></figure>
+
+<h3 id="查看Redis服务的主从信息"><a href="#查看Redis服务的主从信息" class="headerlink" title="查看Redis服务的主从信息"></a>查看Redis服务的主从信息</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; info replication</span><br><span class="line"></span><br><span class="line"><span class="comment"># Replication</span></span><br><span class="line">role:master								<span class="comment">#角色：主机</span></span><br><span class="line">connected_slaves:0						<span class="comment">#已连接的从机数量：0</span></span><br><span class="line">master_replid:91792be1189896bfa47e7a99aae23b8702c8c93b</span><br><span class="line">master_replid2:0000000000000000000000000000000000000000</span><br><span class="line">master_repl_offset:0</span><br><span class="line">second_repl_offset:-1</span><br><span class="line">repl_backlog_active:0</span><br><span class="line">repl_backlog_size:1048576</span><br><span class="line">repl_backlog_first_byte_offset:0</span><br><span class="line">repl_backlog_histlen:0</span><br></pre></td></tr></table></figure>
+
+<p>初始化的Redis服务的角色都是主机，即<code>role:master</code>。</p>
+<h3 id="设置从机从属于主机（slaveof）"><a href="#设置从机从属于主机（slaveof）" class="headerlink" title="设置从机从属于主机（slaveof）"></a>设置从机从属于主机（slaveof）</h3><p>命令格式如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; slaveof host port     <span class="comment">#设置当前连接的服务从属于host:port的redis服务</span></span><br></pre></td></tr></table></figure>
+
+
+
+<p>在已连接从机服务的客户端上执行：<code>slaveof 127.0.0.1 6379</code>，即</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6380&gt; slaveof 127.0.0.1 6379</span><br><span class="line">OK</span><br><span class="line">127.0.0.1:6380&gt; info replication</span><br><span class="line"><span class="comment"># Replication</span></span><br><span class="line">role:slave						<span class="comment">#角色：从机</span></span><br><span class="line">master_host:127.0.0.1			<span class="comment">#主机host地址</span></span><br><span class="line">master_port:6379				<span class="comment">#主机port端口号</span></span><br><span class="line">master_link_status:up			<span class="comment">#与主机连接状态：up（已连接）</span></span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6381&gt; slaveof 127.0.0.1 6379</span><br><span class="line">OK</span><br><span class="line">127.0.0.1:6381&gt; info replication</span><br><span class="line"><span class="comment"># Replication</span></span><br><span class="line">role:slave</span><br><span class="line">master_host:127.0.0.1</span><br><span class="line">master_port:6379</span><br><span class="line">master_link_status:up</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+<h3 id="全量复制"><a href="#全量复制" class="headerlink" title="全量复制"></a>全量复制</h3><p>一旦主从关系确定，主库会将所有数据立马同步到从库。</p>
+<h3 id="增量复制"><a href="#增量复制" class="headerlink" title="增量复制"></a>增量复制</h3><p>在主库上写的数据，会同步到从库。</p>
+<h3 id="读写分离，主写从读"><a href="#读写分离，主写从读" class="headerlink" title="读写分离，主写从读"></a>读写分离，主写从读</h3><p>主机既能读也能写（尽量写），从机只能读不能写。</p>
+<h3 id="主机宕机，从机原地待命"><a href="#主机宕机，从机原地待命" class="headerlink" title="主机宕机，从机原地待命"></a>主机宕机，从机原地待命</h3><p>主机宕机后，<strong>从机仍然可以读数据</strong>，可以从<code>info replication</code>中看到与主机的连接状态变为<code>down</code></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6380&gt; info replication</span><br><span class="line"><span class="comment"># Replication</span></span><br><span class="line">role:slave									<span class="comment">#角色仍是从机</span></span><br><span class="line">master_host:127.0.0.1</span><br><span class="line">master_port:6379</span><br><span class="line">master_link_status:down						<span class="comment">#与主机的连接状态变为down（未连接）</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="主机恢复，恢复原样"><a href="#主机恢复，恢复原样" class="headerlink" title="主机恢复，恢复原样"></a>主机恢复，恢复原样</h3><p>主机恢复后，<strong>恢复到原样</strong>，从机与主机继续建立连接</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6380&gt; info replication</span><br><span class="line"><span class="comment"># Replication</span></span><br><span class="line">role:slave</span><br><span class="line">master_host:127.0.0.1</span><br><span class="line">master_port:6379</span><br><span class="line">master_link_status:up						<span class="comment">#与主机的连接状态变为up（已连接）</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="从机宕机"><a href="#从机宕机" class="headerlink" title="从机宕机"></a>从机宕机</h3><p>从机宕机后，主机少一台从机，其余从机不受影响</p>
+<h3 id="从机恢复"><a href="#从机恢复" class="headerlink" title="从机恢复"></a>从机恢复</h3><p>从机恢复后，会初始化到最初的状态（即变为<code>role:master</code>），需要重新设置从属主机，然后主机的数据会全量复制到从机上。</p>
+<h3 id="主机宕机，从机上位"><a href="#主机宕机，从机上位" class="headerlink" title="主机宕机，从机上位"></a>主机宕机，从机上位</h3><p>主机宕机后，如果主机灾害程度无法短时间恢复则可以使用从机进行上位（即取代主机）。</p>
+<ol>
+<li><p>选择一个从机取消其原本的从属关系，成为新的主机</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6380&gt; slaveof no one			<span class="comment">#取消从属关系（成为主机）</span></span><br><span class="line">OK</span><br><span class="line">127.0.0.1:6380&gt; info replication		<span class="comment">#查看复制关系</span></span><br><span class="line"><span class="comment"># Replication</span></span><br><span class="line">role:master								<span class="comment">#角色：主机（新的主机）</span></span><br><span class="line">connected_slaves:0</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+<p>此时6380从机成为了新的主机，并且<strong>仍保留原有的数据</strong></p>
+</li>
+<li><p>其余从机重新从属于新的主机</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6381&gt; slaveof 127.0.0.1 6380	<span class="comment">#6381从机从属于6380</span></span><br><span class="line">OK</span><br><span class="line"></span><br><span class="line">127.0.0.1:6381&gt; info replication</span><br><span class="line"><span class="comment"># Replication</span></span><br><span class="line">role:slave</span><br><span class="line">master_host:127.0.0.1</span><br><span class="line">master_port:6380</span><br><span class="line">master_link_status:up</span><br></pre></td></tr></table></figure></li>
+</ol>
+<blockquote>
+<p><strong>Tips</strong></p>
+<p>主机可读可写，从机只能读，不能写。</p>
+</blockquote>
+<h2 id="Redis哨兵模式"><a href="#Redis哨兵模式" class="headerlink" title="Redis哨兵模式"></a>Redis哨兵模式</h2><p>Redis的哨兵模式会在某一Redis服务发生故障（如宕机）时，自动执行从机上位（按照一定规则），并且主机恢复后会从属于新的主机。流程如下：</p>
+<ol>
+<li><p>配置哨兵的配置文件</p>
+<p>redis_sentinel.conf：（配置文件名称自定义）</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">#该哨兵的名称是sentinel-redis。作用是monitor（监控）主机127.0.0.1的6379（端口）上的Redis服务</span><br><span class="line">sentinel monitor sentinel-redis 127.0.0.1 6379 1</span><br></pre></td></tr></table></figure>
+
+
+</li>
+<li><p>启动哨兵</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cmd&gt; redis-server redis_sentinel.conf --sentinel</span><br></pre></td></tr></table></figure>
+
+<p>出现以下内容则启动成功：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">cmd&gt;redis-server.exe redis_sentinel.conf --sentinel</span><br><span class="line">[16228] 07 Oct 21:58:19.446 <span class="comment"># oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo</span></span><br><span class="line">[16228] 07 Oct 21:58:19.446 <span class="comment"># Redis version=5.0.10, bits=64, commit=1c047b68, modified=0, pid=16228, just started</span></span><br><span class="line">[16228] 07 Oct 21:58:19.446 <span class="comment"># Configuration loaded</span></span><br><span class="line">                _._</span><br><span class="line">           _.-``__ <span class="string">&#x27;&#x27;</span>-._</span><br><span class="line">      _.-``    `.  `_.  <span class="string">&#x27;&#x27;</span>-._           Redis 5.0.10 (1c047b68/0) 64 bit</span><br><span class="line">  .-`` .-```.  ```\/    _.,_ <span class="string">&#x27;&#x27;</span>-._</span><br><span class="line"> (    <span class="string">&#x27;      ,       .-`  | `,    )     Running in sentinel mode</span></span><br><span class="line"><span class="string"> |`-._`-...-` __...-.``-._|&#x27;</span>` _.-<span class="string">&#x27;|     Port: 26379</span></span><br><span class="line"><span class="string"> |    `-._   `._    /     _.-&#x27;</span>    |     PID: 16228</span><br><span class="line">  `-._    `-._  `-./  _.-<span class="string">&#x27;    _.-&#x27;</span></span><br><span class="line"> |`-._`-._    `-.__.-<span class="string">&#x27;    _.-&#x27;</span>_.-<span class="string">&#x27;|</span></span><br><span class="line"><span class="string"> |    `-._`-._        _.-&#x27;</span>_.-<span class="string">&#x27;    |           http://redis.io</span></span><br><span class="line"><span class="string">  `-._    `-._`-.__.-&#x27;</span>_.-<span class="string">&#x27;    _.-&#x27;</span></span><br><span class="line"> |`-._`-._    `-.__.-<span class="string">&#x27;    _.-&#x27;</span>_.-<span class="string">&#x27;|</span></span><br><span class="line"><span class="string"> |    `-._`-._        _.-&#x27;</span>_.-<span class="string">&#x27;    |</span></span><br><span class="line"><span class="string">  `-._    `-._`-.__.-&#x27;</span>_.-<span class="string">&#x27;    _.-&#x27;</span></span><br><span class="line">      `-._    `-.__.-<span class="string">&#x27;    _.-&#x27;</span></span><br><span class="line">          `-._        _.-<span class="string">&#x27;</span></span><br><span class="line"><span class="string">              `-.__.-&#x27;</span></span><br><span class="line"></span><br><span class="line">[16228] 07 Oct 21:58:19.452 <span class="comment"># Sentinel ID is 192b87ae0be76565fefed74ead2f28454a49f746</span></span><br><span class="line">[16228] 07 Oct 21:58:19.452 <span class="comment"># +monitor master sentinel-redis 127.0.0.1 6379 quorum 1</span></span><br><span class="line">[16228] 07 Oct 21:58:19.456 * +slave slave 127.0.0.1:6381 127.0.0.1 6381 @ sentinel-redis 127.0.0.1 6379</span><br><span class="line">[16228] 07 Oct 21:58:19.457 * +slave slave 127.0.0.1:6380 127.0.0.1 6380 @ sentinel-redis 127.0.0.1 6379</span><br></pre></td></tr></table></figure>
+
+
+</li>
+<li><p>监控的主机宕机，从机会在短时间后上位（变为新的主机，其余从机从属于该新主机）</p>
+<p>（此时6379宕机）</p>
+<p>6381成为新的主机：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6381&gt; info replication</span><br><span class="line"><span class="comment"># Replication</span></span><br><span class="line">role:master</span><br><span class="line">connected_slaves:1</span><br><span class="line">slave0:ip=127.0.0.1,port=6380,state=online,offset=22068,lag=0</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+
+
+<p>6380从属于6381：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6380&gt; info replication</span><br><span class="line"><span class="comment"># Replication</span></span><br><span class="line">role:slave</span><br><span class="line">master_host:127.0.0.1</span><br><span class="line">master_port:6381</span><br><span class="line">master_link_status:up</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+
+</li>
+<li><p>旧主机恢复，变为新主机的从机</p>
+<p>（此时6379恢复）</p>
+<p>6379从属于6381：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt; info replication</span><br><span class="line"><span class="comment"># Replication</span></span><br><span class="line">role:slave</span><br><span class="line">master_host:127.0.0.1</span><br><span class="line">master_port:6381</span><br><span class="line">master_link_status:up</span><br><span class="line">...</span><br></pre></td></tr></table></figure></li>
+</ol>
+<blockquote>
+<p><strong>Tips</strong></p>
+<p>哨兵并不会在主机宕机的一瞬间就将从机上位，而是在一定间隔时间内扫描，扫描到主机宕机了再让从机上位，旧主机恢复时，哨兵将其变为新主机的从机时同理（并不会立马执行，而是在一定时间间隔内）。</p>
+</blockquote>
+<h3 id="总结-6"><a href="#总结-6" class="headerlink" title="总结"></a>总结</h3><ol>
+<li><p>查看Redis服务的主从关系</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; info replication</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>设置Redis服务之间的从属关系</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cli&gt; slaveof host port			<span class="comment">#执行命令的当前主机从属于host:port上的Redis服务</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>开启哨兵模式</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cmd&gt; redis-sentinel &lt;sentinel_config&gt;	<span class="comment">#以sentinel_config配置文件执行哨兵</span></span><br></pre></td></tr></table></figure></li>
+</ol>
+<blockquote>
+<p><strong>Tips</strong></p>
+<ul>
+<li>主从复制原则：先全量复制，再增量复制</li>
+<li>哨兵三大任务：监控、提醒、自动故障迁移</li>
+</ul>
+</blockquote>
+<h2 id="Jedis的使用"><a href="#Jedis的使用" class="headerlink" title="Jedis的使用"></a>Jedis的使用</h2><p>Jedis是在Java上使用Redis的客户端，封装了一些命令和操作。类似jdbc，同时Spring官方还提供<a target="_blank" rel="noopener" href="https://spring.io/projects/spring-data-redis">Spring Data Redis</a></p>
+<h3 id="引入Jedis依赖"><a href="#引入Jedis依赖" class="headerlink" title="引入Jedis依赖"></a>引入Jedis依赖</h3><p>采用Maven项目进行演示，需要引入Jedis依赖</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>redis.clients<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>jedis<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>2.9.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="配置主机和端口号"><a href="#配置主机和端口号" class="headerlink" title="配置主机和端口号"></a>配置主机和端口号</h3><p>创建Jedis的连接</p>
+<p>JedisConnection.java</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">JedisConnection</span> &#123;</span><br><span class="line">    <span class="comment">//host</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">String</span> <span class="variable">REDIS_HOST</span> <span class="operator">=</span> <span class="string">&quot;127.0.0.1&quot;</span>;</span><br><span class="line">    <span class="comment">//port</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">int</span> <span class="variable">REDIS_PORT</span> <span class="operator">=</span> <span class="number">6379</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> Jedis <span class="title function_">getJedis</span><span class="params">()</span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">Jedis</span>(REDIS_HOST,REDIS_PORT);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="操作key"><a href="#操作key" class="headerlink" title="操作key"></a>操作key</h3><p>具体命令参考<a href="#redis-key">Redis操作key</a></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">JedisKeys</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line">        <span class="comment">//获得Jedis对象</span></span><br><span class="line">        <span class="type">Jedis</span> <span class="variable">jedis</span> <span class="operator">=</span> JedisConnection.getJedis();</span><br><span class="line">        </span><br><span class="line">        <span class="comment">//是否能连接上redis服务</span></span><br><span class="line">        <span class="type">String</span> <span class="variable">ping</span> <span class="operator">=</span> jedis.ping();</span><br><span class="line">        <span class="comment">//查询keys</span></span><br><span class="line">        Set&lt;String&gt; keys = jedis.keys(<span class="string">&quot;*&quot;</span>);</span><br><span class="line">        <span class="comment">//k1是否存在</span></span><br><span class="line">        <span class="type">Boolean</span> <span class="variable">existsK1</span> <span class="operator">=</span> jedis.exists(<span class="string">&quot;k1&quot;</span>);</span><br><span class="line">        <span class="comment">//k1的生存时间</span></span><br><span class="line">        <span class="type">Long</span> <span class="variable">ttlK1</span> <span class="operator">=</span> jedis.ttl(<span class="string">&quot;k1&quot;</span>);</span><br><span class="line">        <span class="comment">//k1的类型</span></span><br><span class="line">        <span class="type">String</span> <span class="variable">typeK1</span> <span class="operator">=</span> jedis.type(<span class="string">&quot;k1&quot;</span>);</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// ...</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="操作string"><a href="#操作string" class="headerlink" title="操作string"></a>操作string</h3><p>具体命令参考<a href="#redis-string">Redis操作string类型</a></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">JedisString</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line">        <span class="comment">//获得Jedis对象</span></span><br><span class="line">        <span class="type">Jedis</span> <span class="variable">jedis</span> <span class="operator">=</span> JedisConnection.getJedis();</span><br><span class="line">        </span><br><span class="line">        <span class="comment">//存储string数据</span></span><br><span class="line">        <span class="type">String</span> <span class="variable">setResult</span> <span class="operator">=</span> jedis.set(<span class="string">&quot;k3&quot;</span>, <span class="string">&quot;v3&quot;</span>);</span><br><span class="line">        <span class="comment">//批量存储string数据</span></span><br><span class="line">        <span class="type">String</span> <span class="variable">msetResult</span> <span class="operator">=</span> jedis.mset(<span class="string">&quot;k4&quot;</span>, <span class="string">&quot;v4&quot;</span>, <span class="string">&quot;k5&quot;</span>, <span class="string">&quot;v5&quot;</span>);</span><br><span class="line">        <span class="comment">//获得k3的value</span></span><br><span class="line">        <span class="type">String</span> <span class="variable">getK3</span> <span class="operator">=</span> jedis.get(<span class="string">&quot;k3&quot;</span>);</span><br><span class="line">        <span class="comment">//存储k10并且自加</span></span><br><span class="line">        jedis.set(<span class="string">&quot;k10&quot;</span>,<span class="string">&quot;5&quot;</span>);</span><br><span class="line">        jedis.incr(<span class="string">&quot;k10&quot;</span>);</span><br><span class="line">        <span class="comment">//存储k11并且自加50</span></span><br><span class="line">        jedis.set(<span class="string">&quot;k11&quot;</span>,<span class="string">&quot;100&quot;</span>);</span><br><span class="line">        jedis.incrBy(<span class="string">&quot;k11&quot;</span>, <span class="number">50</span>);</span><br><span class="line">        <span class="comment">//获得k3的字符串长度</span></span><br><span class="line">        jedis.strlen(<span class="string">&quot;k3&quot;</span>);</span><br><span class="line">        </span><br><span class="line">        <span class="comment">//...</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="操作list"><a href="#操作list" class="headerlink" title="操作list"></a>操作list</h3><p>具体命令参考<a href="#redis-list">Redis操作list类型</a></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">JedisList</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line">        <span class="type">Jedis</span> <span class="variable">jedis</span> <span class="operator">=</span> JedisConnection.getJedis();</span><br><span class="line"></span><br><span class="line">        <span class="comment">//从左边添加元素</span></span><br><span class="line">        jedis.lpush(<span class="string">&quot;list1&quot;</span>,<span class="string">&quot;v1&quot;</span>,<span class="string">&quot;v2&quot;</span>,<span class="string">&quot;v3&quot;</span>);</span><br><span class="line">        <span class="comment">//移除左边的元素</span></span><br><span class="line">        jedis.lpop(<span class="string">&quot;list1&quot;</span>);</span><br><span class="line">        <span class="comment">//遍历list1</span></span><br><span class="line">        List&lt;String&gt; list1 = jedis.lrange(<span class="string">&quot;list1&quot;</span>, <span class="number">0</span>, -<span class="number">1</span>);</span><br><span class="line">        list1.forEach(System.out::println);</span><br><span class="line">        <span class="comment">//返回list1长度</span></span><br><span class="line">        jedis.llen(<span class="string">&quot;list1&quot;</span>);</span><br><span class="line"></span><br><span class="line">        <span class="comment">//从右边添加元素</span></span><br><span class="line">        jedis.rpush(<span class="string">&quot;list2&quot;</span>,<span class="string">&quot;v1&quot;</span>,<span class="string">&quot;v2&quot;</span>,<span class="string">&quot;v3&quot;</span>);</span><br><span class="line">        <span class="comment">//从右边移除元素</span></span><br><span class="line">        jedis.rpop(<span class="string">&quot;list2&quot;</span>);</span><br><span class="line">        <span class="comment">//遍历list2</span></span><br><span class="line">        List&lt;String&gt; list2 = jedis.lrange(<span class="string">&quot;list2&quot;</span>, <span class="number">0</span>, -<span class="number">1</span>);</span><br><span class="line">        list2.forEach(System.out::println);</span><br><span class="line">        <span class="comment">//返回list2长度</span></span><br><span class="line">        jedis.llen(<span class="string">&quot;list2&quot;</span>);</span><br><span class="line">        </span><br><span class="line">        <span class="comment">//...</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="操作set"><a href="#操作set" class="headerlink" title="操作set"></a>操作set</h3><p>具体命令参考<a href="#redis-set">Redis操作set类型</a></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">JedisSet</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line">        <span class="type">Jedis</span> <span class="variable">jedis</span> <span class="operator">=</span> JedisConnection.getJedis();</span><br><span class="line"></span><br><span class="line">        <span class="comment">//添加元素</span></span><br><span class="line">        jedis.sadd(<span class="string">&quot;set1&quot;</span>,<span class="string">&quot;v1&quot;</span>,<span class="string">&quot;v2&quot;</span>,<span class="string">&quot;v3&quot;</span>);</span><br><span class="line">        <span class="comment">//判断元素是否存在</span></span><br><span class="line">        jedis.sismember(<span class="string">&quot;set1&quot;</span>,<span class="string">&quot;v1&quot;</span>);</span><br><span class="line">        <span class="comment">//（随机）弹出元素</span></span><br><span class="line">        jedis.spop(<span class="string">&quot;set1&quot;</span>,<span class="number">1</span>);</span><br><span class="line">        <span class="comment">//移除v1,v2元素</span></span><br><span class="line">        jedis.srem(<span class="string">&quot;set1&quot;</span>,<span class="string">&quot;v1&quot;</span>,<span class="string">&quot;v2&quot;</span>);</span><br><span class="line">        <span class="comment">//遍历set1</span></span><br><span class="line">        Set&lt;String&gt; smembers = jedis.smembers(<span class="string">&quot;set1&quot;</span>);</span><br><span class="line">        smembers.forEach(System.out::println);</span><br><span class="line">        <span class="comment">//set1长度</span></span><br><span class="line">        jedis.scard(<span class="string">&quot;set1&quot;</span>);</span><br><span class="line"></span><br><span class="line">        <span class="comment">//...</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="操作hash"><a href="#操作hash" class="headerlink" title="操作hash"></a>操作hash</h3><p>具体命令参考<a href="#redis-hash">Redis操作hash类型</a></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">JedisHash</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line">        <span class="type">Jedis</span> <span class="variable">jedis</span> <span class="operator">=</span> JedisConnection.getJedis();</span><br><span class="line"></span><br><span class="line">        <span class="comment">//存入对象student1</span></span><br><span class="line">        jedis.hset(<span class="string">&quot;student1&quot;</span>,<span class="string">&quot;name&quot;</span>,<span class="string">&quot;wqk&quot;</span>);</span><br><span class="line">        HashMap&lt;String, String&gt; map = <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;&gt;();</span><br><span class="line">        map.put(<span class="string">&quot;age&quot;</span>,<span class="string">&quot;18&quot;</span>);</span><br><span class="line">        map.put(<span class="string">&quot;score&quot;</span>,<span class="string">&quot;98&quot;</span>);</span><br><span class="line">        <span class="comment">//批量存入student1</span></span><br><span class="line">        jedis.hmset(<span class="string">&quot;student1&quot;</span>,map);</span><br><span class="line">        <span class="comment">//获取student1对象的name值</span></span><br><span class="line">        jedis.hget(<span class="string">&quot;student1&quot;</span>,<span class="string">&quot;name&quot;</span>);</span><br><span class="line">        <span class="comment">//批量获取student1对象的name、age、score</span></span><br><span class="line">        jedis.hmget(<span class="string">&quot;student1&quot;</span>,<span class="string">&quot;name&quot;</span>,<span class="string">&quot;age&quot;</span>,<span class="string">&quot;score&quot;</span>);</span><br><span class="line">        <span class="comment">//获取student1对象的所有field-value</span></span><br><span class="line">        jedis.hgetAll(<span class="string">&quot;student1&quot;</span>);</span><br><span class="line"></span><br><span class="line">        <span class="comment">//...</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="操作zset"><a href="#操作zset" class="headerlink" title="操作zset"></a>操作zset</h3><p>具体命令参考<a href="#redis-zset">Redis操作zset类型</a></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">JedisZset</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line">        <span class="type">Jedis</span> <span class="variable">jedis</span> <span class="operator">=</span> JedisConnection.getJedis();</span><br><span class="line"></span><br><span class="line">        <span class="comment">//向zset1添加v1，v2，v3</span></span><br><span class="line">        jedis.zadd(<span class="string">&quot;zset1&quot;</span>,<span class="number">500</span>,<span class="string">&quot;v1&quot;</span>);</span><br><span class="line">        jedis.zadd(<span class="string">&quot;zset1&quot;</span>,<span class="number">1000</span>,<span class="string">&quot;v2&quot;</span>);</span><br><span class="line">        jedis.zadd(<span class="string">&quot;zset1&quot;</span>,<span class="number">100</span>,<span class="string">&quot;v3&quot;</span>);</span><br><span class="line"></span><br><span class="line">        <span class="comment">//按照下标遍历zset1</span></span><br><span class="line">        Set&lt;String&gt; zset1 = jedis.zrange(<span class="string">&quot;zset1&quot;</span>, <span class="number">0</span>, -<span class="number">1</span>);</span><br><span class="line">        zset1.forEach(System.out::println);</span><br><span class="line"></span><br><span class="line">        <span class="comment">//按照分数遍历zset1</span></span><br><span class="line">        Set&lt;String&gt; zset11 = jedis.zrangeByScore(<span class="string">&quot;zset1&quot;</span>, <span class="number">0</span>, <span class="number">1000</span>);</span><br><span class="line">        zset11.forEach(System.out::println);</span><br><span class="line">        <span class="comment">//zset1长度</span></span><br><span class="line">        jedis.zcard(<span class="string">&quot;zset1&quot;</span>);</span><br><span class="line"></span><br><span class="line">        <span class="comment">//...</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Redis事务-1"><a href="#Redis事务-1" class="headerlink" title="Redis事务"></a>Redis事务</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">JedisTransaction</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line">        <span class="type">Jedis</span> <span class="variable">jedis</span> <span class="operator">=</span> JedisConnection.getJedis();</span><br><span class="line"></span><br><span class="line">        <span class="comment">//获取Redis的事务对象</span></span><br><span class="line">        <span class="type">Transaction</span> <span class="variable">transaction</span> <span class="operator">=</span> jedis.multi();</span><br><span class="line">        <span class="comment">// start</span></span><br><span class="line">        transaction.set(<span class="string">&quot;k6&quot;</span>,<span class="string">&quot;v6&quot;</span>);</span><br><span class="line">        transaction.set(<span class="string">&quot;k7&quot;</span>,<span class="string">&quot;v7&quot;</span>);</span><br><span class="line">        <span class="comment">// end</span></span><br><span class="line">        transaction.exec(); <span class="comment">//执行事务</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Redis客户端可视化"><a href="#Redis客户端可视化" class="headerlink" title="Redis客户端可视化"></a>Redis客户端可视化</h2><p>一个开源的Redis客户端可视化工具<a target="_blank" rel="noopener" href="https://github.com/uglide/RedisDesktopManager/releases/download/0.8.8/redis-desktop-manager-0.8.8.384.exe">Redis-Desktop-Manager</a></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://fangaoxs.github.io/2023/07/19/back-end/Redis/redis%E5%85%A5%E9%97%A8/redis/" data-id="clsblyuf5002nw0k6fm8ye4bt" data-title="Redis原理和Jedis" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/java/" rel="tag">java</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/jedis/" rel="tag">jedis</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/redis/" rel="tag">redis</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2023/07/19/back-end/go/golang%E5%BA%93/dig/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">前一篇</strong>
+      <div class="article-nav-title">
+        
+          Go的依赖注入库dig
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2023/07/19/back-end/go/golang%E5%BA%93/flag/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">后一篇</strong>
+      <div class="article-nav-title">Go的解析命令行库flag</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/ArrayList/" rel="tag">ArrayList</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Cookie/" rel="tag">Cookie</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/GRPC/" rel="tag">GRPC</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/GRPC-web/" rel="tag">GRPC-web</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Golang/" rel="tag">Golang</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JWT/" rel="tag">JWT</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java/" rel="tag">Java</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JavaSE/" rel="tag">JavaSE</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/LinkedList/" rel="tag">LinkedList</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Mybatis/" rel="tag">Mybatis</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OAuth2-0/" rel="tag">OAuth2.0</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OIDC/" rel="tag">OIDC</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SSO/" rel="tag">SSO</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Spring/" rel="tag">Spring</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SpringAOP/" rel="tag">SpringAOP</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SpringBoot/" rel="tag">SpringBoot</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SpringCloud/" rel="tag">SpringCloud</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/String/" rel="tag">String</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/caddy/" rel="tag">caddy</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cobra/" rel="tag">cobra</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/devops/" rel="tag">devops</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dig/" rel="tag">dig</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dockerfile/" rel="tag">dockerfile</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/echarts/" rel="tag">echarts</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/es6/" rel="tag">es6</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/flag/" rel="tag">flag</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/flags/" rel="tag">flags</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gin/" rel="tag">gin</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/godotenv/" rel="tag">godotenv</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gorm/" rel="tag">gorm</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/http/" rel="tag">http</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/javascript/" rel="tag">javascript</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/jedis/" rel="tag">jedis</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kubernates/" rel="tag">kubernates</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/logrus/" rel="tag">logrus</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mysql/" rel="tag">mysql</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/promise/" rel="tag">promise</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/protobuf/" rel="tag">protobuf</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/python/" rel="tag">python</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/redis/" rel="tag">redis</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/stream/" rel="tag">stream</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/uni-app/" rel="tag">uni-app</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vue/" rel="tag">vue</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vue-cli/" rel="tag">vue-cli</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vue-element-admin/" rel="tag">vue-element-admin</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vue-router/" rel="tag">vue-router</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/webpack/" rel="tag">webpack</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/websocket/" rel="tag">websocket</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" rel="tag">多线程</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag">数据库</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/" rel="tag">网络安全</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" rel="tag">计算机网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" rel="tag">设计模式</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9B%86%E5%90%88/" rel="tag">集合</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/ArrayList/" style="font-size: 10px;">ArrayList</a> <a href="/tags/Cookie/" style="font-size: 10px;">Cookie</a> <a href="/tags/GRPC/" style="font-size: 12.86px;">GRPC</a> <a href="/tags/GRPC-web/" style="font-size: 10px;">GRPC-web</a> <a href="/tags/Golang/" style="font-size: 18.57px;">Golang</a> <a href="/tags/JWT/" style="font-size: 10px;">JWT</a> <a href="/tags/Java/" style="font-size: 20px;">Java</a> <a href="/tags/JavaSE/" style="font-size: 12.86px;">JavaSE</a> <a href="/tags/LinkedList/" style="font-size: 10px;">LinkedList</a> <a href="/tags/Mybatis/" style="font-size: 11.43px;">Mybatis</a> <a href="/tags/OAuth2-0/" style="font-size: 10px;">OAuth2.0</a> <a href="/tags/OIDC/" style="font-size: 12.86px;">OIDC</a> <a href="/tags/SSO/" style="font-size: 10px;">SSO</a> <a href="/tags/Spring/" style="font-size: 12.86px;">Spring</a> <a href="/tags/SpringAOP/" style="font-size: 10px;">SpringAOP</a> <a href="/tags/SpringBoot/" style="font-size: 14.29px;">SpringBoot</a> <a href="/tags/SpringCloud/" style="font-size: 10px;">SpringCloud</a> <a href="/tags/String/" style="font-size: 10px;">String</a> <a href="/tags/caddy/" style="font-size: 10px;">caddy</a> <a href="/tags/cobra/" style="font-size: 10px;">cobra</a> <a href="/tags/devops/" style="font-size: 10px;">devops</a> <a href="/tags/dig/" style="font-size: 10px;">dig</a> <a href="/tags/docker/" style="font-size: 11.43px;">docker</a> <a href="/tags/dockerfile/" style="font-size: 10px;">dockerfile</a> <a href="/tags/echarts/" style="font-size: 10px;">echarts</a> <a href="/tags/es6/" style="font-size: 10px;">es6</a> <a href="/tags/flag/" style="font-size: 10px;">flag</a> <a href="/tags/flags/" style="font-size: 10px;">flags</a> <a href="/tags/gin/" style="font-size: 10px;">gin</a> <a href="/tags/godotenv/" style="font-size: 10px;">godotenv</a> <a href="/tags/gorm/" style="font-size: 10px;">gorm</a> <a href="/tags/http/" style="font-size: 11.43px;">http</a> <a href="/tags/java/" style="font-size: 10px;">java</a> <a href="/tags/javascript/" style="font-size: 15.71px;">javascript</a> <a href="/tags/jedis/" style="font-size: 10px;">jedis</a> <a href="/tags/kubernates/" style="font-size: 10px;">kubernates</a> <a href="/tags/logrus/" style="font-size: 10px;">logrus</a> <a href="/tags/mysql/" style="font-size: 10px;">mysql</a> <a href="/tags/promise/" style="font-size: 10px;">promise</a> <a href="/tags/protobuf/" style="font-size: 10px;">protobuf</a> <a href="/tags/python/" style="font-size: 10px;">python</a> <a href="/tags/redis/" style="font-size: 11.43px;">redis</a> <a href="/tags/stream/" style="font-size: 10px;">stream</a> <a href="/tags/uni-app/" style="font-size: 10px;">uni-app</a> <a href="/tags/vue/" style="font-size: 17.14px;">vue</a> <a href="/tags/vue-cli/" style="font-size: 10px;">vue-cli</a> <a href="/tags/vue-element-admin/" style="font-size: 10px;">vue-element-admin</a> <a href="/tags/vue-router/" style="font-size: 10px;">vue-router</a> <a href="/tags/webpack/" style="font-size: 10px;">webpack</a> <a href="/tags/websocket/" style="font-size: 10px;">websocket</a> <a href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" style="font-size: 11.43px;">多线程</a> <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" style="font-size: 11.43px;">数据库</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/" style="font-size: 11.43px;">网络安全</a> <a href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" style="font-size: 10px;">计算机网络</a> <a href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" style="font-size: 11.43px;">设计模式</a> <a href="/tags/%E9%9B%86%E5%90%88/" style="font-size: 12.86px;">集合</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/02/">二月 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/07/">七月 2023</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2024/02/04/back-end/docker/dockerfile/">docker学习</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/19/data-structure/%E6%89%8B%E5%86%99ArrayList/ArrayList%E6%95%B4%E5%90%88Java/">利用Java来手写ArrayList</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/19/data-structure/%E6%89%8B%E5%86%99LinkedList/LinkedList%E6%95%B4%E5%90%88Java/">利用Java手写LinkedList</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/19/back-end/DevOps/CI_CD/">CI_CD</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/19/design-pattern/SOLID/%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1%E7%9A%84S.O.L.I.D%E5%8E%9F%E5%88%99/">面向对象的S.O.L.I.D原则</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2024 FanGaoXS<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

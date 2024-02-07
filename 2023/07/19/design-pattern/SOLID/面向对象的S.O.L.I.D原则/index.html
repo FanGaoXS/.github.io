@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>面向对象的S.O.L.I.D原则 | FanGaoXS&#39;s blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="Single responsibility principle单一职责原则：改变类的原因不应该超过一个，即一个类应该只有一个职责。 实例：面积计算器 12345type AreaCalculate struct&#123;&#125;func (a AreaCalculate) Calculate(p Plane) float64 &#123;	return p.Area()&#125;  上述名">
+<meta property="og:type" content="article">
+<meta property="og:title" content="面向对象的S.O.L.I.D原则">
+<meta property="og:url" content="https://fangaoxs.github.io/2023/07/19/design-pattern/SOLID/%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1%E7%9A%84S.O.L.I.D%E5%8E%9F%E5%88%99/index.html">
+<meta property="og:site_name" content="FanGaoXS&#39;s blog">
+<meta property="og:description" content="Single responsibility principle单一职责原则：改变类的原因不应该超过一个，即一个类应该只有一个职责。 实例：面积计算器 12345type AreaCalculate struct&#123;&#125;func (a AreaCalculate) Calculate(p Plane) float64 &#123;	return p.Area()&#125;  上述名">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-07-19T07:30:39.000Z">
+<meta property="article:modified_time" content="2024-02-07T09:35:54.888Z">
+<meta property="article:author" content="FanGaoXS">
+<meta property="article:tag" content="设计模式">
+<meta property="article:tag" content="Golang">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="FanGaoXS's blog" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">FanGaoXS&#39;s blog</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        
+          <a class="nav-icon" href="/atom.xml" title="RSS 订阅"><span class="fa fa-rss"></span></a>
+        
+        <a class="nav-icon nav-search-btn" title="搜索"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="搜索"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://fangaoxs.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-design-pattern/SOLID/面向对象的S.O.L.I.D原则" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2023/07/19/design-pattern/SOLID/%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1%E7%9A%84S.O.L.I.D%E5%8E%9F%E5%88%99/" class="article-date">
+  <time class="dt-published" datetime="2023-07-19T07:30:39.000Z" itemprop="datePublished">2023-07-19</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      面向对象的S.O.L.I.D原则
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="Single-responsibility-principle"><a href="#Single-responsibility-principle" class="headerlink" title="Single responsibility principle"></a>Single responsibility principle</h2><p><strong>单一职责原则</strong>：改变类的原因不应该超过一个，即一个类应该只有一个职责。</p>
+<p>实例：面积计算器</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> AreaCalculate <span class="keyword">struct</span>&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(a AreaCalculate)</span></span> Calculate(p Plane) <span class="type">float64</span> &#123;</span><br><span class="line">	<span class="keyword">return</span> p.Area()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上述名为<code>AreaCalculate</code>的类最好只进行一项功能：计算面积。而不是：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> AreaCalculate <span class="keyword">struct</span>&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(a AreaCalculate)</span></span> Calculate(p Plane) <span class="type">float64</span> &#123;</span><br><span class="line">	<span class="keyword">return</span> p.Area()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(a AreaCalculate)</span></span> PrintAreaAsJSON() &#123;</span><br><span class="line">	<span class="comment">// print as JSON</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(a AreaCalculate)</span></span> PrintAreaAsXML() &#123;</span><br><span class="line">	<span class="comment">// print as XML</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(a AreaCalculate)</span></span> PrintAreaAsStdin() &#123;</span><br><span class="line">	<span class="comment">// print as Stdin</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>错误示范：上述类不仅要计算面积，还有按照需求对面积进行相应的格式化输出，这就违反的了单一职责原则：<strong>一个类应该只有一个职责</strong>。正确的做法应该是再有另外一个类：对面积进行格式化（JSON、XML、Stdin等）输出。这样就有了两个类：计算面积的类，对计算出来的面积进行格式化打印的类。</p>
+<h2 id="Open-close-principle"><a href="#Open-close-principle" class="headerlink" title="Open-close principle"></a>Open-close principle</h2><p><strong>开放封闭原则</strong>：对象或者实体应该对扩展开放，对修改封闭。</p>
+<h2 id="Liskov-substitution-principle"><a href="#Liskov-substitution-principle" class="headerlink" title="Liskov substitution principle"></a>Liskov substitution principle</h2><p><strong>里氏替换原则</strong>：任何子类或者派生类应该可以替换它的基类或者父类。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> Human <span class="keyword">struct</span> &#123;</span><br><span class="line">	skin   <span class="type">string</span></span><br><span class="line">	gender <span class="type">string</span></span><br><span class="line">	height <span class="type">float64</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(h Human)</span></span> Skin() <span class="type">string</span> &#123;</span><br><span class="line">	<span class="keyword">return</span> h.skin</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(h Human)</span></span> Gender() <span class="type">string</span> &#123;</span><br><span class="line">	<span class="keyword">return</span> h.gender</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(h Human)</span></span> Height() <span class="type">float64</span> &#123;</span><br><span class="line">	<span class="keyword">return</span> h.height</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Man <span class="keyword">struct</span> &#123;</span><br><span class="line">	Human</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(m Man)</span></span> Skin() <span class="type">string</span> &#123;</span><br><span class="line">	<span class="keyword">return</span> m.skin</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(m Man)</span></span> Gender() <span class="type">string</span> &#123;</span><br><span class="line">	<span class="keyword">return</span> <span class="string">&quot;男&quot;</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(m Man)</span></span> Height() <span class="type">float64</span> &#123;</span><br><span class="line">	<span class="keyword">return</span> m.height</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Woman <span class="keyword">struct</span> &#123;</span><br><span class="line">	Human</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(w Woman)</span></span> Skin() <span class="type">string</span> &#123;</span><br><span class="line">	<span class="keyword">return</span> w.skin</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(w Woman)</span></span> Gender() <span class="type">string</span> &#123;</span><br><span class="line">	<span class="keyword">return</span> <span class="string">&quot;女&quot;</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(w Woman)</span></span> Height() <span class="type">float64</span> &#123;</span><br><span class="line">	<span class="keyword">return</span> w.height</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Robot <span class="keyword">struct</span> &#123;</span><br><span class="line">	Human</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>如果你的设计将<code>Robot</code>类继承了<code>Human</code>类，这显然是不符合<strong>里氏替换原则</strong>的：因为<code>Robot</code>类没有办法替换它的父类<code>Human</code>。</p>
+<h2 id="Interface-segregation-principle"><a href="#Interface-segregation-principle" class="headerlink" title="Interface segregation principle"></a>Interface segregation principle</h2><p><strong>接口隔离原则</strong>：不应该强迫client实现它并不需要的接口。</p>
+<h2 id="Dependency-inversion-principle"><a href="#Dependency-inversion-principle" class="headerlink" title="Dependency inversion principle"></a>Dependency inversion principle</h2><p><strong>依赖倒置原则</strong>：抽象不应该依赖于具体实现，具体实现应该依赖于抽象，即High-level的实体不应该依赖于Low-level的实体，也是依赖于抽象，而不依赖于具象。</p>
+<p>比如在单一职责原则中提到的，面积计算器不应该依赖于具体的图形（Triangle或者Rectangle），而是依赖于抽象的图形（Plane）。因为抽象是具有具体图形的相同属性的集合，所以依赖于广泛的抽象，就能向下兼容具体的具象。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://fangaoxs.github.io/2023/07/19/design-pattern/SOLID/%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1%E7%9A%84S.O.L.I.D%E5%8E%9F%E5%88%99/" data-id="clsblyudt000iw0k6cicff7x9" data-title="面向对象的S.O.L.I.D原则" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Golang/" rel="tag">Golang</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" rel="tag">设计模式</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2023/07/19/back-end/DevOps/CI_CD/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">前一篇</strong>
+      <div class="article-nav-title">
+        
+          CI_CD
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2023/07/19/design-pattern/design-pattern/%E7%BB%93%E5%90%88Java%E5%92%8CGolang%E5%AD%A6%E4%B9%A0%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">后一篇</strong>
+      <div class="article-nav-title">结合Java和Golang学习设计模式</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/ArrayList/" rel="tag">ArrayList</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Cookie/" rel="tag">Cookie</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/GRPC/" rel="tag">GRPC</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/GRPC-web/" rel="tag">GRPC-web</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Golang/" rel="tag">Golang</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JWT/" rel="tag">JWT</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java/" rel="tag">Java</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JavaSE/" rel="tag">JavaSE</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/LinkedList/" rel="tag">LinkedList</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Mybatis/" rel="tag">Mybatis</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OAuth2-0/" rel="tag">OAuth2.0</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OIDC/" rel="tag">OIDC</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SSO/" rel="tag">SSO</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Spring/" rel="tag">Spring</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SpringAOP/" rel="tag">SpringAOP</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SpringBoot/" rel="tag">SpringBoot</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SpringCloud/" rel="tag">SpringCloud</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/String/" rel="tag">String</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/caddy/" rel="tag">caddy</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cobra/" rel="tag">cobra</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/devops/" rel="tag">devops</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dig/" rel="tag">dig</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dockerfile/" rel="tag">dockerfile</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/echarts/" rel="tag">echarts</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/es6/" rel="tag">es6</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/flag/" rel="tag">flag</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/flags/" rel="tag">flags</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gin/" rel="tag">gin</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/godotenv/" rel="tag">godotenv</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gorm/" rel="tag">gorm</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/http/" rel="tag">http</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/javascript/" rel="tag">javascript</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/jedis/" rel="tag">jedis</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kubernates/" rel="tag">kubernates</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/logrus/" rel="tag">logrus</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mysql/" rel="tag">mysql</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/promise/" rel="tag">promise</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/protobuf/" rel="tag">protobuf</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/python/" rel="tag">python</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/redis/" rel="tag">redis</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/stream/" rel="tag">stream</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/uni-app/" rel="tag">uni-app</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vue/" rel="tag">vue</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vue-cli/" rel="tag">vue-cli</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vue-element-admin/" rel="tag">vue-element-admin</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vue-router/" rel="tag">vue-router</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/webpack/" rel="tag">webpack</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/websocket/" rel="tag">websocket</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" rel="tag">多线程</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag">数据库</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/" rel="tag">网络安全</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" rel="tag">计算机网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" rel="tag">设计模式</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9B%86%E5%90%88/" rel="tag">集合</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/ArrayList/" style="font-size: 10px;">ArrayList</a> <a href="/tags/Cookie/" style="font-size: 10px;">Cookie</a> <a href="/tags/GRPC/" style="font-size: 12.86px;">GRPC</a> <a href="/tags/GRPC-web/" style="font-size: 10px;">GRPC-web</a> <a href="/tags/Golang/" style="font-size: 18.57px;">Golang</a> <a href="/tags/JWT/" style="font-size: 10px;">JWT</a> <a href="/tags/Java/" style="font-size: 20px;">Java</a> <a href="/tags/JavaSE/" style="font-size: 12.86px;">JavaSE</a> <a href="/tags/LinkedList/" style="font-size: 10px;">LinkedList</a> <a href="/tags/Mybatis/" style="font-size: 11.43px;">Mybatis</a> <a href="/tags/OAuth2-0/" style="font-size: 10px;">OAuth2.0</a> <a href="/tags/OIDC/" style="font-size: 12.86px;">OIDC</a> <a href="/tags/SSO/" style="font-size: 10px;">SSO</a> <a href="/tags/Spring/" style="font-size: 12.86px;">Spring</a> <a href="/tags/SpringAOP/" style="font-size: 10px;">SpringAOP</a> <a href="/tags/SpringBoot/" style="font-size: 14.29px;">SpringBoot</a> <a href="/tags/SpringCloud/" style="font-size: 10px;">SpringCloud</a> <a href="/tags/String/" style="font-size: 10px;">String</a> <a href="/tags/caddy/" style="font-size: 10px;">caddy</a> <a href="/tags/cobra/" style="font-size: 10px;">cobra</a> <a href="/tags/devops/" style="font-size: 10px;">devops</a> <a href="/tags/dig/" style="font-size: 10px;">dig</a> <a href="/tags/docker/" style="font-size: 11.43px;">docker</a> <a href="/tags/dockerfile/" style="font-size: 10px;">dockerfile</a> <a href="/tags/echarts/" style="font-size: 10px;">echarts</a> <a href="/tags/es6/" style="font-size: 10px;">es6</a> <a href="/tags/flag/" style="font-size: 10px;">flag</a> <a href="/tags/flags/" style="font-size: 10px;">flags</a> <a href="/tags/gin/" style="font-size: 10px;">gin</a> <a href="/tags/godotenv/" style="font-size: 10px;">godotenv</a> <a href="/tags/gorm/" style="font-size: 10px;">gorm</a> <a href="/tags/http/" style="font-size: 11.43px;">http</a> <a href="/tags/java/" style="font-size: 10px;">java</a> <a href="/tags/javascript/" style="font-size: 15.71px;">javascript</a> <a href="/tags/jedis/" style="font-size: 10px;">jedis</a> <a href="/tags/kubernates/" style="font-size: 10px;">kubernates</a> <a href="/tags/logrus/" style="font-size: 10px;">logrus</a> <a href="/tags/mysql/" style="font-size: 10px;">mysql</a> <a href="/tags/promise/" style="font-size: 10px;">promise</a> <a href="/tags/protobuf/" style="font-size: 10px;">protobuf</a> <a href="/tags/python/" style="font-size: 10px;">python</a> <a href="/tags/redis/" style="font-size: 11.43px;">redis</a> <a href="/tags/stream/" style="font-size: 10px;">stream</a> <a href="/tags/uni-app/" style="font-size: 10px;">uni-app</a> <a href="/tags/vue/" style="font-size: 17.14px;">vue</a> <a href="/tags/vue-cli/" style="font-size: 10px;">vue-cli</a> <a href="/tags/vue-element-admin/" style="font-size: 10px;">vue-element-admin</a> <a href="/tags/vue-router/" style="font-size: 10px;">vue-router</a> <a href="/tags/webpack/" style="font-size: 10px;">webpack</a> <a href="/tags/websocket/" style="font-size: 10px;">websocket</a> <a href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" style="font-size: 11.43px;">多线程</a> <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" style="font-size: 11.43px;">数据库</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/" style="font-size: 11.43px;">网络安全</a> <a href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" style="font-size: 10px;">计算机网络</a> <a href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" style="font-size: 11.43px;">设计模式</a> <a href="/tags/%E9%9B%86%E5%90%88/" style="font-size: 12.86px;">集合</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/02/">二月 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/07/">七月 2023</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2024/02/04/back-end/docker/dockerfile/">docker学习</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/19/data-structure/%E6%89%8B%E5%86%99ArrayList/ArrayList%E6%95%B4%E5%90%88Java/">利用Java来手写ArrayList</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/19/data-structure/%E6%89%8B%E5%86%99LinkedList/LinkedList%E6%95%B4%E5%90%88Java/">利用Java手写LinkedList</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/19/back-end/DevOps/CI_CD/">CI_CD</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/19/design-pattern/SOLID/%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1%E7%9A%84S.O.L.I.D%E5%8E%9F%E5%88%99/">面向对象的S.O.L.I.D原则</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2024 FanGaoXS<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

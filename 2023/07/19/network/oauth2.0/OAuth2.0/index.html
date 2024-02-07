@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>了解OAuth2.0 | FanGaoXS&#39;s blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="1 什么是 OAuth2.0开发授权（OAuth）是一个开放标准，允许用户让第三方应用访问该用户在某一网站上存储的私密的资源（如照片、视频、联系人列表等），而无需将用户名和密码提供给第三方应用。 OAuth 允许用户提供一个令牌，而不是用户名和密码来访问他们存放在特定服务提供者的数据。每一个令牌授权一个特定的网站（例如，视频编辑网站）在特定的时段（例如，接下里的2小时内）访问特定的资源（例如仅仅是">
+<meta property="og:type" content="article">
+<meta property="og:title" content="了解OAuth2.0">
+<meta property="og:url" content="https://fangaoxs.github.io/2023/07/19/network/oauth2.0/OAuth2.0/index.html">
+<meta property="og:site_name" content="FanGaoXS&#39;s blog">
+<meta property="og:description" content="1 什么是 OAuth2.0开发授权（OAuth）是一个开放标准，允许用户让第三方应用访问该用户在某一网站上存储的私密的资源（如照片、视频、联系人列表等），而无需将用户名和密码提供给第三方应用。 OAuth 允许用户提供一个令牌，而不是用户名和密码来访问他们存放在特定服务提供者的数据。每一个令牌授权一个特定的网站（例如，视频编辑网站）在特定的时段（例如，接下里的2小时内）访问特定的资源（例如仅仅是">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://fangaoxs.github.io/2023/07/19/network/oauth2.0/OAuth2.0/bg2014051203.png">
+<meta property="og:image" content="https://fangaoxs.github.io/2023/07/19/network/oauth2.0/OAuth2.0/image-20230315170052077.png">
+<meta property="og:image" content="https://fangaoxs.github.io/2023/07/19/network/oauth2.0/OAuth2.0/image-20230316170347676.png">
+<meta property="og:image" content="https://fangaoxs.github.io/2023/07/19/network/oauth2.0/OAuth2.0/image-20230316171712672.png">
+<meta property="og:image" content="https://fangaoxs.github.io/2023/07/19/network/oauth2.0/OAuth2.0/image-20230316172853800.png">
+<meta property="article:published_time" content="2023-07-19T07:30:39.000Z">
+<meta property="article:modified_time" content="2024-02-07T09:47:05.473Z">
+<meta property="article:author" content="FanGaoXS">
+<meta property="article:tag" content="Golang">
+<meta property="article:tag" content="OAuth2.0">
+<meta property="article:tag" content="网络安全">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://fangaoxs.github.io/2023/07/19/network/oauth2.0/OAuth2.0/bg2014051203.png">
+  
+    <link rel="alternate" href="/atom.xml" title="FanGaoXS's blog" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">FanGaoXS&#39;s blog</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        
+          <a class="nav-icon" href="/atom.xml" title="RSS 订阅"><span class="fa fa-rss"></span></a>
+        
+        <a class="nav-icon nav-search-btn" title="搜索"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="搜索"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://fangaoxs.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-network/oauth2.0/OAuth2.0" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2023/07/19/network/oauth2.0/OAuth2.0/" class="article-date">
+  <time class="dt-published" datetime="2023-07-19T07:30:39.000Z" itemprop="datePublished">2023-07-19</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      了解OAuth2.0
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="1-什么是-OAuth2-0"><a href="#1-什么是-OAuth2-0" class="headerlink" title="1 什么是 OAuth2.0"></a>1 什么是 OAuth2.0</h2><p><strong>开发授权</strong>（OAuth）是一个开放标准，允许用户让第三方应用访问该用户在某一网站上存储的私密的资源（如照片、视频、联系人列表等），而无需将用户名和密码提供给第三方应用。</p>
+<p>OAuth 允许用户提供一个令牌，而不是用户名和密码来访问他们存放在特定服务提供者的数据。每一个令牌授权一个<strong>特定的网站</strong>（例如，视频编辑网站）在<strong>特定的时段</strong>（例如，接下里的2小时内）访问<strong>特定的资源</strong>（例如仅仅是某一相册中的视频）。这样，OAuth让用户可以授权第三方网站他们存储在另外服务提供者的某些特定信息，而非所有内容。</p>
+<p>OAuth 是 OpenID 的一个补充，但是完全不同的服务。</p>
+<h3 id="OAuth-2-0"><a href="#OAuth-2-0" class="headerlink" title="OAuth 2.0"></a>OAuth 2.0</h3><p>OAuth 2.0 是 OAuth 协议的下一版本，但不向下兼容 OAuth 1.0。OAuth 2.0 关注客户端开发者的简易性，同时为Web应用、桌面应用、手机和智慧设备提供专门的认证流程。</p>
+<h2 id="2-应用场景"><a href="#2-应用场景" class="headerlink" title="2 应用场景"></a>2 应用场景</h2><p>参考自阮一峰的理解OAuth的适用场景的例子。</p>
+<p>有一个“云冲印”的网站，支持将用户存在各大服务商（包括但不限于百度网盘，Google网盘等）存储的图片打印出来，现在用户想利用“云冲印”来打印他存储在百度网盘的图片。那么问题来了：“云冲印”如何拿到用户存储在百度网盘的图片呢？</p>
+<p>答：“云冲印”需要得到用户的授权（即授权“云冲印”读取存储在百度网盘的图片）。传统的方法可能是，用户将自己百度网盘的用户名和密码告诉“云冲印”，后者就可以读取用户的照片了。但这样的做法有以下几个严重的缺点：</p>
+<blockquote>
+<ol>
+<li>“云冲印”为了后续的服务，“云冲印”需要保存该用户的百度网盘的用户名和密码，这会对“云冲印”公司带来额外的存储开销。</li>
+<li>“云冲印”拥有了用户存储在百度网盘所有自资料的权利，用户没法限制“云冲印”获得授权的范围和有效期。</li>
+<li>用户修改了百度网盘的密码后，“云冲印”必须也要同步修改密码才能正常使用服务，这很显然是不合理的。</li>
+</ol>
+</blockquote>
+<p>OAuth就是为了解决上述问题而诞生的。</p>
+<h2 id="3-名词定义"><a href="#3-名词定义" class="headerlink" title="3 名词定义"></a>3 名词定义</h2><p>在深入了解OAuth 2.0之前，需要了解几个专用名词。</p>
+<ul>
+<li><code>Third-party application</code>：第三方应用程序，即上一节例子中的“云冲印”。</li>
+<li><code>HTTP service</code>：HTTP 服务提供商，即上一节例子中的“百度网盘”。</li>
+<li><code>Resource Owner</code>：资源所有者，又称“用户”。</li>
+<li><code>User Agent</code>：用户代理，一般是浏览器。</li>
+<li><code>Authorization server</code>：认证服务器，即服务提供商专门用来处理认证的服务器。</li>
+<li><code>Resource server</code>：资源服务器，即服务提供商存放用户生成的资源的服务器。它与认证服务器可以同在一台服务器也可以不同在一台服务器。</li>
+</ul>
+<p>了解了上述名词，就不难理解，OAuth的作用就是让“客户端”安全可控地获取“用户”的授权，与“服务提供商”进行互动。</p>
+<h2 id="4-OAuth-思路"><a href="#4-OAuth-思路" class="headerlink" title="4 OAuth 思路"></a>4 OAuth 思路</h2><p>OAuth 使得“第三方应用程序”与“服务提供商”之间多了一个授权层（authorization layer）。“第三方应用程序”不能直接登录“服务提供商”，只能访问授权层，以此将用户与“第三方应用程序”区分来。“第三方应用程序”登录授权层所用的令牌，与用户的密码不同。用户可以在登录的时候，指定授权层令牌的权限范围和有效期。</p>
+<p>“第三方应用程序”登录授权层后，“服务提供商”根据令牌的权限范围和有效期，向“第三方应用程序”开放用户存储的资料。</p>
+<h2 id="5-运行流程"><a href="#5-运行流程" class="headerlink" title="5 运行流程"></a>5 运行流程</h2><p>OAuth 2.0 的运行流程如下图</p>
+<p><img src="/2023/07/19/network/oauth2.0/OAuth2.0/bg2014051203.png" alt="OAuth运行流程"></p>
+<blockquote>
+<p>A) 用户打开第三方程序后，第三方程序要求用户给予授权。</p>
+<p>B) 用户同意给予第三方程序授权。</p>
+<p>C) 第三方程序使用上一步获得的授权，向认证服务器申请令牌。</p>
+<p>D) 认证服务器对第三方程序进行认证后，确认无误，同意发放令牌。</p>
+<p>E) 第三方程序使用令牌，向资源服务器申请获取资源。</p>
+<p>F) 资源服务器确认令牌无误，同意向客户端开放资源。</p>
+</blockquote>
+<h2 id="6-第三方程序的授权模式"><a href="#6-第三方程序的授权模式" class="headerlink" title="6 第三方程序的授权模式"></a>6 第三方程序的授权模式</h2><p>第三方程序必须得到用户的授权（authorization grant），才能获得令牌（access token）。OAuth 2.0 定义了四种授权方式：</p>
+<ul>
+<li><strong>授权码模式</strong>（authorization code）是功能最完整、流程最严密的授权模式。它的特点就是通过客户端的后台服务器，与“服务提供商”的认证服务器进行互动。</li>
+<li><strong>简化模式</strong>（implicit）不通过第三方应用程序的服务器，直接在浏览器中向认证服务器申请令牌，跳过了“授权码”这个步骤。所有步骤在浏览器中完成，令牌对访问者是可见的，且客户端不需要认证。</li>
+<li><strong>密码模式</strong>（resource owner password credentials）用户向客户端提供自己的用户名和密码。客户端使用这些信息，向”服务商提供商”索要授权。</li>
+<li><strong>客户端模式</strong>（client credentials）指客户端以自己的名义，而不是以用户的名义，向”服务提供商”进行认证。</li>
+</ul>
+<h2 id="7-OAuth-接入第三方程序示例"><a href="#7-OAuth-接入第三方程序示例" class="headerlink" title="7 OAuth 接入第三方程序示例"></a>7 OAuth 接入第三方程序示例</h2><p>基本上遵循 OAuth 协议的第三方程序都是以下流程，举例 A 网站允许 Github 登录，差不多就是以下流程：</p>
+<ol>
+<li>A 网站引导用户跳转到 Github。</li>
+<li>Github 要求用户登录，并询问“ A 网站要求获得 XX 权限，是否同意？”</li>
+<li>用户登录并同意后 Github 就会重定向回 A 网站，同时发回一个授权码。</li>
+<li>A 网站使用授权码，向 Github 请求令牌。</li>
+<li>Github 返回令牌。</li>
+<li>A 网站使用令牌，访问用户存储在 Github 的数据。</li>
+</ol>
+<p>以下以<code>gitee</code>为例，集成OAuth：</p>
+<h3 id="a-应用登记"><a href="#a-应用登记" class="headerlink" title="a) 应用登记"></a>a) 应用登记</h3><p>访问这个网址完成App登记：<a target="_blank" rel="noopener" href="https://gitee.com/oauth/applications/new">https://gitee.com/oauth/applications/new</a></p>
+<p>应用名称随便填，主页URL填<code>http://localhost:8090</code>，应用回调地址填<code>http://localhost:8090/gitee/oauth/callback</code>，再随便上传一个图片作为Logo。填写完成后 gitee 会返回供 gitee 识别的该第三方应用的 ClientID 和 ClientSecret 身份识别码。</p>
+<p><img src="/2023/07/19/network/oauth2.0/OAuth2.0/image-20230315170052077.png"></p>
+<h3 id="b-第三方应用程序请求授权码"><a href="#b-第三方应用程序请求授权码" class="headerlink" title="b) 第三方应用程序请求授权码"></a>b) 第三方应用程序请求授权码</h3><p>运行示例代码，然后浏览器输入</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://localhost:8090/gitee/authorize</span><br></pre></td></tr></table></figure>
+
+<p>此时浏览器会重定向到（如果此时你没有登录gitee，则会要求先登录gitee）</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">https://gitee.com/oauth/authorize?client_id=894c85cea5b36cd629a3cf0867778692acbad55877487e111f4683312bc512cb&amp;redirect_uri=http%3A%2F%2Flocalhost%3A8090%2Fgitee%2Foauth%2Fcallback&amp;response_type=code</span><br></pre></td></tr></table></figure>
+
+<p>该 url 中包含了<code>client_id</code>：在gitee申请的第三方程序的识别的ID，和<code>redirect_uri</code>：同意授权后gitee会回调的地址（会携带一个授权码code）以及<code>response_type</code>指定授权模式，这里是授权码模式即code。</p>
+<p>此时你确认<strong>是否同意授权</strong>以及第三方程序<strong>访问的范围</strong>。</p>
+<p><img src="/2023/07/19/network/oauth2.0/OAuth2.0/image-20230316170347676.png"></p>
+<p>点击同意后，浏览器则会回调刚填入的<code>redirect_uri</code>，这里则是</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://localhost:8090/gitee/oauth/callback?code=18ca69350dfb2f139829944845a017cef6bfddec01c2d71e507cbdbf51962b1c</span><br></pre></td></tr></table></figure>
+
+<p>会看到这里会携带一个授权码code，接着就需要利用这个code向gitee申请令牌。</p>
+<h3 id="C-获得token"><a href="#C-获得token" class="headerlink" title="C) 获得token"></a>C) 获得token</h3><p>可以看到已经拿到token了。这是因为后端在拿到code后直接向gitee发起申请得到token了并且返回。</p>
+<p><img src="/2023/07/19/network/oauth2.0/OAuth2.0/image-20230316171712672.png"></p>
+<p>此时已经完成了用授权码code申请到了token，接下来就可以使用token获取用户存储在gitee的资源了。</p>
+<h3 id="D-获取资源"><a href="#D-获取资源" class="headerlink" title="D) 获取资源"></a>D) 获取资源</h3><p>拿到token后具体可以使用哪些API可以参阅文档，文档中有API的method以及可选参数：<a target="_blank" rel="noopener" href="https://gitee.com/api/v5/swagger%EF%BC%8C%E8%BF%99%E9%87%8C%E6%BC%94%E7%A4%BA%EF%BC%9A%E8%8E%B7%E5%8F%96%E6%8E%88%E6%9D%83%E7%94%A8%E6%88%B7%E7%9A%84%E8%B5%84%E6%96%99%EF%BC%88%E5%8D%B3%E5%BD%93%E5%89%8D%E7%94%A8%E6%88%B7%E7%9A%84%E8%B5%84%E6%96%99%EF%BC%89%EF%BC%9Ahttps://gitee.com/api/v5/user">https://gitee.com/api/v5/swagger，这里演示：获取授权用户的资料（即当前用户的资料）：https://gitee.com/api/v5/user</a> 浏览器输入</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">https://gitee.com/api/v5/user?access_token=5d3b7a6d1602934d12709xxxxx</span><br></pre></td></tr></table></figure>
+
+<p>即可以获取到用户的资料了</p>
+<p><img src="/2023/07/19/network/oauth2.0/OAuth2.0/image-20230316172853800.png"></p>
+<p><strong>恭喜你，你已经可以在第三方程序发起请求使用gitee登录了（表面上的）</strong></p>
+<p>接下来将带你了解后端代码具体如何与gitee交互的。</p>
+<h3 id="E-后端实现"><a href="#E-后端实现" class="headerlink" title="E) 后端实现"></a>E) 后端实现</h3><p>这里以gitee的实现为例，github或者gitlab可以自行参考代码。</p>
+<h4 id="1-第三方App向服务提供商发起获得授权的申请"><a href="#1-第三方App向服务提供商发起获得授权的申请" class="headerlink" title="1 第三方App向服务提供商发起获得授权的申请"></a>1 第三方App向服务提供商发起获得授权的申请</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// curl -X GET http://localhost:8090/gitee/authorize</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Authorize</span></span><br><span class="line"><span class="comment">// 向服务提供商gitee发起获得授权码的申请</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Authorize</span><span class="params">(c *gin.Context)</span></span> &#123;</span><br><span class="line">	u, _ := url.Parse(<span class="string">&quot;https://gitee.com/oauth/authorize&quot;</span>)</span><br><span class="line">	values := u.Query()</span><br><span class="line">	values.Set(<span class="string">&quot;client_id&quot;</span>, ClientId)</span><br><span class="line">	values.Set(<span class="string">&quot;redirect_uri&quot;</span>, <span class="string">&quot;http://localhost:8090/gitee/oauth/callback&quot;</span>)</span><br><span class="line">	values.Set(<span class="string">&quot;response_type&quot;</span>, <span class="string">&quot;code&quot;</span>)</span><br><span class="line">	u.RawQuery = values.Encode()</span><br><span class="line"></span><br><span class="line">	<span class="comment">// redirect to -&gt; https://gitee.com/oauth/authorize?client_id=&#123;CLIENT_ID&#125;&amp;redirect_uri=http://localhost:8090/gitee/oauth/callback&amp;response_type=code</span></span><br><span class="line">	c.Redirect(http.StatusMovedPermanently, u.String())</span><br><span class="line">	<span class="keyword">return</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>使用GET请求该App的<code>/gitee/authorize</code>资源，服务端就会将<code>clientId</code>、<code>redirect_uri</code>、<code>response_type</code>拼凑到向gitee发起请求的url上，并重定向到该url。<strong>此时</strong>浏览器会转到服务提供商（这里是gitee），gitee就会向登录的用户发起提示：是否允许该第三方App访问你的gitee资源，并且还会提示资源访问的范围。</p>
+<h4 id="2-第三方App获取到授权码code，并使用code获取token"><a href="#2-第三方App获取到授权码code，并使用code获取token" class="headerlink" title="2 第三方App获取到授权码code，并使用code获取token"></a>2 第三方App获取到授权码code，并使用code获取token</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Callback</span></span><br><span class="line"><span class="comment">// 用户同意授权后</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Callback</span><span class="params">(c *gin.Context)</span></span> &#123;</span><br><span class="line">	code := c.Query(<span class="string">&quot;code&quot;</span>)</span><br><span class="line">	u, _ := url.Parse(<span class="string">&quot;https://gitee.com/oauth/token&quot;</span>)</span><br><span class="line">	values := u.Query()</span><br><span class="line">	values.Set(<span class="string">&quot;client_id&quot;</span>, ClientId)</span><br><span class="line">	values.Set(<span class="string">&quot;client_secret&quot;</span>, ClientSecret)</span><br><span class="line">	values.Set(<span class="string">&quot;code&quot;</span>, code)</span><br><span class="line">	values.Set(<span class="string">&quot;grant_type&quot;</span>, <span class="string">&quot;authorization_code&quot;</span>)</span><br><span class="line">	values.Set(<span class="string">&quot;redirect_uri&quot;</span>, <span class="string">&quot;http://localhost:8090/gitee/oauth/callback&quot;</span>)</span><br><span class="line">	u.RawQuery = values.Encode()</span><br><span class="line"></span><br><span class="line">	client := http.DefaultClient</span><br><span class="line">	req, _ := http.NewRequest(http.MethodPost, u.String(), <span class="literal">nil</span>)</span><br><span class="line">	req.Header.Set(<span class="string">&quot;accept&quot;</span>, <span class="string">&quot;application/json&quot;</span>)</span><br><span class="line">	res, _ := client.Do(req)</span><br><span class="line">	<span class="comment">// HTTP POST -&gt; https://gitee.com/oauth/token?client_id=&#123;CLIENT_ID&#125;&amp;client_secret=&#123;CLIENT_SECRET&#125;&amp;code=&#123;CODE&#125;&amp;grant_type=authorization_code&amp;redirect_uri=http://localhost:8090/gitee/oauth/callback</span></span><br><span class="line">	<span class="keyword">defer</span> res.Body.Close()</span><br><span class="line">	bytes, _ := ioutil.ReadAll(res.Body)</span><br><span class="line">	fmt.Println(<span class="type">string</span>(bytes))</span><br><span class="line"></span><br><span class="line">	obj := <span class="built_in">make</span>(<span class="keyword">map</span>[<span class="type">string</span>]<span class="keyword">interface</span>&#123;&#125;)</span><br><span class="line">	json.Unmarshal(bytes, &amp;obj)</span><br><span class="line">	c.JSON(http.StatusOK, obj)</span><br><span class="line">	<span class="keyword">return</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>待上述第1步完成后，gitee会携带授权码code回调服务端<code>redirect_uri</code>的地址<code>/gitee/oauth/callback</code>。此时服务端会将<code>client_id</code>、<code>client_secret</code>、<code>code</code>、<code>grant_type</code>、<code>redirect_uri</code>拼凑到向gitee发起请求的url上，指定接受json格式的返回值，此时返回的json就是一个包含token的对象了。</p>
+<h4 id="3-使用token获取gitee资源"><a href="#3-使用token获取gitee资源" class="headerlink" title="3 使用token获取gitee资源"></a>3 使用token获取gitee资源</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Userinfo</span><span class="params">(c *gin.Context)</span></span> &#123;</span><br><span class="line">	token := c.Query(<span class="string">&quot;token&quot;</span>)</span><br><span class="line"></span><br><span class="line">	u, _ := url.Parse(<span class="string">&quot;https://gitee.com/api/v5/user&quot;</span>)</span><br><span class="line">	values := u.Query()</span><br><span class="line">	values.Set(<span class="string">&quot;access_token&quot;</span>, token)</span><br><span class="line">	u.RawQuery = values.Encode()</span><br><span class="line"></span><br><span class="line">	client := http.DefaultClient</span><br><span class="line">	req, _ := http.NewRequest(http.MethodGet, u.String(), <span class="literal">nil</span>)</span><br><span class="line">	req.Header.Set(<span class="string">&quot;accept&quot;</span>, <span class="string">&quot;application/json&quot;</span>)</span><br><span class="line">	res, _ := client.Do(req)</span><br><span class="line">	<span class="comment">// HTTP GET -&gt; https://gitee.com/api/v5/user?access_token=&#123;TOKEN&#125;</span></span><br><span class="line">	<span class="keyword">defer</span> res.Body.Close()</span><br><span class="line">	bytes, _ := ioutil.ReadAll(res.Body)</span><br><span class="line">	fmt.Println(<span class="type">string</span>(bytes))</span><br><span class="line"></span><br><span class="line">	info := <span class="built_in">new</span>(UserInfo)</span><br><span class="line">	json.Unmarshal(bytes, &amp;info)</span><br><span class="line">	c.JSON(http.StatusOK, info)</span><br><span class="line">	<span class="keyword">return</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>待第2步获取到token后，我们就可以使用该token访问用户存储在gitee的资源了。使用GET请求将token作为query访问<code>/gitee/userinfo</code>，此时服务端就会将此token拼凑到向gitee请求资源的url上，发起GET请求，制定接受json格式的返回值，此时gitee就会返回该token对应的userinfo了。</p>
+<h2 id="思考"><a href="#思考" class="headerlink" title="思考"></a>思考</h2><p>通过Oauth2.0的方式第三方应用申请到的token一般包含<code>access_token</code>和<code>refresh_token</code>，第三方应用分别利用<code>access_token</code>和<code>refresh_token</code>向资源提供商获取资源和刷新token，第三方应用能够从资源提供商获取资源但是没有办法<strong>在自己内部存储该资源所有者的信息</strong>，因为第三方应用无法将token和资源所有者进行关联（因为token会不断重置，第三方应用无法将此作为唯一标识来确认资源所有者）。以网易云音乐为例，允许资源所有者以QQor微信or微博等第三方登陆，网易云音乐使用第三方登录成功后，会在网易云音乐这里存储下资源所有者的头像、资源所有者名等等，并且下次使用第三方登录的时候仍然会指向该资源所有者，这就是利用了Oauth2.0更上层的实现<strong>OIDC</strong>来实现的，因为OIDC不仅会返回<code>access_token</code>和<code>refresh_token</code>还会返回<code>id_token</code>（即资源所有者的token），这样第三方应用就能够将资源所有者进行存储了。</p>
+<h2 id="示例仓库"><a href="#示例仓库" class="headerlink" title="示例仓库"></a>示例仓库</h2><h3 id="示例仓库-1"><a href="#示例仓库-1" class="headerlink" title="示例仓库"></a>示例仓库</h3><p><a target="_blank" rel="noopener" href="https://github.com/FanGaoXS/oauth_demo.git">https://github.com/FanGaoXS/oauth_demo.git</a></p>
+<p>代码用Go集成了<code>gitee</code>、<code>github</code>、 <code>gitlab</code>的OAuth实现，记得阅读README然后根据实际情况修改<code>.env</code>文件中的配置信息。</p>
+<h2 id="参考自"><a href="#参考自" class="headerlink" title="参考自"></a>参考自</h2><p><a target="_blank" rel="noopener" href="https://www.ruanyifeng.com/blog/2014/05/oauth_2_0.html">理解OAuth 2.0：https://www.ruanyifeng.com/blog/2014/05/oauth_2_0.html</a></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://fangaoxs.github.io/2023/07/19/network/oauth2.0/OAuth2.0/" data-id="clsblyuen001fw0k68t8gd1fm" data-title="了解OAuth2.0" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Golang/" rel="tag">Golang</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OAuth2-0/" rel="tag">OAuth2.0</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/" rel="tag">网络安全</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2023/07/19/network/caddy/http%E5%8F%8D%E5%90%91%E4%BB%A3%E7%90%86/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">前一篇</strong>
+      <div class="article-nav-title">
+        
+          利用Caddy实现http反向代理
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2023/07/19/network/OIDC/%E6%90%AD%E5%BB%BAOIDC%20Provider%EF%BC%8C%E4%BB%A5Golang%E4%B8%BA%E4%BE%8B/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">后一篇</strong>
+      <div class="article-nav-title">搭建OIDC Provider，以Golang为例</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/ArrayList/" rel="tag">ArrayList</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Cookie/" rel="tag">Cookie</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/GRPC/" rel="tag">GRPC</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/GRPC-web/" rel="tag">GRPC-web</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Golang/" rel="tag">Golang</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JWT/" rel="tag">JWT</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java/" rel="tag">Java</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JavaSE/" rel="tag">JavaSE</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/LinkedList/" rel="tag">LinkedList</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Mybatis/" rel="tag">Mybatis</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OAuth2-0/" rel="tag">OAuth2.0</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OIDC/" rel="tag">OIDC</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SSO/" rel="tag">SSO</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Spring/" rel="tag">Spring</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SpringAOP/" rel="tag">SpringAOP</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SpringBoot/" rel="tag">SpringBoot</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SpringCloud/" rel="tag">SpringCloud</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/String/" rel="tag">String</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/caddy/" rel="tag">caddy</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cobra/" rel="tag">cobra</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/devops/" rel="tag">devops</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dig/" rel="tag">dig</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dockerfile/" rel="tag">dockerfile</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/echarts/" rel="tag">echarts</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/es6/" rel="tag">es6</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/flag/" rel="tag">flag</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/flags/" rel="tag">flags</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gin/" rel="tag">gin</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/godotenv/" rel="tag">godotenv</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gorm/" rel="tag">gorm</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/http/" rel="tag">http</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/javascript/" rel="tag">javascript</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/jedis/" rel="tag">jedis</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kubernates/" rel="tag">kubernates</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/logrus/" rel="tag">logrus</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mysql/" rel="tag">mysql</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/promise/" rel="tag">promise</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/protobuf/" rel="tag">protobuf</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/python/" rel="tag">python</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/redis/" rel="tag">redis</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/stream/" rel="tag">stream</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/uni-app/" rel="tag">uni-app</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vue/" rel="tag">vue</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vue-cli/" rel="tag">vue-cli</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vue-element-admin/" rel="tag">vue-element-admin</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vue-router/" rel="tag">vue-router</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/webpack/" rel="tag">webpack</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/websocket/" rel="tag">websocket</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" rel="tag">多线程</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag">数据库</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/" rel="tag">网络安全</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" rel="tag">计算机网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" rel="tag">设计模式</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9B%86%E5%90%88/" rel="tag">集合</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/ArrayList/" style="font-size: 10px;">ArrayList</a> <a href="/tags/Cookie/" style="font-size: 10px;">Cookie</a> <a href="/tags/GRPC/" style="font-size: 12.86px;">GRPC</a> <a href="/tags/GRPC-web/" style="font-size: 10px;">GRPC-web</a> <a href="/tags/Golang/" style="font-size: 18.57px;">Golang</a> <a href="/tags/JWT/" style="font-size: 10px;">JWT</a> <a href="/tags/Java/" style="font-size: 20px;">Java</a> <a href="/tags/JavaSE/" style="font-size: 12.86px;">JavaSE</a> <a href="/tags/LinkedList/" style="font-size: 10px;">LinkedList</a> <a href="/tags/Mybatis/" style="font-size: 11.43px;">Mybatis</a> <a href="/tags/OAuth2-0/" style="font-size: 10px;">OAuth2.0</a> <a href="/tags/OIDC/" style="font-size: 12.86px;">OIDC</a> <a href="/tags/SSO/" style="font-size: 10px;">SSO</a> <a href="/tags/Spring/" style="font-size: 12.86px;">Spring</a> <a href="/tags/SpringAOP/" style="font-size: 10px;">SpringAOP</a> <a href="/tags/SpringBoot/" style="font-size: 14.29px;">SpringBoot</a> <a href="/tags/SpringCloud/" style="font-size: 10px;">SpringCloud</a> <a href="/tags/String/" style="font-size: 10px;">String</a> <a href="/tags/caddy/" style="font-size: 10px;">caddy</a> <a href="/tags/cobra/" style="font-size: 10px;">cobra</a> <a href="/tags/devops/" style="font-size: 10px;">devops</a> <a href="/tags/dig/" style="font-size: 10px;">dig</a> <a href="/tags/docker/" style="font-size: 11.43px;">docker</a> <a href="/tags/dockerfile/" style="font-size: 10px;">dockerfile</a> <a href="/tags/echarts/" style="font-size: 10px;">echarts</a> <a href="/tags/es6/" style="font-size: 10px;">es6</a> <a href="/tags/flag/" style="font-size: 10px;">flag</a> <a href="/tags/flags/" style="font-size: 10px;">flags</a> <a href="/tags/gin/" style="font-size: 10px;">gin</a> <a href="/tags/godotenv/" style="font-size: 10px;">godotenv</a> <a href="/tags/gorm/" style="font-size: 10px;">gorm</a> <a href="/tags/http/" style="font-size: 11.43px;">http</a> <a href="/tags/java/" style="font-size: 10px;">java</a> <a href="/tags/javascript/" style="font-size: 15.71px;">javascript</a> <a href="/tags/jedis/" style="font-size: 10px;">jedis</a> <a href="/tags/kubernates/" style="font-size: 10px;">kubernates</a> <a href="/tags/logrus/" style="font-size: 10px;">logrus</a> <a href="/tags/mysql/" style="font-size: 10px;">mysql</a> <a href="/tags/promise/" style="font-size: 10px;">promise</a> <a href="/tags/protobuf/" style="font-size: 10px;">protobuf</a> <a href="/tags/python/" style="font-size: 10px;">python</a> <a href="/tags/redis/" style="font-size: 11.43px;">redis</a> <a href="/tags/stream/" style="font-size: 10px;">stream</a> <a href="/tags/uni-app/" style="font-size: 10px;">uni-app</a> <a href="/tags/vue/" style="font-size: 17.14px;">vue</a> <a href="/tags/vue-cli/" style="font-size: 10px;">vue-cli</a> <a href="/tags/vue-element-admin/" style="font-size: 10px;">vue-element-admin</a> <a href="/tags/vue-router/" style="font-size: 10px;">vue-router</a> <a href="/tags/webpack/" style="font-size: 10px;">webpack</a> <a href="/tags/websocket/" style="font-size: 10px;">websocket</a> <a href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" style="font-size: 11.43px;">多线程</a> <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" style="font-size: 11.43px;">数据库</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/" style="font-size: 11.43px;">网络安全</a> <a href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" style="font-size: 10px;">计算机网络</a> <a href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" style="font-size: 11.43px;">设计模式</a> <a href="/tags/%E9%9B%86%E5%90%88/" style="font-size: 12.86px;">集合</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/02/">二月 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/07/">七月 2023</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2024/02/04/back-end/docker/dockerfile/">docker学习</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/19/data-structure/%E6%89%8B%E5%86%99ArrayList/ArrayList%E6%95%B4%E5%90%88Java/">利用Java来手写ArrayList</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/19/data-structure/%E6%89%8B%E5%86%99LinkedList/LinkedList%E6%95%B4%E5%90%88Java/">利用Java手写LinkedList</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/19/back-end/DevOps/CI_CD/">CI_CD</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/19/design-pattern/SOLID/%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1%E7%9A%84S.O.L.I.D%E5%8E%9F%E5%88%99/">面向对象的S.O.L.I.D原则</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2024 FanGaoXS<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

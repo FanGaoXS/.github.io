@@ -4,21 +4,21 @@
   <meta charset="utf-8">
   
   
-  <title>dockerfile结合go应用程序的简单应用 | FanGaoXS&#39;s blog</title>
+  <title>docker学习 | FanGaoXS&#39;s blog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <meta name="description" content="dockerfile是什么Dockerfile是一种用于定义和构建Docker镜像的文本文件。它包含一系列指令和配置，用于构建一个可运行的Docker容器。 在Dockerfile中，您可以定义从哪个基础镜像开始构建、复制文件、设置环境变量、运行命令等操作。每个指令都代表一个步骤，按顺序执行，从而构建出一个完整的Docker镜像。 go buildgo build是Go语言的一个命令，用于将Go">
+  <meta name="description" content="dockerfile是什么Dockerfile是一种用于定义和构建Docker镜像的文本文件。它包含一系列指令和配置，用于构建一个可运行的Docker容器。 在Dockerfile中，您可以定义从哪个基础镜像开始构建、复制文件、设置环境变量、运行命令等操作。每个指令都代表一个步骤，按顺序执行，从而构建出一个完整的Docker镜像。 go buildgo build是Go语言的一个命令，用于将Go源">
 <meta property="og:type" content="article">
-<meta property="og:title" content="dockerfile结合go应用程序的简单应用">
+<meta property="og:title" content="docker学习">
 <meta property="og:url" content="https://fangaoxs.github.io/2024/02/04/back-end/docker/dockerfile/index.html">
 <meta property="og:site_name" content="FanGaoXS&#39;s blog">
-<meta property="og:description" content="dockerfile是什么Dockerfile是一种用于定义和构建Docker镜像的文本文件。它包含一系列指令和配置，用于构建一个可运行的Docker容器。 在Dockerfile中，您可以定义从哪个基础镜像开始构建、复制文件、设置环境变量、运行命令等操作。每个指令都代表一个步骤，按顺序执行，从而构建出一个完整的Docker镜像。 go buildgo build是Go语言的一个命令，用于将Go">
+<meta property="og:description" content="dockerfile是什么Dockerfile是一种用于定义和构建Docker镜像的文本文件。它包含一系列指令和配置，用于构建一个可运行的Docker容器。 在Dockerfile中，您可以定义从哪个基础镜像开始构建、复制文件、设置环境变量、运行命令等操作。每个指令都代表一个步骤，按顺序执行，从而构建出一个完整的Docker镜像。 go buildgo build是Go语言的一个命令，用于将Go源">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://fangaoxs.github.io/2024/02/04/back-end/docker/dockerfile/image-20240205155732038.png">
 <meta property="article:published_time" content="2024-02-04T09:27:39.000Z">
-<meta property="article:modified_time" content="2024-02-05T07:58:00.811Z">
+<meta property="article:modified_time" content="2024-02-07T09:10:15.489Z">
 <meta property="article:author" content="FanGaoXS">
+<meta property="article:tag" content="docker">
+<meta property="article:tag" content="dockerfile">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://fangaoxs.github.io/2024/02/04/back-end/docker/dockerfile/image-20240205155732038.png">
   
     <link rel="alternate" href="/atom.xml" title="FanGaoXS's blog" type="application/atom+xml">
   
@@ -87,7 +87,7 @@
         
   
     <h1 class="p-name article-title" itemprop="headline name">
-      dockerfile结合go应用程序的简单应用
+      docker学习
     </h1>
   
 
@@ -95,8 +95,7 @@
     
     <div class="e-content article-entry" itemprop="articleBody">
       
-        <p><img src="/2024/02/04/back-end/docker/dockerfile/image-20240205155732038.png" alt="image-20240205155732038"></p>
-<h2 id="dockerfile是什么"><a href="#dockerfile是什么" class="headerlink" title="dockerfile是什么"></a>dockerfile是什么</h2><p>Dockerfile是一种用于定义和构建Docker镜像的文本文件。它包含一系列指令和配置，用于构建一个可运行的Docker容器。</p>
+        <h2 id="dockerfile是什么"><a href="#dockerfile是什么" class="headerlink" title="dockerfile是什么"></a>dockerfile是什么</h2><p>Dockerfile是一种用于定义和构建Docker镜像的文本文件。它包含一系列指令和配置，用于构建一个可运行的Docker容器。</p>
 <p>在Dockerfile中，您可以定义从哪个基础镜像开始构建、复制文件、设置环境变量、运行命令等操作。每个指令都代表一个步骤，按顺序执行，从而构建出一个完整的Docker镜像。</p>
 <h2 id="go-build"><a href="#go-build" class="headerlink" title="go build"></a>go build</h2><p><code>go build</code>是Go语言的一个命令，用于将Go源代码编译成可执行文件或库。</p>
 <h2 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h2><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">FROM</span> golang:<span class="number">1.20</span> as builder</span><br><span class="line"><span class="keyword">WORKDIR</span><span class="language-bash"> /source</span></span><br><span class="line"><span class="keyword">COPY</span><span class="language-bash"> . /source</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> go build -o app .</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">FROM</span> ubuntu:noble</span><br><span class="line"><span class="keyword">COPY</span><span class="language-bash"> --from=builder /source/app /app</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> <span class="built_in">chmod</span> +x /app</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">ENV</span> APP_NAME=<span class="string">&quot;app&quot;</span></span><br><span class="line"><span class="keyword">ENV</span> APP_VERSION=<span class="string">&quot;v0.0.1&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">CMD</span><span class="language-bash"> [<span class="string">&quot;/app&quot;</span>]</span></span><br></pre></td></tr></table></figure>
@@ -168,14 +167,26 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://fangaoxs.github.io/2024/02/04/back-end/docker/dockerfile/" data-id="cls8n3pks00003rk64vnzaymi" data-title="dockerfile结合go应用程序的简单应用" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://fangaoxs.github.io/2024/02/04/back-end/docker/dockerfile/" data-id="clsblyudy000ow0k6gt6h1yzk" data-title="docker学习" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/docker/" rel="tag">docker</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/dockerfile/" rel="tag">dockerfile</a></li></ul>
+
     </footer>
   </div>
   
     
+<nav id="article-nav">
+  
+  
+    <a href="/2023/07/19/data-structure/%E6%89%8B%E5%86%99ArrayList/ArrayList%E6%95%B4%E5%90%88Java/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">后一篇</strong>
+      <div class="article-nav-title">利用Java来手写ArrayList</div>
+    </a>
+  
+</nav>
+
   
 </article>
 
@@ -188,15 +199,29 @@
 
   
     
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/ArrayList/" rel="tag">ArrayList</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Cookie/" rel="tag">Cookie</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/GRPC/" rel="tag">GRPC</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/GRPC-web/" rel="tag">GRPC-web</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Golang/" rel="tag">Golang</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JWT/" rel="tag">JWT</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java/" rel="tag">Java</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JavaSE/" rel="tag">JavaSE</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/LinkedList/" rel="tag">LinkedList</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Mybatis/" rel="tag">Mybatis</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OAuth2-0/" rel="tag">OAuth2.0</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OIDC/" rel="tag">OIDC</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SSO/" rel="tag">SSO</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Spring/" rel="tag">Spring</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SpringAOP/" rel="tag">SpringAOP</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SpringBoot/" rel="tag">SpringBoot</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SpringCloud/" rel="tag">SpringCloud</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/String/" rel="tag">String</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/caddy/" rel="tag">caddy</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cobra/" rel="tag">cobra</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/devops/" rel="tag">devops</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dig/" rel="tag">dig</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dockerfile/" rel="tag">dockerfile</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/echarts/" rel="tag">echarts</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/es6/" rel="tag">es6</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/flag/" rel="tag">flag</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/flags/" rel="tag">flags</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gin/" rel="tag">gin</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/godotenv/" rel="tag">godotenv</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gorm/" rel="tag">gorm</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/http/" rel="tag">http</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/javascript/" rel="tag">javascript</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/jedis/" rel="tag">jedis</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kubernates/" rel="tag">kubernates</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/logrus/" rel="tag">logrus</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mysql/" rel="tag">mysql</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/promise/" rel="tag">promise</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/protobuf/" rel="tag">protobuf</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/python/" rel="tag">python</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/redis/" rel="tag">redis</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/stream/" rel="tag">stream</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/uni-app/" rel="tag">uni-app</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vue/" rel="tag">vue</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vue-cli/" rel="tag">vue-cli</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vue-element-admin/" rel="tag">vue-element-admin</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vue-router/" rel="tag">vue-router</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/webpack/" rel="tag">webpack</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/websocket/" rel="tag">websocket</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" rel="tag">多线程</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag">数据库</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/" rel="tag">网络安全</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" rel="tag">计算机网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" rel="tag">设计模式</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9B%86%E5%90%88/" rel="tag">集合</a></li></ul>
+    </div>
+  </div>
+
 
   
     
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/ArrayList/" style="font-size: 10px;">ArrayList</a> <a href="/tags/Cookie/" style="font-size: 10px;">Cookie</a> <a href="/tags/GRPC/" style="font-size: 12.86px;">GRPC</a> <a href="/tags/GRPC-web/" style="font-size: 10px;">GRPC-web</a> <a href="/tags/Golang/" style="font-size: 18.57px;">Golang</a> <a href="/tags/JWT/" style="font-size: 10px;">JWT</a> <a href="/tags/Java/" style="font-size: 20px;">Java</a> <a href="/tags/JavaSE/" style="font-size: 12.86px;">JavaSE</a> <a href="/tags/LinkedList/" style="font-size: 10px;">LinkedList</a> <a href="/tags/Mybatis/" style="font-size: 11.43px;">Mybatis</a> <a href="/tags/OAuth2-0/" style="font-size: 10px;">OAuth2.0</a> <a href="/tags/OIDC/" style="font-size: 12.86px;">OIDC</a> <a href="/tags/SSO/" style="font-size: 10px;">SSO</a> <a href="/tags/Spring/" style="font-size: 12.86px;">Spring</a> <a href="/tags/SpringAOP/" style="font-size: 10px;">SpringAOP</a> <a href="/tags/SpringBoot/" style="font-size: 14.29px;">SpringBoot</a> <a href="/tags/SpringCloud/" style="font-size: 10px;">SpringCloud</a> <a href="/tags/String/" style="font-size: 10px;">String</a> <a href="/tags/caddy/" style="font-size: 10px;">caddy</a> <a href="/tags/cobra/" style="font-size: 10px;">cobra</a> <a href="/tags/devops/" style="font-size: 10px;">devops</a> <a href="/tags/dig/" style="font-size: 10px;">dig</a> <a href="/tags/docker/" style="font-size: 11.43px;">docker</a> <a href="/tags/dockerfile/" style="font-size: 10px;">dockerfile</a> <a href="/tags/echarts/" style="font-size: 10px;">echarts</a> <a href="/tags/es6/" style="font-size: 10px;">es6</a> <a href="/tags/flag/" style="font-size: 10px;">flag</a> <a href="/tags/flags/" style="font-size: 10px;">flags</a> <a href="/tags/gin/" style="font-size: 10px;">gin</a> <a href="/tags/godotenv/" style="font-size: 10px;">godotenv</a> <a href="/tags/gorm/" style="font-size: 10px;">gorm</a> <a href="/tags/http/" style="font-size: 11.43px;">http</a> <a href="/tags/java/" style="font-size: 10px;">java</a> <a href="/tags/javascript/" style="font-size: 15.71px;">javascript</a> <a href="/tags/jedis/" style="font-size: 10px;">jedis</a> <a href="/tags/kubernates/" style="font-size: 10px;">kubernates</a> <a href="/tags/logrus/" style="font-size: 10px;">logrus</a> <a href="/tags/mysql/" style="font-size: 10px;">mysql</a> <a href="/tags/promise/" style="font-size: 10px;">promise</a> <a href="/tags/protobuf/" style="font-size: 10px;">protobuf</a> <a href="/tags/python/" style="font-size: 10px;">python</a> <a href="/tags/redis/" style="font-size: 11.43px;">redis</a> <a href="/tags/stream/" style="font-size: 10px;">stream</a> <a href="/tags/uni-app/" style="font-size: 10px;">uni-app</a> <a href="/tags/vue/" style="font-size: 17.14px;">vue</a> <a href="/tags/vue-cli/" style="font-size: 10px;">vue-cli</a> <a href="/tags/vue-element-admin/" style="font-size: 10px;">vue-element-admin</a> <a href="/tags/vue-router/" style="font-size: 10px;">vue-router</a> <a href="/tags/webpack/" style="font-size: 10px;">webpack</a> <a href="/tags/websocket/" style="font-size: 10px;">websocket</a> <a href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" style="font-size: 11.43px;">多线程</a> <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" style="font-size: 11.43px;">数据库</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/" style="font-size: 11.43px;">网络安全</a> <a href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" style="font-size: 10px;">计算机网络</a> <a href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" style="font-size: 11.43px;">设计模式</a> <a href="/tags/%E9%9B%86%E5%90%88/" style="font-size: 12.86px;">集合</a>
+    </div>
+  </div>
+
   
     
   <div class="widget-wrap">
     <h3 class="widget-title">归档</h3>
     <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/02/">二月 2024</a></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/02/">二月 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/07/">七月 2023</a></li></ul>
     </div>
   </div>
 
@@ -209,7 +234,23 @@
       <ul>
         
           <li>
-            <a href="/2024/02/04/back-end/docker/dockerfile/">dockerfile结合go应用程序的简单应用</a>
+            <a href="/2024/02/04/back-end/docker/dockerfile/">docker学习</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/19/data-structure/%E6%89%8B%E5%86%99ArrayList/ArrayList%E6%95%B4%E5%90%88Java/">利用Java来手写ArrayList</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/19/data-structure/%E6%89%8B%E5%86%99LinkedList/LinkedList%E6%95%B4%E5%90%88Java/">利用Java手写LinkedList</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/19/back-end/DevOps/CI_CD/">CI_CD</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/19/design-pattern/SOLID/%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1%E7%9A%84S.O.L.I.D%E5%8E%9F%E5%88%99/">面向对象的S.O.L.I.D原则</a>
           </li>
         
       </ul>

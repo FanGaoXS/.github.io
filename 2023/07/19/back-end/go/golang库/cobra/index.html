@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>cobra命令行程序库 | FanGaoXS&#39;s blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="简介cobra是一个命令行程序库，可以用来编写命令行程序。同时，它还提供了一个脚手架，用于生成基于cobra的应用程序。知名的开源项目：Kubernates、Hugo、etcd等。 快速开始安装第三方库 1$ go get github.com&#x2F;spf13&#x2F;cobra&#x2F;cobra  依据darjun的指引，我们尝试实现一个简单的命令行程序git，当然并不是真正的git，而是模拟其命令行，最后其实还">
+<meta property="og:type" content="article">
+<meta property="og:title" content="cobra命令行程序库">
+<meta property="og:url" content="https://fangaoxs.github.io/2023/07/19/back-end/go/golang%E5%BA%93/cobra/index.html">
+<meta property="og:site_name" content="FanGaoXS&#39;s blog">
+<meta property="og:description" content="简介cobra是一个命令行程序库，可以用来编写命令行程序。同时，它还提供了一个脚手架，用于生成基于cobra的应用程序。知名的开源项目：Kubernates、Hugo、etcd等。 快速开始安装第三方库 1$ go get github.com&#x2F;spf13&#x2F;cobra&#x2F;cobra  依据darjun的指引，我们尝试实现一个简单的命令行程序git，当然并不是真正的git，而是模拟其命令行，最后其实还">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-07-19T07:30:39.000Z">
+<meta property="article:modified_time" content="2024-02-07T09:17:36.774Z">
+<meta property="article:author" content="FanGaoXS">
+<meta property="article:tag" content="Golang">
+<meta property="article:tag" content="cobra">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="FanGaoXS's blog" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">FanGaoXS&#39;s blog</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        
+          <a class="nav-icon" href="/atom.xml" title="RSS 订阅"><span class="fa fa-rss"></span></a>
+        
+        <a class="nav-icon nav-search-btn" title="搜索"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="搜索"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://fangaoxs.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-back-end/go/golang库/cobra" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2023/07/19/back-end/go/golang%E5%BA%93/cobra/" class="article-date">
+  <time class="dt-published" datetime="2023-07-19T07:30:39.000Z" itemprop="datePublished">2023-07-19</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      cobra命令行程序库
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p><code>cobra</code>是一个命令行程序库，可以用来编写命令行程序。同时，它还提供了一个脚手架，用于生成基于cobra的应用程序。知名的开源项目：<code>Kubernates</code>、<code>Hugo</code>、<code>etcd</code>等。</p>
+<h2 id="快速开始"><a href="#快速开始" class="headerlink" title="快速开始"></a>快速开始</h2><p>安装第三方库</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ go get github.com/spf13/cobra/cobra</span><br></pre></td></tr></table></figure>
+
+<p>依据darjun的指引，我们尝试实现一个简单的命令行程序git，当然并不是真正的git，而是模拟其命令行，最后其实还是通过调用<code>os/exec</code>库调用外部程序去执行真正的git命令，返回其结果。</p>
+<p>目录结构</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">quick_start</span><br><span class="line">  ├── cmd</span><br><span class="line">  │   ├── helper.go</span><br><span class="line">  │   ├── root.go</span><br><span class="line">  │   └── version.go</span><br><span class="line">  └── main.go</span><br></pre></td></tr></table></figure>
+
+
+
+<p>root.go</p>
+<p><strong>根命令git</strong></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> cmd</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;errors&quot;</span></span><br><span class="line">	<span class="string">&quot;log&quot;</span></span><br><span class="line">	</span><br><span class="line">	<span class="string">&quot;github.com/spf13/cobra&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> rootCmd = &amp;cobra.Command&#123;</span><br><span class="line">	Use:   <span class="string">&quot;git&quot;</span>,</span><br><span class="line">	Short: <span class="string">&quot;Git is a distributed version control system.&quot;</span>,</span><br><span class="line">	Long: <span class="string">`Git is a free and open source distributed version control system</span></span><br><span class="line"><span class="string">designed to handle everything from small to very large projects </span></span><br><span class="line"><span class="string">with speed and efficiency.`</span>,</span><br><span class="line">	Run: <span class="function"><span class="keyword">func</span><span class="params">(cmd *cobra.Command, args []<span class="type">string</span>)</span></span> &#123;</span><br><span class="line">		Error(cmd, args, errors.New(<span class="string">&quot;unimplemented command&quot;</span>))</span><br><span class="line">	&#125;,</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Execute</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="comment">// 执行root及其子命令</span></span><br><span class="line">	<span class="keyword">if</span> err := rootCmd.Execute(); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Fatalln(<span class="string">&quot;execute root command failed&quot;</span>)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+
+<p>version.go</p>
+<p><strong>子命令git version</strong></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> cmd</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;fmt&quot;</span></span><br><span class="line">	<span class="string">&quot;os/exec&quot;</span></span><br><span class="line">	</span><br><span class="line">	<span class="string">&quot;github.com/spf13/cobra&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> versionCmd = &amp;cobra.Command&#123;</span><br><span class="line">	Use:   <span class="string">&quot;version&quot;</span>,</span><br><span class="line">	Short: <span class="string">&quot;version subcommand show git version info.&quot;</span>,</span><br><span class="line">	Run: <span class="function"><span class="keyword">func</span><span class="params">(cmd *cobra.Command, args []<span class="type">string</span>)</span></span> &#123;</span><br><span class="line">    <span class="comment">// 使用exec库直接执行 git version 命令</span></span><br><span class="line">		command := exec.Command(<span class="string">&quot;git&quot;</span>, <span class="string">&quot;version&quot;</span>)</span><br><span class="line">		output, err := command.CombinedOutput()</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			Error(cmd, args, err)</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		fmt.Print(<span class="type">string</span>(output)) <span class="comment">// 打印执行的结果</span></span><br><span class="line">	&#125;,</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">init</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="comment">// 将version命令添加为root命令的子命令</span></span><br><span class="line">	rootCmd.AddCommand(versionCmd)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>main.go</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> <span class="string">&quot;lib_cobra/quick_start/cmd&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">   cmd.Execute() <span class="comment">// 执行root命令</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>terminal</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">&gt; $ go build -o diygit main.go <span class="comment"># 为了避免和真正的git冲突，我们将其命名为diygit</span></span><br><span class="line">&gt; $ diygit -h</span><br><span class="line">Git is a free and open <span class="built_in">source</span> distributed version control system</span><br><span class="line">designed to handle everything from small to very large projects </span><br><span class="line">with speed and efficiency.</span><br><span class="line"></span><br><span class="line">Usage:</span><br><span class="line">  git [flags]</span><br><span class="line">  git [<span class="built_in">command</span>]</span><br><span class="line"></span><br><span class="line">Available Commands:</span><br><span class="line">  completion  Generate the autocompletion script <span class="keyword">for</span> the specified shell</span><br><span class="line">  <span class="built_in">help</span>        Help about any <span class="built_in">command</span></span><br><span class="line">  version     version subcommand show git version info.</span><br><span class="line"></span><br><span class="line">Flags:</span><br><span class="line">  -h, --<span class="built_in">help</span>   <span class="built_in">help</span> <span class="keyword">for</span> git</span><br><span class="line"></span><br><span class="line">Use <span class="string">&quot;git [command] --help&quot;</span> <span class="keyword">for</span> more information about a <span class="built_in">command</span>.</span><br><span class="line"></span><br><span class="line">&gt; $ diygit version -h</span><br><span class="line">version subcommand show git version info.</span><br><span class="line"></span><br><span class="line">Usage:</span><br><span class="line">  git version [flags]</span><br><span class="line"></span><br><span class="line">Flags:</span><br><span class="line">  -h, --<span class="built_in">help</span>   <span class="built_in">help</span> <span class="keyword">for</span> version</span><br><span class="line"></span><br><span class="line">&gt; $ diygit version</span><br><span class="line">git version 2.26.2</span><br></pre></td></tr></table></figure>
+
+<p>此时的经过go build后的<code>diygit</code>即是<code>git</code>命令</p>
+<h2 id="目录结构"><a href="#目录结构" class="headerlink" title="目录结构"></a>目录结构</h2><p>使用cobra构建命令行工具时，程序的目录结构推荐使用以下结构</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">app_name</span><br><span class="line">  ├── cmd</span><br><span class="line">  │   ├── root.go</span><br><span class="line">  │   ├── cmd1.go</span><br><span class="line">  │   ├── cmd2.go</span><br><span class="line">  │   └── cmd3.go</span><br><span class="line">  └── main.go</span><br></pre></td></tr></table></figure>
+
+<p>cmd下的每个文件实现一个命令，外层的main.go的作用仅仅是初始化root命令。</p>
+<h2 id="特性"><a href="#特性" class="headerlink" title="特性"></a>特性</h2><p>cobra提供非常丰富的功能：</p>
+<ul>
+<li>支持子命令，如<code>app server</code>，<code>app fetch</code></li>
+<li>支持长短选项，如<code>-v</code>，<code>--verbose</code></li>
+<li>子命令嵌套</li>
+<li>全局、本地层级选项</li>
+<li>使用脚手架自动生成程序和命令</li>
+</ul>
+<p>三个基本概念：</p>
+<ul>
+<li>命令（Command）：需要执行的操作</li>
+<li>参数（Args）：命令的参数，即操作的对象</li>
+<li>选项（Flag）：命令选项可以调整命令的行为</li>
+</ul>
+<p>如示例<code>git branch -D dev</code>，<code>branch</code>是子命令，<code>-D</code>是该子命令的选项，<code>dev</code>是该子命令的参数</p>
+<p>如示例<code>curl -X example.com</code>，<code>curl</code>是命令，<code>-X</code>是该命令的选项，<code>example.com</code>是该参数</p>
+<h3 id="命令（Command）"><a href="#命令（Command）" class="headerlink" title="命令（Command）"></a>命令（Command）</h3><p>每个命令基本上只需要对<code>cobra.Command</code>的<code>Use</code>、<code>Short</code>、<code>Long</code>、<code>Run</code>四个属性进行赋值差不多就可以了。</p>
+<ul>
+<li>Use：命令的使用信息。Tips：在这里可以解释如何使用该命令，但是只有该属性的第一个词会被录入到<strong>help</strong>即帮助信息中</li>
+<li>Short：命令的短描述，可以通过<code>--help</code>查看</li>
+<li>Long：命令的长描述，可以通过<code>--help &lt;command&gt; </code>查看</li>
+<li>Run：该命令的具体执行逻辑，类型是<code>func(cmd *cobra.Command, args []string)</code>，其中cmd是该命令本身的一些属性，args是该命令的选项列表。</li>
+</ul>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&amp;cobra.Command&#123;</span><br><span class="line">   Use:   <span class="string">&quot;&quot;</span>,</span><br><span class="line">   Short: <span class="string">&quot;&quot;</span>,	</span><br><span class="line">   Long:  <span class="string">&quot;&quot;</span>,</span><br><span class="line">   Run:   <span class="literal">nil</span>,	</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>很多时候，还可以使用<code>Args</code>属性，类型是<code>func(cmd *cobra.Command, args []string) error</code>，它可以帮助你提前校验<code>args</code>是否符合规范，如果不符合，请返回err</p>
+<h3 id="选项（Flag）"><a href="#选项（Flag）" class="headerlink" title="选项（Flag）"></a>选项（Flag）</h3><p>cobra的选项分为两种，一种是<strong>永久选项</strong>，该选项可以被定义它的命令及其子命令使用。另一种是<strong>本地选项</strong>，只能在定义它的命令中使用。cobra使用pflag来解析命令后选项，pflag的使用基本和flag相同。</p>
+<ul>
+<li><p>定义好存储选项的变量</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> (</span><br><span class="line">	Sex  <span class="type">bool</span></span><br><span class="line">	Name <span class="type">string</span></span><br><span class="line">	Age  <span class="type">int</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+
+</li>
+<li><p>设置永久选项</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">registerCmd.PersistentFlags().BoolVarP(&amp;Sex, <span class="string">&quot;sex&quot;</span>, <span class="string">&quot;s&quot;</span>, <span class="literal">false</span>, <span class="string">&quot;sex of user&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+
+</li>
+<li><p>设置本地选项</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">registerCmd.Flags().StringVar(&amp;Name, <span class="string">&quot;name&quot;</span>, <span class="string">&quot;&quot;</span>, <span class="string">&quot;name of user&quot;</span>)</span><br><span class="line">registerCmd.Flags().IntVarP(&amp;Age, <span class="string">&quot;age&quot;</span>, <span class="string">&quot;a&quot;</span>, <span class="number">0</span>, <span class="string">&quot;age of user&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<p><code>TypeVar</code>和<code>TypeVarP</code>的区别在于，后者支持短选项。</p>
+</li>
+</ul>
+<p>使用<code>id</code>和<code>uuid</code>联合来移除用户的简单操作：如果id或者uuid存在则使用id或者uuid来移除用户，如果同时存在，则联合来移除。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> (</span><br><span class="line">	Id   <span class="type">string</span></span><br><span class="line">	Uuid <span class="type">string</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> removeCmd = &amp;cobra.Command&#123;</span><br><span class="line">	Use:   <span class="string">&quot;remove&quot;</span>,</span><br><span class="line">	Short: <span class="string">&quot;remove user&quot;</span>,</span><br><span class="line">	Long:  <span class="string">&quot;remove user with given information&quot;</span>,</span><br><span class="line">	Run: <span class="function"><span class="keyword">func</span><span class="params">(cmd *cobra.Command, args []<span class="type">string</span>)</span></span> &#123;</span><br><span class="line">		removeUser(Id, Uuid)</span><br><span class="line">	&#125;,</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">removeUser</span><span class="params">(id <span class="type">string</span>, uuid <span class="type">string</span>)</span></span> &#123;</span><br><span class="line">	<span class="comment">// do remove</span></span><br><span class="line">	<span class="keyword">if</span> id != <span class="string">&quot;&quot;</span> &#123;</span><br><span class="line">		fmt.Printf(<span class="string">&quot;remove user with id: %s\n&quot;</span>, id)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> uuid != <span class="string">&quot;&quot;</span> &#123;</span><br><span class="line">		fmt.Printf(<span class="string">&quot;remove user with uuid: %s\n&quot;</span>, uuid)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> id != <span class="string">&quot;&quot;</span> &amp;&amp; uuid != <span class="string">&quot;&quot;</span> &#123;</span><br><span class="line">		fmt.Printf(<span class="string">&quot;remove user with id: %s and uuid: %s\n&quot;</span>, id, uuid)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">init</span><span class="params">()</span></span> &#123;</span><br><span class="line">	removeCmd.Flags().StringVar(&amp;Id, <span class="string">&quot;id&quot;</span>, <span class="string">&quot;&quot;</span>, <span class="string">&quot;id of user&quot;</span>)</span><br><span class="line">	removeCmd.Flags().StringVar(&amp;Uuid, <span class="string">&quot;uuid&quot;</span>, <span class="string">&quot;&quot;</span>, <span class="string">&quot;uuid of user&quot;</span>)</span><br><span class="line">	rootCmd.AddCommand(removeCmd)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a target="_blank" rel="noopener" href="https://darjun.github.io/2020/01/17/godailylib/cobra/">每日一库之cobra</a></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://fangaoxs.github.io/2023/07/19/back-end/go/golang%E5%BA%93/cobra/" data-id="clsblyuf3002kw0k602t8cpup" data-title="cobra命令行程序库" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Golang/" rel="tag">Golang</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/cobra/" rel="tag">cobra</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2023/07/19/back-end/go/gRPC/grpc%E6%95%B4%E5%90%88go/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">前一篇</strong>
+      <div class="article-nav-title">
+        
+          gRPC在go语言当中的应用，第一个gRPC应用
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2023/07/19/back-end/go/golang%E5%BA%93/dig/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">后一篇</strong>
+      <div class="article-nav-title">Go的依赖注入库dig</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/ArrayList/" rel="tag">ArrayList</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Cookie/" rel="tag">Cookie</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/GRPC/" rel="tag">GRPC</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/GRPC-web/" rel="tag">GRPC-web</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Golang/" rel="tag">Golang</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JWT/" rel="tag">JWT</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java/" rel="tag">Java</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JavaSE/" rel="tag">JavaSE</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/LinkedList/" rel="tag">LinkedList</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Mybatis/" rel="tag">Mybatis</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OAuth2-0/" rel="tag">OAuth2.0</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OIDC/" rel="tag">OIDC</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SSO/" rel="tag">SSO</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Spring/" rel="tag">Spring</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SpringAOP/" rel="tag">SpringAOP</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SpringBoot/" rel="tag">SpringBoot</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SpringCloud/" rel="tag">SpringCloud</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/String/" rel="tag">String</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/caddy/" rel="tag">caddy</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cobra/" rel="tag">cobra</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/devops/" rel="tag">devops</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dig/" rel="tag">dig</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dockerfile/" rel="tag">dockerfile</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/echarts/" rel="tag">echarts</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/es6/" rel="tag">es6</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/flag/" rel="tag">flag</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/flags/" rel="tag">flags</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gin/" rel="tag">gin</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/godotenv/" rel="tag">godotenv</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gorm/" rel="tag">gorm</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/http/" rel="tag">http</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/javascript/" rel="tag">javascript</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/jedis/" rel="tag">jedis</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kubernates/" rel="tag">kubernates</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/logrus/" rel="tag">logrus</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mysql/" rel="tag">mysql</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/promise/" rel="tag">promise</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/protobuf/" rel="tag">protobuf</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/python/" rel="tag">python</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/redis/" rel="tag">redis</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/stream/" rel="tag">stream</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/uni-app/" rel="tag">uni-app</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vue/" rel="tag">vue</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vue-cli/" rel="tag">vue-cli</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vue-element-admin/" rel="tag">vue-element-admin</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vue-router/" rel="tag">vue-router</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/webpack/" rel="tag">webpack</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/websocket/" rel="tag">websocket</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" rel="tag">多线程</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag">数据库</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/" rel="tag">网络安全</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" rel="tag">计算机网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" rel="tag">设计模式</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9B%86%E5%90%88/" rel="tag">集合</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/ArrayList/" style="font-size: 10px;">ArrayList</a> <a href="/tags/Cookie/" style="font-size: 10px;">Cookie</a> <a href="/tags/GRPC/" style="font-size: 12.86px;">GRPC</a> <a href="/tags/GRPC-web/" style="font-size: 10px;">GRPC-web</a> <a href="/tags/Golang/" style="font-size: 18.57px;">Golang</a> <a href="/tags/JWT/" style="font-size: 10px;">JWT</a> <a href="/tags/Java/" style="font-size: 20px;">Java</a> <a href="/tags/JavaSE/" style="font-size: 12.86px;">JavaSE</a> <a href="/tags/LinkedList/" style="font-size: 10px;">LinkedList</a> <a href="/tags/Mybatis/" style="font-size: 11.43px;">Mybatis</a> <a href="/tags/OAuth2-0/" style="font-size: 10px;">OAuth2.0</a> <a href="/tags/OIDC/" style="font-size: 12.86px;">OIDC</a> <a href="/tags/SSO/" style="font-size: 10px;">SSO</a> <a href="/tags/Spring/" style="font-size: 12.86px;">Spring</a> <a href="/tags/SpringAOP/" style="font-size: 10px;">SpringAOP</a> <a href="/tags/SpringBoot/" style="font-size: 14.29px;">SpringBoot</a> <a href="/tags/SpringCloud/" style="font-size: 10px;">SpringCloud</a> <a href="/tags/String/" style="font-size: 10px;">String</a> <a href="/tags/caddy/" style="font-size: 10px;">caddy</a> <a href="/tags/cobra/" style="font-size: 10px;">cobra</a> <a href="/tags/devops/" style="font-size: 10px;">devops</a> <a href="/tags/dig/" style="font-size: 10px;">dig</a> <a href="/tags/docker/" style="font-size: 11.43px;">docker</a> <a href="/tags/dockerfile/" style="font-size: 10px;">dockerfile</a> <a href="/tags/echarts/" style="font-size: 10px;">echarts</a> <a href="/tags/es6/" style="font-size: 10px;">es6</a> <a href="/tags/flag/" style="font-size: 10px;">flag</a> <a href="/tags/flags/" style="font-size: 10px;">flags</a> <a href="/tags/gin/" style="font-size: 10px;">gin</a> <a href="/tags/godotenv/" style="font-size: 10px;">godotenv</a> <a href="/tags/gorm/" style="font-size: 10px;">gorm</a> <a href="/tags/http/" style="font-size: 11.43px;">http</a> <a href="/tags/java/" style="font-size: 10px;">java</a> <a href="/tags/javascript/" style="font-size: 15.71px;">javascript</a> <a href="/tags/jedis/" style="font-size: 10px;">jedis</a> <a href="/tags/kubernates/" style="font-size: 10px;">kubernates</a> <a href="/tags/logrus/" style="font-size: 10px;">logrus</a> <a href="/tags/mysql/" style="font-size: 10px;">mysql</a> <a href="/tags/promise/" style="font-size: 10px;">promise</a> <a href="/tags/protobuf/" style="font-size: 10px;">protobuf</a> <a href="/tags/python/" style="font-size: 10px;">python</a> <a href="/tags/redis/" style="font-size: 11.43px;">redis</a> <a href="/tags/stream/" style="font-size: 10px;">stream</a> <a href="/tags/uni-app/" style="font-size: 10px;">uni-app</a> <a href="/tags/vue/" style="font-size: 17.14px;">vue</a> <a href="/tags/vue-cli/" style="font-size: 10px;">vue-cli</a> <a href="/tags/vue-element-admin/" style="font-size: 10px;">vue-element-admin</a> <a href="/tags/vue-router/" style="font-size: 10px;">vue-router</a> <a href="/tags/webpack/" style="font-size: 10px;">webpack</a> <a href="/tags/websocket/" style="font-size: 10px;">websocket</a> <a href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" style="font-size: 11.43px;">多线程</a> <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" style="font-size: 11.43px;">数据库</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/" style="font-size: 11.43px;">网络安全</a> <a href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" style="font-size: 10px;">计算机网络</a> <a href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" style="font-size: 11.43px;">设计模式</a> <a href="/tags/%E9%9B%86%E5%90%88/" style="font-size: 12.86px;">集合</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/02/">二月 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/07/">七月 2023</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2024/02/04/back-end/docker/dockerfile/">docker学习</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/19/data-structure/%E6%89%8B%E5%86%99ArrayList/ArrayList%E6%95%B4%E5%90%88Java/">利用Java来手写ArrayList</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/19/data-structure/%E6%89%8B%E5%86%99LinkedList/LinkedList%E6%95%B4%E5%90%88Java/">利用Java手写LinkedList</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/19/back-end/DevOps/CI_CD/">CI_CD</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/19/design-pattern/SOLID/%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1%E7%9A%84S.O.L.I.D%E5%8E%9F%E5%88%99/">面向对象的S.O.L.I.D原则</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2024 FanGaoXS<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>
