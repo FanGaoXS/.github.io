@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>ECharts简单上手使用并且整合SpringBoot | FanGaoXS&#39;s blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="1、什么是ECharts商业级数据图表，它是一个纯JavaScript的图标库，兼容绝大部分的浏览器，底层依赖轻量级的canvas类库ZRender，提供直观，生动，可交互，可高度个性化定制的数据可视化图表。创新的拖拽重计算、数据视图、值域漫游等特性大大增强了用户体验，赋予了用户对数据进行挖掘、整合的能力。简单点来讲就是纯前端的绘制简单的图表。 官网地址：https:&#x2F;&#x2F;echarts.apach">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ECharts简单上手使用并且整合SpringBoot">
+<meta property="og:url" content="https://fangaoxs.github.io/2020/08/28/front-end/ECharts/echarts%E6%95%B4%E5%90%88SpringBoot/index.html">
+<meta property="og:site_name" content="FanGaoXS&#39;s blog">
+<meta property="og:description" content="1、什么是ECharts商业级数据图表，它是一个纯JavaScript的图标库，兼容绝大部分的浏览器，底层依赖轻量级的canvas类库ZRender，提供直观，生动，可交互，可高度个性化定制的数据可视化图表。创新的拖拽重计算、数据视图、值域漫游等特性大大增强了用户体验，赋予了用户对数据进行挖掘、整合的能力。简单点来讲就是纯前端的绘制简单的图表。 官网地址：https:&#x2F;&#x2F;echarts.apach">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-08-28T07:30:39.000Z">
+<meta property="article:modified_time" content="2024-02-18T08:47:44.898Z">
+<meta property="article:author" content="FanGaoXS">
+<meta property="article:tag" content="javascript">
+<meta property="article:tag" content="echarts">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="FanGaoXS's blog" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">FanGaoXS&#39;s blog</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        
+          <a class="nav-icon" href="/atom.xml" title="RSS 订阅"><span class="fa fa-rss"></span></a>
+        
+        <a class="nav-icon nav-search-btn" title="搜索"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="搜索"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://fangaoxs.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-front-end/ECharts/echarts整合SpringBoot" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2020/08/28/front-end/ECharts/echarts%E6%95%B4%E5%90%88SpringBoot/" class="article-date">
+  <time class="dt-published" datetime="2020-08-28T07:30:39.000Z" itemprop="datePublished">2020-08-28</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      ECharts简单上手使用并且整合SpringBoot
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="1、什么是ECharts"><a href="#1、什么是ECharts" class="headerlink" title="1、什么是ECharts"></a>1、什么是ECharts</h2><p>商业级数据图表，它是一个纯JavaScript的图标库，兼容绝大部分的浏览器，底层依赖轻量级的canvas类库ZRender，提供直观，生动，可交互，可高度个性化定制的数据可视化图表。创新的拖拽重计算、数据视图、值域漫游等特性大大增强了用户体验，赋予了用户对数据进行挖掘、整合的能力。简单点来讲就是纯前端的绘制简单的图表。</p>
+<p>官网地址：<a target="_blank" rel="noopener" href="https://echarts.apache.org/">https://echarts.apache.org/</a></p>
+<h2 id="2、ECharts能画什么图"><a href="#2、ECharts能画什么图" class="headerlink" title="2、ECharts能画什么图"></a>2、ECharts能画什么图</h2><p>折线图（区域图）、柱状图（条状图）、散点图（气泡图）、K线图、饼图（环形图）</p>
+<p>雷达图（填充雷达图）、和弦图、力导向布局图、地图、仪表盘、漏斗图、事件河流图等12类图表</p>
+<h2 id="3、安装ECharts"><a href="#3、安装ECharts" class="headerlink" title="3、安装ECharts"></a>3、安装ECharts</h2><p>需要先引入ECharts和jQuery的js，或者直接在html里面引入CDN</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">&lt;!--引入ECharts.js--&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">&quot;/js/echarts.js&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line">   <span class="comment">&lt;!--引入jQuery.js--&gt;</span></span><br><span class="line">   <span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">&quot;/js/jquery-3.5.1.js&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>因为我们需要整合SpringBoot，所以我就使用Thymeleaf模板引擎来渲染，就需要给src前加上th，像这样：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">&lt;!--引入ECharts.js--&gt;</span></span><br><span class="line">   <span class="tag">&lt;<span class="name">script</span> <span class="attr">th:src</span>=<span class="string">&quot;@&#123;/js/echarts.js&#125;&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line">   <span class="comment">&lt;!--引入jQuery.js--&gt;</span></span><br><span class="line">   <span class="tag">&lt;<span class="name">script</span> <span class="attr">th:src</span>=<span class="string">&quot;@&#123;/js/jquery-3.5.1.js&#125;&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="4、简单使用ECharts"><a href="#4、简单使用ECharts" class="headerlink" title="4、简单使用ECharts"></a>4、简单使用ECharts</h2><h3 id="4-1-准备一个div盒子来放图表"><a href="#4-1-准备一个div盒子来放图表" class="headerlink" title="4.1 准备一个div盒子来放图表"></a>4.1 准备一个div盒子来放图表</h3><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">&lt;!--为ECharts准备一个id为main，宽高都为500px的盒子--&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">div</span> <span class="attr">id</span>=<span class="string">&quot;main&quot;</span> <span class="attr">style</span>=<span class="string">&quot;width: 500px;height: 500px;&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="4-2-利用Dom操作盒子然后设置图表的参数"><a href="#4-2-利用Dom操作盒子然后设置图表的参数" class="headerlink" title="4.2 利用Dom操作盒子然后设置图表的参数"></a>4.2 利用Dom操作盒子然后设置图表的参数</h3><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//1、通过id获取到main并且用echarts初始化</span></span><br><span class="line"><span class="keyword">let</span> myChart=echarts.<span class="title function_">init</span>(<span class="variable language_">document</span>.<span class="title function_">getElementById</span>(<span class="string">&#x27;main&#x27;</span>));</span><br><span class="line"><span class="comment">//2、指定图表的配置项和数据</span></span><br><span class="line"><span class="keyword">let</span> option = &#123;</span><br><span class="line">	<span class="comment">//标题</span></span><br><span class="line">	<span class="attr">title</span>: &#123;</span><br><span class="line">		<span class="attr">text</span>: <span class="string">&#x27;ECharts 入门示例&#x27;</span></span><br><span class="line">	&#125;,</span><br><span class="line">	<span class="comment">//配置信息</span></span><br><span class="line">	<span class="attr">tooltip</span>: &#123;&#125;,</span><br><span class="line">	<span class="attr">legend</span>: &#123;</span><br><span class="line">		<span class="attr">data</span>:[<span class="string">&#x27;销量&#x27;</span>]</span><br><span class="line">	&#125;,</span><br><span class="line">	<span class="attr">xAxis</span>: &#123;</span><br><span class="line">		<span class="attr">data</span>: [<span class="string">&quot;衬衫&quot;</span>,<span class="string">&quot;羊毛衫&quot;</span>,<span class="string">&quot;雪纺衫&quot;</span>,<span class="string">&quot;裤子&quot;</span>,<span class="string">&quot;高跟鞋&quot;</span>,<span class="string">&quot;袜子&quot;</span>]</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">yAxis</span>: &#123;&#125;,</span><br><span class="line">    <span class="attr">series</span>: [&#123;</span><br><span class="line">        <span class="attr">name</span>: <span class="string">&#x27;销量&#x27;</span>,</span><br><span class="line">        <span class="attr">type</span>: <span class="string">&#x27;bar&#x27;</span>,</span><br><span class="line">        <span class="attr">data</span>: [<span class="number">10</span>, <span class="number">30</span>, <span class="number">20</span>, <span class="number">80</span>, <span class="number">50</span>, <span class="number">9</span>]</span><br><span class="line">    &#125;]</span><br><span class="line">&#125;;</span><br><span class="line"><span class="comment">//3、使用刚指定的配置项和数据显示图表。</span></span><br><span class="line">myChart.<span class="title function_">setOption</span>(option);</span><br></pre></td></tr></table></figure>
+
+<p>这样就可以在页面初始化的时候看到图表和图表上呈现数据了。</p>
+<h2 id="5、ECharts集合SpringBoot和Ajax"><a href="#5、ECharts集合SpringBoot和Ajax" class="headerlink" title="5、ECharts集合SpringBoot和Ajax"></a>5、ECharts集合SpringBoot和Ajax</h2><p>因为大多数时候数据肯定不会是定死的，所以我们肯定需要从后端加载数据</p>
+<h3 id="5-1-后端Controller模拟数据"><a href="#5-1-后端Controller模拟数据" class="headerlink" title="5.1 后端Controller模拟数据"></a>5.1 后端Controller模拟数据</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Controller</span></span><br><span class="line"><span class="meta">@RequestMapping(&quot;/test&quot;)</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">TestController</span> &#123;</span><br><span class="line">    <span class="meta">@RequestMapping(&quot;/data&quot;)</span></span><br><span class="line">    <span class="meta">@ResponseBody</span></span><br><span class="line">    <span class="keyword">public</span> Map <span class="title function_">data</span><span class="params">(<span class="meta">@RequestParam(&quot;id&quot;)</span><span class="type">int</span> id)</span>&#123;</span><br><span class="line">        <span class="comment">//衬衫数量</span></span><br><span class="line">        <span class="type">int</span> shirtNumber=<span class="number">0</span>;</span><br><span class="line">        <span class="comment">//羊毛衫数量</span></span><br><span class="line">        <span class="type">int</span> woolSweaterNumber=<span class="number">0</span>;</span><br><span class="line">        <span class="comment">//雪纺衫数量</span></span><br><span class="line">        <span class="type">int</span> chiffonShirtNumber=<span class="number">0</span>;</span><br><span class="line">        <span class="comment">//裤子数量</span></span><br><span class="line">        <span class="type">int</span> pantsNumber=<span class="number">0</span>;</span><br><span class="line">        <span class="comment">//高跟鞋数量</span></span><br><span class="line">        <span class="type">int</span> highHeelsNumber=<span class="number">0</span>;</span><br><span class="line">        <span class="comment">//袜子数量</span></span><br><span class="line">        <span class="type">int</span> sockNumber=<span class="number">0</span>;</span><br><span class="line">        <span class="keyword">if</span> (id==<span class="number">1</span>)&#123;</span><br><span class="line">            shirtNumber=<span class="number">20</span>;</span><br><span class="line">            woolSweaterNumber=<span class="number">30</span>;</span><br><span class="line">            chiffonShirtNumber=<span class="number">8</span>;</span><br><span class="line">            pantsNumber=<span class="number">80</span>;</span><br><span class="line">            highHeelsNumber=<span class="number">9</span>;</span><br><span class="line">            sockNumber=<span class="number">10</span>;</span><br><span class="line">        &#125;<span class="keyword">else</span> <span class="keyword">if</span> (id==<span class="number">2</span>)&#123;</span><br><span class="line">            shirtNumber=<span class="number">2</span>;</span><br><span class="line">            woolSweaterNumber=<span class="number">3</span>;</span><br><span class="line">            chiffonShirtNumber=<span class="number">8</span>;</span><br><span class="line">            pantsNumber=<span class="number">8</span>;</span><br><span class="line">            highHeelsNumber=<span class="number">9</span>;</span><br><span class="line">            sockNumber=<span class="number">1</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        HashMap&lt;String, Integer&gt; numberMap = <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;&gt;();</span><br><span class="line">        numberMap.put(<span class="string">&quot;shirtNumber&quot;</span>,shirtNumber);</span><br><span class="line">        numberMap.put(<span class="string">&quot;woolSweaterNumber&quot;</span>,woolSweaterNumber);</span><br><span class="line">        numberMap.put(<span class="string">&quot;chiffonShirtNumber&quot;</span>,chiffonShirtNumber);</span><br><span class="line">        numberMap.put(<span class="string">&quot;pantsNumber&quot;</span>,pantsNumber);</span><br><span class="line">        numberMap.put(<span class="string">&quot;highHeelsNumber&quot;</span>,highHeelsNumber);</span><br><span class="line">        numberMap.put(<span class="string">&quot;sockNumber&quot;</span>,sockNumber);</span><br><span class="line">        <span class="keyword">return</span> numberMap;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>发起<code>/test/data</code>这个请求并且携带一个id作为参数，就可以得到key-value的键值对集合来模拟真实的数据。</p>
+<h3 id="5-2-前端利用Ajax发起请求获得数据"><a href="#5-2-前端利用Ajax发起请求获得数据" class="headerlink" title="5.2 前端利用Ajax发起请求获得数据"></a>5.2 前端利用Ajax发起请求获得数据</h3><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//1、通过id获取到main并且用echarts初始化</span></span><br><span class="line">      <span class="keyword">let</span> myChart=echarts.<span class="title function_">init</span>(<span class="variable language_">document</span>.<span class="title function_">getElementById</span>(<span class="string">&#x27;main&#x27;</span>));</span><br><span class="line">      <span class="comment">//开启loading效果</span></span><br><span class="line">      myChart.<span class="title function_">showLoading</span>();</span><br><span class="line">      <span class="comment">//Ajax的post请求</span></span><br><span class="line">      $.<span class="title function_">post</span>(&#123;</span><br><span class="line">          <span class="comment">//向后端发起的请求</span></span><br><span class="line">          <span class="attr">url</span>:<span class="string">&#x27;/test/data&#x27;</span>,</span><br><span class="line">          <span class="comment">//向后端发起的请求并且携带的数据</span></span><br><span class="line">          <span class="attr">data</span>: &#123;</span><br><span class="line">              <span class="attr">id</span>: id</span><br><span class="line">          &#125;,</span><br><span class="line">          <span class="comment">//异步开启</span></span><br><span class="line">          <span class="attr">async</span>:<span class="literal">true</span>,</span><br><span class="line">          <span class="comment">//请求成功的回调函数</span></span><br><span class="line">          <span class="attr">success</span>:<span class="keyword">function</span> (<span class="params">e</span>) &#123;</span><br><span class="line">              myChart.<span class="title function_">hideLoading</span>();<span class="comment">//关闭loading效果</span></span><br><span class="line">              <span class="comment">//打印回调里携带的数据</span></span><br><span class="line">              <span class="variable language_">console</span>.<span class="title function_">log</span>(e);</span><br><span class="line">              number.<span class="property">shirtNumber</span>=e.<span class="property">shirtNumber</span>;</span><br><span class="line">              number.<span class="property">woolSweaterNumber</span>=e.<span class="property">woolSweaterNumber</span>;</span><br><span class="line">              number.<span class="property">chiffonShirtNumber</span>=e.<span class="property">chiffonShirtNumber</span>;</span><br><span class="line">              number.<span class="property">pantsNumber</span>=e.<span class="property">pantsNumber</span>;</span><br><span class="line">              number.<span class="property">highHeelsNumber</span>=e.<span class="property">highHeelsNumber</span>;</span><br><span class="line">              number.<span class="property">sockNumber</span>=e.<span class="property">sockNumber</span>;</span><br><span class="line">              <span class="comment">//2、指定图表的配置项和数据</span></span><br><span class="line">              <span class="keyword">let</span> option = &#123;</span><br><span class="line">                  <span class="comment">//标题</span></span><br><span class="line">                  <span class="attr">title</span>: &#123;</span><br><span class="line">                      <span class="attr">text</span>: <span class="string">&#x27;ECharts 入门示例&#x27;</span></span><br><span class="line">                  &#125;,</span><br><span class="line">                  <span class="comment">//配置信息</span></span><br><span class="line">                  <span class="attr">tooltip</span>: &#123;&#125;,</span><br><span class="line">                  <span class="attr">legend</span>: &#123;</span><br><span class="line">                      <span class="attr">data</span>:[<span class="string">&#x27;销量&#x27;</span>]</span><br><span class="line">                  &#125;,</span><br><span class="line">                  <span class="attr">xAxis</span>: &#123;</span><br><span class="line">                      <span class="attr">data</span>: [<span class="string">&quot;衬衫&quot;</span>,<span class="string">&quot;羊毛衫&quot;</span>,<span class="string">&quot;雪纺衫&quot;</span>,<span class="string">&quot;裤子&quot;</span>,<span class="string">&quot;高跟鞋&quot;</span>,<span class="string">&quot;袜子&quot;</span>]</span><br><span class="line">                  &#125;,</span><br><span class="line">                  <span class="attr">yAxis</span>: &#123;&#125;,</span><br><span class="line">                  <span class="attr">series</span>: [&#123;</span><br><span class="line">                      <span class="attr">name</span>: <span class="string">&#x27;销量&#x27;</span>,</span><br><span class="line">                      <span class="attr">type</span>: <span class="string">&#x27;bar&#x27;</span>,</span><br><span class="line">                      <span class="attr">data</span>: [number.<span class="property">shirtNumber</span>, number.<span class="property">woolSweaterNumber</span>, number.<span class="property">chiffonShirtNumber</span>, number.<span class="property">pantsNumber</span>, number.<span class="property">highHeelsNumber</span>, number.<span class="property">sockNumber</span>]</span><br><span class="line">                  &#125;]</span><br><span class="line">              &#125;;</span><br><span class="line">              <span class="comment">//3、使用刚指定的配置项和数据显示图表。</span></span><br><span class="line">              myChart.<span class="title function_">setOption</span>(option);</span><br><span class="line">          &#125;,</span><br><span class="line">          <span class="comment">//请求失败的回调函数</span></span><br><span class="line">          <span class="attr">error</span>:<span class="keyword">function</span> (<span class="params">e</span>) &#123;</span><br><span class="line">              <span class="variable language_">console</span>.<span class="title function_">log</span>(e);</span><br><span class="line">          &#125;</span><br><span class="line">      &#125;);</span><br></pre></td></tr></table></figure>
+
+<p>所以数据就会在Ajax发起请求并且成功获取到数据的时候赋给图表里的data。因为ECharts自带loading动画的效果，所以在发起请求的时候使用<code>myChart.showLoading()</code>打开开启loading效果，在请求的成功的回调函数里使用<code>myCharts.hideLoading()</code>关闭loading效果。</p>
+<h3 id="5-3-汇总"><a href="#5-3-汇总" class="headerlink" title="5.3 汇总"></a>5.3 汇总</h3><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;!DOCTYPE <span class="keyword">html</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">html</span> <span class="attr">xmlns:th</span>=<span class="string">&quot;http://www.thymeleaf.org&quot;</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">head</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">meta</span> <span class="attr">charset</span>=<span class="string">&quot;UTF-8&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">title</span>&gt;</span>ECharts演示<span class="tag">&lt;/<span class="name">title</span>&gt;</span></span><br><span class="line">    <span class="comment">&lt;!--引入ECharts.js--&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">script</span> <span class="attr">th:src</span>=<span class="string">&quot;@&#123;/js/echarts.js&#125;&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line">    <span class="comment">&lt;!--引入jQuery.js--&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">script</span> <span class="attr">th:src</span>=<span class="string">&quot;@&#123;/js/jquery-3.5.1.js&#125;&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">head</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">body</span>&gt;</span></span><br><span class="line"><span class="comment">&lt;!--为ECharts准备一个id为main，宽高都为500px的盒子--&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">div</span> <span class="attr">id</span>=<span class="string">&quot;main&quot;</span> <span class="attr">style</span>=<span class="string">&quot;width: 500px;height: 500px;&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">script</span> <span class="attr">type</span>=<span class="string">&quot;text/javascript&quot;</span>&gt;</span><span class="language-javascript"></span></span><br><span class="line"><span class="language-javascript"></span></span><br><span class="line"><span class="language-javascript">    <span class="comment">//函数：给销量图上设置销量数据（异步加载）</span></span></span><br><span class="line"><span class="language-javascript">    <span class="keyword">function</span> <span class="title function_">setNumber</span>(<span class="params">number,id</span>)&#123;</span></span><br><span class="line"><span class="language-javascript">        <span class="comment">//1、通过id获取到main并且用echarts初始化</span></span></span><br><span class="line"><span class="language-javascript">        <span class="keyword">let</span> myChart=echarts.<span class="title function_">init</span>(<span class="variable language_">document</span>.<span class="title function_">getElementById</span>(<span class="string">&#x27;main&#x27;</span>));</span></span><br><span class="line"><span class="language-javascript">        <span class="comment">//开启loading效果</span></span></span><br><span class="line"><span class="language-javascript">        myChart.<span class="title function_">showLoading</span>();</span></span><br><span class="line"><span class="language-javascript">        <span class="comment">//Ajax的post请求</span></span></span><br><span class="line"><span class="language-javascript">        $.<span class="title function_">post</span>(&#123;</span></span><br><span class="line"><span class="language-javascript">            <span class="comment">//向后端发起的请求</span></span></span><br><span class="line"><span class="language-javascript">            <span class="attr">url</span>:<span class="string">&#x27;/test/data&#x27;</span>,</span></span><br><span class="line"><span class="language-javascript">            <span class="comment">//向后端发起的请求并且携带的数据</span></span></span><br><span class="line"><span class="language-javascript">            <span class="attr">data</span>: &#123;</span></span><br><span class="line"><span class="language-javascript">                <span class="attr">id</span>: id</span></span><br><span class="line"><span class="language-javascript">            &#125;,</span></span><br><span class="line"><span class="language-javascript">            <span class="comment">//异步开启</span></span></span><br><span class="line"><span class="language-javascript">            <span class="attr">async</span>:<span class="literal">true</span>,</span></span><br><span class="line"><span class="language-javascript">            <span class="comment">//请求成功的回调函数</span></span></span><br><span class="line"><span class="language-javascript">            <span class="attr">success</span>:<span class="keyword">function</span> (<span class="params">e</span>) &#123;</span></span><br><span class="line"><span class="language-javascript">                myChart.<span class="title function_">hideLoading</span>();<span class="comment">//关闭loading效果</span></span></span><br><span class="line"><span class="language-javascript">                <span class="comment">//打印回调里携带的数据</span></span></span><br><span class="line"><span class="language-javascript">                <span class="variable language_">console</span>.<span class="title function_">log</span>(e);</span></span><br><span class="line"><span class="language-javascript">                number.<span class="property">shirtNumber</span>=e.<span class="property">shirtNumber</span>;</span></span><br><span class="line"><span class="language-javascript">                number.<span class="property">woolSweaterNumber</span>=e.<span class="property">woolSweaterNumber</span>;</span></span><br><span class="line"><span class="language-javascript">                number.<span class="property">chiffonShirtNumber</span>=e.<span class="property">chiffonShirtNumber</span>;</span></span><br><span class="line"><span class="language-javascript">                number.<span class="property">pantsNumber</span>=e.<span class="property">pantsNumber</span>;</span></span><br><span class="line"><span class="language-javascript">                number.<span class="property">highHeelsNumber</span>=e.<span class="property">highHeelsNumber</span>;</span></span><br><span class="line"><span class="language-javascript">                number.<span class="property">sockNumber</span>=e.<span class="property">sockNumber</span>;</span></span><br><span class="line"><span class="language-javascript">                <span class="comment">//2、指定图表的配置项和数据</span></span></span><br><span class="line"><span class="language-javascript">                <span class="keyword">let</span> option = &#123;</span></span><br><span class="line"><span class="language-javascript">                    <span class="comment">//标题</span></span></span><br><span class="line"><span class="language-javascript">                    <span class="attr">title</span>: &#123;</span></span><br><span class="line"><span class="language-javascript">                        <span class="attr">text</span>: <span class="string">&#x27;ECharts 入门示例&#x27;</span></span></span><br><span class="line"><span class="language-javascript">                    &#125;,</span></span><br><span class="line"><span class="language-javascript">                    <span class="comment">//配置信息</span></span></span><br><span class="line"><span class="language-javascript">                    <span class="attr">tooltip</span>: &#123;&#125;,</span></span><br><span class="line"><span class="language-javascript">                    <span class="attr">legend</span>: &#123;</span></span><br><span class="line"><span class="language-javascript">                        <span class="attr">data</span>:[<span class="string">&#x27;销量&#x27;</span>]</span></span><br><span class="line"><span class="language-javascript">                    &#125;,</span></span><br><span class="line"><span class="language-javascript">                    <span class="attr">xAxis</span>: &#123;</span></span><br><span class="line"><span class="language-javascript">                        <span class="attr">data</span>: [<span class="string">&quot;衬衫&quot;</span>,<span class="string">&quot;羊毛衫&quot;</span>,<span class="string">&quot;雪纺衫&quot;</span>,<span class="string">&quot;裤子&quot;</span>,<span class="string">&quot;高跟鞋&quot;</span>,<span class="string">&quot;袜子&quot;</span>]</span></span><br><span class="line"><span class="language-javascript">                    &#125;,</span></span><br><span class="line"><span class="language-javascript">                    <span class="attr">yAxis</span>: &#123;&#125;,</span></span><br><span class="line"><span class="language-javascript">                    <span class="attr">series</span>: [&#123;</span></span><br><span class="line"><span class="language-javascript">                        <span class="attr">name</span>: <span class="string">&#x27;销量&#x27;</span>,</span></span><br><span class="line"><span class="language-javascript">                        <span class="attr">type</span>: <span class="string">&#x27;bar&#x27;</span>,</span></span><br><span class="line"><span class="language-javascript">                        <span class="attr">data</span>: [number.<span class="property">shirtNumber</span>, number.<span class="property">woolSweaterNumber</span>, number.<span class="property">chiffonShirtNumber</span>, number.<span class="property">pantsNumber</span>, number.<span class="property">highHeelsNumber</span>, number.<span class="property">sockNumber</span>]</span></span><br><span class="line"><span class="language-javascript">                    &#125;]</span></span><br><span class="line"><span class="language-javascript">                &#125;;</span></span><br><span class="line"><span class="language-javascript">                <span class="comment">//3、使用刚指定的配置项和数据显示图表。</span></span></span><br><span class="line"><span class="language-javascript">                myChart.<span class="title function_">setOption</span>(option);</span></span><br><span class="line"><span class="language-javascript">            &#125;,</span></span><br><span class="line"><span class="language-javascript">            <span class="comment">//请求失败的回调函数</span></span></span><br><span class="line"><span class="language-javascript">            <span class="attr">error</span>:<span class="keyword">function</span> (<span class="params">e</span>) &#123;</span></span><br><span class="line"><span class="language-javascript">                <span class="variable language_">console</span>.<span class="title function_">log</span>(e);</span></span><br><span class="line"><span class="language-javascript">            &#125;</span></span><br><span class="line"><span class="language-javascript">        &#125;);</span></span><br><span class="line"><span class="language-javascript">    &#125;;</span></span><br><span class="line"><span class="language-javascript"></span></span><br><span class="line"><span class="language-javascript">    <span class="comment">//全局加载</span></span></span><br><span class="line"><span class="language-javascript">    $(<span class="keyword">function</span> (<span class="params"></span>) &#123;</span></span><br><span class="line"><span class="language-javascript">        <span class="comment">//销量对象</span></span></span><br><span class="line"><span class="language-javascript">        <span class="keyword">let</span> number=&#123;</span></span><br><span class="line"><span class="language-javascript">            <span class="comment">//衬衫数量</span></span></span><br><span class="line"><span class="language-javascript">            <span class="attr">shirtNumber</span>:<span class="number">0</span>,</span></span><br><span class="line"><span class="language-javascript">            <span class="comment">//羊毛衫数量</span></span></span><br><span class="line"><span class="language-javascript">            <span class="attr">woolSweaterNumber</span>:<span class="number">0</span>,</span></span><br><span class="line"><span class="language-javascript">            <span class="comment">//雪纺衫数量</span></span></span><br><span class="line"><span class="language-javascript">            <span class="attr">chiffonShirtNumber</span>:<span class="number">0</span>,</span></span><br><span class="line"><span class="language-javascript">            <span class="comment">//裤子数量</span></span></span><br><span class="line"><span class="language-javascript">            <span class="attr">pantsNumber</span>:<span class="number">0</span>,</span></span><br><span class="line"><span class="language-javascript">            <span class="comment">//高跟鞋数量</span></span></span><br><span class="line"><span class="language-javascript">            <span class="attr">highHeelsNumber</span>:<span class="number">0</span>,</span></span><br><span class="line"><span class="language-javascript">            <span class="comment">//袜子数量</span></span></span><br><span class="line"><span class="language-javascript">            <span class="attr">sockNumber</span>:<span class="number">0</span></span></span><br><span class="line"><span class="language-javascript">        &#125;;</span></span><br><span class="line"><span class="language-javascript"></span></span><br><span class="line"><span class="language-javascript">        <span class="keyword">let</span> id=<span class="number">1</span>;</span></span><br><span class="line"><span class="language-javascript"></span></span><br><span class="line"><span class="language-javascript">        <span class="variable language_">console</span>.<span class="title function_">log</span>(number);</span></span><br><span class="line"><span class="language-javascript">        <span class="comment">//设置销量图</span></span></span><br><span class="line"><span class="language-javascript">        <span class="title function_">setNumber</span>(number,id);</span></span><br><span class="line"><span class="language-javascript"></span></span><br><span class="line"><span class="language-javascript">    &#125;);</span></span><br><span class="line"><span class="language-javascript"></span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">body</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://fangaoxs.github.io/2020/08/28/front-end/ECharts/echarts%E6%95%B4%E5%90%88SpringBoot/" data-id="clsrb81ur000ucak6eckuhjrt" data-title="ECharts简单上手使用并且整合SpringBoot" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/echarts/" rel="tag">echarts</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/javascript/" rel="tag">javascript</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2020/10/19/front-end/vue/webpack/webpack/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">前一篇</strong>
+      <div class="article-nav-title">
+        
+          webpack
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2020/08/19/back-end/Java/Java%E5%A4%9A%E7%BA%BF%E7%A8%8B/Java%E5%A4%9A%E7%BA%BF%E7%A8%8B%E8%BF%9B%E9%98%B6%E7%AE%80%E5%8D%95%E6%A2%B3%E7%90%86/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">后一篇</strong>
+      <div class="article-nav-title">Java多线程进阶简单梳理</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Cookie/" rel="tag">Cookie</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/GRPC/" rel="tag">GRPC</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Golang/" rel="tag">Golang</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JWT/" rel="tag">JWT</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java/" rel="tag">Java</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OIDC/" rel="tag">OIDC</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Spring/" rel="tag">Spring</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/devops/" rel="tag">devops</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/echarts/" rel="tag">echarts</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/http/" rel="tag">http</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/javascript/" rel="tag">javascript</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kubernates/" rel="tag">kubernates</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/python/" rel="tag">python</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/redis/" rel="tag">redis</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/uni-app/" rel="tag">uni-app</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vue/" rel="tag">vue</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/webpack/" rel="tag">webpack</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/websocket/" rel="tag">websocket</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag">数据库</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" rel="tag">数据结构</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/" rel="tag">网络安全</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" rel="tag">计算机网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" rel="tag">设计模式</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/Cookie/" style="font-size: 10px;">Cookie</a> <a href="/tags/GRPC/" style="font-size: 13.33px;">GRPC</a> <a href="/tags/Golang/" style="font-size: 18.33px;">Golang</a> <a href="/tags/JWT/" style="font-size: 10px;">JWT</a> <a href="/tags/Java/" style="font-size: 20px;">Java</a> <a href="/tags/OIDC/" style="font-size: 13.33px;">OIDC</a> <a href="/tags/Spring/" style="font-size: 13.33px;">Spring</a> <a href="/tags/devops/" style="font-size: 10px;">devops</a> <a href="/tags/docker/" style="font-size: 11.67px;">docker</a> <a href="/tags/echarts/" style="font-size: 10px;">echarts</a> <a href="/tags/http/" style="font-size: 11.67px;">http</a> <a href="/tags/java/" style="font-size: 10px;">java</a> <a href="/tags/javascript/" style="font-size: 15px;">javascript</a> <a href="/tags/kubernates/" style="font-size: 10px;">kubernates</a> <a href="/tags/python/" style="font-size: 10px;">python</a> <a href="/tags/redis/" style="font-size: 11.67px;">redis</a> <a href="/tags/uni-app/" style="font-size: 10px;">uni-app</a> <a href="/tags/vue/" style="font-size: 16.67px;">vue</a> <a href="/tags/webpack/" style="font-size: 10px;">webpack</a> <a href="/tags/websocket/" style="font-size: 10px;">websocket</a> <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" style="font-size: 11.67px;">数据库</a> <a href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" style="font-size: 11.67px;">数据结构</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/" style="font-size: 11.67px;">网络安全</a> <a href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" style="font-size: 10px;">计算机网络</a> <a href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" style="font-size: 11.67px;">设计模式</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/01/">一月 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/11/">十一月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/07/">七月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/06/">六月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/02/">二月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">一月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/12/">十二月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/10/">十月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/09/">九月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/08/">八月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/07/">七月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/05/">五月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/04/">四月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/12/">十二月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/11/">十一月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/10/">十月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/08/">八月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/06/">六月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/03/">三月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/12/">十二月 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/11/">十一月 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/10/">十月 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/08/">八月 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/07/">七月 2020</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2024/01/31/back-end/docker/dockerfile/">dockerfile</a>
+          </li>
+        
+          <li>
+            <a href="/2023/11/07/network/caddy/http%E5%8F%8D%E5%90%91%E4%BB%A3%E7%90%86/">利用Caddy实现http反向代理</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/25/network/OIDC/%E7%BB%93%E5%90%88OIDC%E5%92%8CCookie%E5%AE%9E%E7%8E%B0SSO/">结合OIDC和Cookie实现SSO</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/24/back-end/Java/Java%E5%AE%B9%E5%99%A8/%E9%9B%86%E5%90%88/">Java集合</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/19/back-end/DevOps/CI_CD/">CI_CD</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2024 FanGaoXS<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

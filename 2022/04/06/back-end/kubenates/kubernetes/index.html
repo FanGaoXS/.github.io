@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>kubernates的学习 | FanGaoXS&#39;s blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="本篇学习笔记总结自https:&#x2F;&#x2F;k8s.easydoc.net&#x2F;，https:&#x2F;&#x2F;www.bilibili.com&#x2F;video&#x2F;BV1Tg411P7EB&#x2F; 安装k8s集群主节点需要的组件 docker（也可以是其他容器运行时） kubectl 集群命令行交互工具 kubeadm 集群初始化工具  工作节点需要的组件 docker（也可以是其他容器运行时） kubelet 管理 Pod 和容器，确">
+<meta property="og:type" content="article">
+<meta property="og:title" content="kubernates的学习">
+<meta property="og:url" content="https://fangaoxs.github.io/2022/04/06/back-end/kubenates/kubernetes/index.html">
+<meta property="og:site_name" content="FanGaoXS&#39;s blog">
+<meta property="og:description" content="本篇学习笔记总结自https:&#x2F;&#x2F;k8s.easydoc.net&#x2F;，https:&#x2F;&#x2F;www.bilibili.com&#x2F;video&#x2F;BV1Tg411P7EB&#x2F; 安装k8s集群主节点需要的组件 docker（也可以是其他容器运行时） kubectl 集群命令行交互工具 kubeadm 集群初始化工具  工作节点需要的组件 docker（也可以是其他容器运行时） kubelet 管理 Pod 和容器，确">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2022-04-06T07:30:39.000Z">
+<meta property="article:modified_time" content="2024-02-18T08:58:56.547Z">
+<meta property="article:author" content="FanGaoXS">
+<meta property="article:tag" content="kubernates">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="FanGaoXS's blog" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">FanGaoXS&#39;s blog</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        
+          <a class="nav-icon" href="/atom.xml" title="RSS 订阅"><span class="fa fa-rss"></span></a>
+        
+        <a class="nav-icon nav-search-btn" title="搜索"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="搜索"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://fangaoxs.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-back-end/kubenates/kubernetes" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2022/04/06/back-end/kubenates/kubernetes/" class="article-date">
+  <time class="dt-published" datetime="2022-04-06T07:30:39.000Z" itemprop="datePublished">2022-04-06</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      kubernates的学习
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>本篇学习笔记总结自<a target="_blank" rel="noopener" href="https://k8s.easydoc.net/%EF%BC%8Chttps://www.bilibili.com/video/BV1Tg411P7EB/">https://k8s.easydoc.net/，https://www.bilibili.com/video/BV1Tg411P7EB/</a></p>
+<h2 id="安装k8s集群"><a href="#安装k8s集群" class="headerlink" title="安装k8s集群"></a>安装k8s集群</h2><h3 id="主节点需要的组件"><a href="#主节点需要的组件" class="headerlink" title="主节点需要的组件"></a>主节点需要的组件</h3><ul>
+<li>docker（也可以是其他容器运行时）</li>
+<li>kubectl 集群命令行交互工具</li>
+<li>kubeadm 集群初始化工具</li>
+</ul>
+<h3 id="工作节点需要的组件"><a href="#工作节点需要的组件" class="headerlink" title="工作节点需要的组件"></a>工作节点需要的组件</h3><ul>
+<li>docker（也可以是其他容器运行时）</li>
+<li>kubelet 管理 Pod 和容器，确保他们健康稳定运行。</li>
+<li>kube-proxy 网络代理，负责网络相关的工作</li>
+</ul>
+<h2 id="部署应用到集群"><a href="#部署应用到集群" class="headerlink" title="部署应用到集群"></a>部署应用到集群</h2><h3 id="使用pod"><a href="#使用pod" class="headerlink" title="使用pod"></a>使用pod</h3><h4 id="快速创建"><a href="#快速创建" class="headerlink" title="快速创建"></a>快速创建</h4><p><code>--image=镜像地址</code></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl run &lt;pod_name&gt; --image==&lt;image_url&gt;</span><br></pre></td></tr></table></figure>
+
+<h4 id="通过yaml文件创建单个pod"><a href="#通过yaml文件创建单个pod" class="headerlink" title="通过yaml文件创建单个pod"></a>通过yaml文件创建单个pod</h4><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Pod</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">	<span class="comment"># pod名称</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">test-k8s</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="comment"># 定义容器，可以多个</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">test-k8s</span> <span class="comment"># 容器名字</span></span><br><span class="line">      <span class="attr">image:</span> <span class="string">ccr.ccs.tencentyun.com/k8s-tutorial/test-k8s:v1</span> <span class="comment"># 镜像</span></span><br></pre></td></tr></table></figure>
+
+<p>然后</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl apply -f &lt;file_path.&lt;yaml&gt;&gt;</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="通过yaml文件创建多个pod（deployment）"><a href="#通过yaml文件创建多个pod（deployment）" class="headerlink" title="通过yaml文件创建多个pod（deployment）"></a>通过yaml文件创建多个pod（deployment）</h4><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Deployment</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="comment"># 部署名字</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">test-k8s</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">replicas:</span> <span class="number">5</span></span><br><span class="line">  <span class="comment"># 用来查找关联的 Pod，所有标签都匹配才行</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">matchLabels:</span></span><br><span class="line">      <span class="attr">app:</span> <span class="string">test-k8s</span></span><br><span class="line">  <span class="comment"># 定义 Pod 相关数据</span></span><br><span class="line">  <span class="attr">template:</span></span><br><span class="line">    <span class="attr">metadata:</span></span><br><span class="line">      <span class="attr">labels:</span></span><br><span class="line">        <span class="attr">app:</span> <span class="string">test-k8s</span></span><br><span class="line">    <span class="attr">spec:</span></span><br><span class="line">      <span class="comment"># 定义容器，可以多个</span></span><br><span class="line">      <span class="attr">containers:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">test-k8s</span> <span class="comment"># 容器名字</span></span><br><span class="line">          <span class="attr">image:</span> <span class="string">ccr.ccs.tencentyun.com/k8s-tutorial/test-k8s:v1</span> <span class="comment"># 镜像</span></span><br></pre></td></tr></table></figure>
+
+<p>然后</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl apply -f &lt;file_path.&lt;yaml&gt;&gt;</span><br></pre></td></tr></table></figure>
+
+<p><strong>称之为development（部署）</strong>，并且可以使用</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl get deployment</span><br></pre></td></tr></table></figure>
+
+<p>查询当前的部署情况</p>
+<blockquote>
+<p><strong>Tips</strong></p>
+<p>运行单个pod的yaml文件的kind为<code>Pod</code>，运行多个pod的yaml文件的kind为<code>Deployment</code></p>
+</blockquote>
+<h3 id="进入pod的bash"><a href="#进入pod的bash" class="headerlink" title="进入pod的bash"></a>进入pod的bash</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl <span class="built_in">exec</span> -it &lt;pod_name&gt; -- bash</span><br></pre></td></tr></table></figure>
+
+<h2 id="资源类型"><a href="#资源类型" class="headerlink" title="资源类型"></a>资源类型</h2><p>常见的资源类型有</p>
+<table>
+<thead>
+<tr>
+<th>类型名称</th>
+<th>描述</th>
+<th>简写</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>pod</td>
+<td></td>
+<td>po</td>
+</tr>
+<tr>
+<td>deployment</td>
+<td></td>
+<td>deploy</td>
+</tr>
+<tr>
+<td>service</td>
+<td></td>
+<td>svc</td>
+</tr>
+<tr>
+<td>statefulset</td>
+<td></td>
+<td>sts</td>
+</tr>
+<tr>
+<td>storage class</td>
+<td></td>
+<td>sc</td>
+</tr>
+<tr>
+<td>presistent volume</td>
+<td></td>
+<td>pv</td>
+</tr>
+<tr>
+<td>presistent volume claim</td>
+<td></td>
+<td>pvc</td>
+</tr>
+<tr>
+<td>config map</td>
+<td></td>
+<td>cm</td>
+</tr>
+<tr>
+<td>sercet</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>name space</td>
+<td></td>
+<td>ns</td>
+</tr>
+</tbody></table>
+<p>可以使用如下命令查看所有资源，资源名称及其简写</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl api-resources </span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="命令"><a href="#命令" class="headerlink" title="命令"></a>命令</h2><h3 id="apply"><a href="#apply" class="headerlink" title="apply"></a>apply</h3><p>运行资源</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">kubectl apply [-f] &lt;file_path&gt;</span><br><span class="line">										<span class="comment"># -f：读取文件，然后运行</span></span><br></pre></td></tr></table></figure>
+
+<p>示例1，启用service资源：</p>
+<p>service.yaml</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Service</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">test-k8s</span></span><br><span class="line"></span><br><span class="line"><span class="string">...</span></span><br></pre></td></tr></table></figure>
+
+<p>运行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl apply -f service.yaml  <span class="comment"># 读取该文件，然后运行资源</span></span><br></pre></td></tr></table></figure>
+
+
+
+<p>示例2：启动pod资源：</p>
+<p>pod.yaml</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Pod</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">	<span class="comment"># pod名称</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">test-k8s</span></span><br><span class="line"></span><br><span class="line"><span class="string">...</span></span><br></pre></td></tr></table></figure>
+
+<p>运行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl apply -f pod.yaml </span><br></pre></td></tr></table></figure>
+
+
+
+<p>同理，还可以运行更多资源，如deployment、statefulset等，具体资源类型由文件的kind决定。</p>
+<h3 id="get"><a href="#get" class="headerlink" title="get"></a>get</h3><p>可以列出该类型的所有资源</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">kubectl get [资源类型] [-o wide|name|yaml|json]</span><br><span class="line">											<span class="comment"># all：列出所有资源，包括pod、deployment、service等</span></span><br><span class="line">											<span class="comment"># -o wide：详细信息</span></span><br><span class="line">											<span class="comment"># -o name：仅输出资源名称</span></span><br><span class="line">											<span class="comment"># -o yaml：YAML格式化输出</span></span><br><span class="line">											<span class="comment"># -o json：JSON格式化输出</span></span><br></pre></td></tr></table></figure>
+
+<p>示例：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">kubectl get pod						<span class="comment"># 列出所有pod</span></span><br><span class="line">kubectl get pod	-o wide		<span class="comment"># 以详细的方式列出所有pod</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="describe"><a href="#describe" class="headerlink" title="describe"></a>describe</h3><p>查看资源的详细描述</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">kubectl describe [资源类型] &lt;name&gt;		<span class="comment"># 第一种写法：资源类型（如pod、svc）+空格+具体名称</span></span><br><span class="line">kubectl describe [资源类型]/&lt;name&gt; 		<span class="comment"># 第二种写法：资源类型+/+具体名称</span></span><br><span class="line">kubectl describe [资源类型]						<span class="comment"># 第三种写法：资源类型，不加具体名称。查看所有该资源的详细描述</span></span><br></pre></td></tr></table></figure>
+
+<p>示例：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">kubectl describe pod test-pod</span><br><span class="line">kubectl describe pod/test-pod</span><br><span class="line">kubectl describe pod</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="logs"><a href="#logs" class="headerlink" title="logs"></a>logs</h3><p>查看资源的日志</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">kubectl logs [资源类型]/&lt;name&gt;	[-f] [-<span class="built_in">tail</span> 100]			<span class="comment"># 只能这种写法</span></span><br><span class="line">																		<span class="comment"># -f：循环读取，即可以读取不断改变的log</span></span><br><span class="line">																		<span class="comment"># -tail：读取最尾部xx行</span></span><br></pre></td></tr></table></figure>
+
+<p>示例：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl logs pod/test-k8s</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="delete"><a href="#delete" class="headerlink" title="delete"></a>delete</h3><p>删除资源</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">kubectl delete [资源类型] &lt;name&gt;</span><br><span class="line">kubectl delete [资源类型]/&lt;name&gt;</span><br></pre></td></tr></table></figure>
+
+<p>示例：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl delete pod/test-k8s</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="rollout"><a href="#rollout" class="headerlink" title="rollout"></a>rollout</h3><p>查看资源的变更历史history</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">kubectl rollout <span class="built_in">history</span> [资源类型] &lt;name&gt;</span><br><span class="line">kubectl rollout <span class="built_in">history</span> [资源类型]/&lt;name&gt;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>重新部署restart（仅适用于deployment）</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl rollout restart deployment/&lt;name&gt;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>回退到上一版本undo</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl rollout undo deployment/&lt;name&gt;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>回退到指定版本</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl rollout undo deployment/&lt;name&gt; --to-revision=2</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="port-forward"><a href="#port-forward" class="headerlink" title="port-forward"></a>port-forward</h3><p>将资源转发到本地</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">kubectl port-forward [资源类型] &lt;name&gt; [local_port]:[remote_port]</span><br><span class="line">kubectl port-forward [资源类型]/&lt;name&gt; [local_port]:[remote_port]</span><br></pre></td></tr></table></figure>
+
+<p>示例：</p>
+<p>将资源的8090的端口转发到本地的8080</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl port-forward svc/test-k8s 8080:8090</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="其他命令"><a href="#其他命令" class="headerlink" title="其他命令"></a>其他命令</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 命令修改镜像，--record 表示把这个命令记录到操作历史中</span></span><br><span class="line">kubectl <span class="built_in">set</span> image deployment test-k8s test-k8s=ccr.ccs.tencentyun.com/k8s-tutorial/test-k8s:v2-with-error --record</span><br><span class="line"><span class="comment"># 暂停运行，暂停后，对 deployment 的修改不会立刻生效，恢复后才应用设置</span></span><br><span class="line">kubectl rollout pause deployment test-k8s</span><br><span class="line"><span class="comment"># 恢复</span></span><br><span class="line">kubectl rollout resume deployment test-k8s</span><br><span class="line"><span class="comment"># 重启</span></span><br><span class="line">kubectl rollout restart deployment test-k8s</span><br><span class="line"><span class="comment"># 删除全部资源</span></span><br><span class="line">kubectl delete all --all</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="service"><a href="#service" class="headerlink" title="service"></a>service</h2><h3 id="特性"><a href="#特性" class="headerlink" title="特性"></a>特性</h3><ul>
+<li>Service 通过 label 关联对应的 Pod</li>
+<li>Servcie 生命周期不跟 Pod 绑定，不会因为 Pod 重创改变 IP</li>
+<li>提供了负载均衡功能，自动转发流量到不同 Pod</li>
+<li>可对集群外部提供访问端口</li>
+<li>集群内部可通过服务名字访问</li>
+</ul>
+<blockquote>
+<p><strong>Tips</strong></p>
+<p>service一共有四种type：</p>
+<h5 id="ClusterIP"><a href="#ClusterIP" class="headerlink" title="ClusterIP"></a>ClusterIP</h5><p>默认的，仅在集群内可用</p>
+<h5 id="NodePort"><a href="#NodePort" class="headerlink" title="NodePort"></a>NodePort</h5><p>暴露端口到节点，提供了集群外部访问的入口<br>端口范围固定 30000 ~ 32767</p>
+<h5 id="LoadBalancer"><a href="#LoadBalancer" class="headerlink" title="LoadBalancer"></a>LoadBalancer</h5><p>需要负载均衡器（通常都需要云服务商提供，裸机可以安装 <a target="_blank" rel="noopener" href="https://metallb.universe.tf/">METALLB</a> 测试）<br>会额外生成一个 IP 对外服务<br>K8S 支持的负载均衡器：<a target="_blank" rel="noopener" href="https://kubernetes.io/zh/docs/concepts/services-networking/service/#internal-load-balancer">负载均衡器</a></p>
+<h5 id="Headless"><a href="#Headless" class="headerlink" title="Headless"></a>Headless</h5><p>适合数据库<br>clusterIp 设置为 None 就变成 Headless 了，不会再分配 IP</p>
+</blockquote>
+<h3 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h3><p>service.yaml:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: Service</span><br><span class="line">metadata:</span><br><span class="line">  name: test-k8s</span><br><span class="line">spec:</span><br><span class="line">  selector:</span><br><span class="line">    app: test-k8s</span><br><span class="line">  <span class="comment"># 默认 ClusterIP 集群内可访问，NodePort 节点可访问，LoadBalancer 负载均衡模式（需要负载均衡器才可用）</span></span><br><span class="line">  <span class="built_in">type</span>: ClusterIP</span><br><span class="line">  ports:</span><br><span class="line">    - port: 8080        <span class="comment"># 本 Service 的端口</span></span><br><span class="line">      targetPort: 8080  <span class="comment"># 容器端口</span></span><br><span class="line"><span class="comment">#      nodePort: 31000   # 节点端口，范围固定 30000 ~ 32767</span></span><br></pre></td></tr></table></figure>
+
+<p>运行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl apply -f &lt;service_path&gt;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="statefulset"><a href="#statefulset" class="headerlink" title="statefulset"></a>statefulset</h2><p>StatefulSet 是用来管理有状态的应用，例如数据库。StatefulSet 会固定每个 Pod 的名字</p>
+<h3 id="特性-1"><a href="#特性-1" class="headerlink" title="特性"></a>特性</h3><ul>
+<li>Service 的 <code>ClusterIP</code> 是空的，Pod 名字也是固定的。</li>
+<li>Pod 创建和销毁是有序的，创建是顺序的，销毁是逆序的。</li>
+<li>Pod 重建不会改变名字，除了IP，所以不要用IP直连</li>
+</ul>
+<p>访问时，如果直接使用 Service 名字连接，会随机转发请求<br>要连接指定 Pod，可以这样<code>pod-name.service-name</code></p>
+<h3 id="示例-1"><a href="#示例-1" class="headerlink" title="示例"></a>示例</h3><p>mongo.yaml</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># StatefulSet: mongodb</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">StatefulSet</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">mongodb</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">replicas:</span> <span class="number">3</span></span><br><span class="line">  <span class="attr">serviceName:</span> <span class="string">mongodb</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">matchLabels:</span></span><br><span class="line">      <span class="attr">app:</span> <span class="string">mongodb</span></span><br><span class="line">  <span class="attr">template:</span></span><br><span class="line">    <span class="attr">metadata:</span></span><br><span class="line">      <span class="attr">labels:</span></span><br><span class="line">        <span class="attr">app:</span> <span class="string">mongodb</span></span><br><span class="line">    <span class="attr">spec:</span></span><br><span class="line">      <span class="attr">containers:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">mongo</span></span><br><span class="line">          <span class="attr">image:</span> <span class="string">mongo:4.4</span></span><br><span class="line">          <span class="comment"># IfNotPresent 仅本地没有镜像时才远程拉，Always 永远都是从远程拉，Never 永远只用本地镜像，本地没有则报错</span></span><br><span class="line">          <span class="attr">imagePullPolicy:</span> <span class="string">IfNotPresent</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="comment"># Service: mongodb</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Service</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">mongodb</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">app:</span> <span class="string">mongodb</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">ClusterIP</span></span><br><span class="line">  <span class="comment"># HeadLess</span></span><br><span class="line">  <span class="attr">clusterIP:</span> <span class="string">None</span></span><br><span class="line">  <span class="attr">ports:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">port:</span> <span class="number">27017</span></span><br><span class="line">      <span class="attr">targetPort:</span> <span class="number">27017</span></span><br></pre></td></tr></table></figure>
+
+<p>运行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl apply -f &lt;file_path&gt;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="pod、deployment、service、statefulset四者的关系"><a href="#pod、deployment、service、statefulset四者的关系" class="headerlink" title="pod、deployment、service、statefulset四者的关系"></a>pod、deployment、service、statefulset四者的关系</h2><p>这四者在yaml文件中通过指定不同的<code>kind</code>来区分，pod是deployment和statefulset运行的最小单元，deployment和statefulset可以通过指定<code>spec.replicas</code>来扩展多个pod，deployment启动的pod默认的名称为<code>deploy名称+无序字符</code>，而statefulset启动的pod的默认名称为<code>statefulset名称+有序数字</code>，如</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ kubectl get pod</span><br><span class="line">NAME                        READY   STATUS    RESTARTS      AGE</span><br><span class="line">mongodb-0                   1/1     Running   1 (20h ago)   3d17h</span><br><span class="line">test-k8s-75bd6fbdbc-72rxc   1/1     Running   1 (20h ago)   3d17h</span><br><span class="line">test-k8s-75bd6fbdbc-ns5h2   1/1     Running   1 (20h ago)   3d17h</span><br></pre></td></tr></table></figure>
+
+<p>启动service并不会创建pod，只是service会通过label来关联pod或者deploy或者statefulset，可以随之进行端口转发，供外部访问。由于service是通过label关联pod的，所以pod销毁service也不会销毁的。</p>
+<h2 id="数据持久化"><a href="#数据持久化" class="headerlink" title="数据持久化"></a>数据持久化</h2><p>k8s集群并不会为你处理数据的存储，我们可以为数据库挂载一个磁盘来确保数据的持久化。可以选择云存储、本地磁盘、NFS。</p>
+<ul>
+<li>本地磁盘：可以挂载某个节点上的目录，但是这需要限定 pod 在这个节点上运行</li>
+<li>云存储：不限定节点，不受集群影响，安全稳定；需要云服务商提供，裸机集群是没有的。</li>
+<li>NFS：不限定节点，不受集群影响</li>
+</ul>
+<h3 id="hostPath"><a href="#hostPath" class="headerlink" title="hostPath"></a>hostPath</h3><p>把节点上的一个目录挂载到 Pod，但是已经不推荐使用了，<a target="_blank" rel="noopener" href="https://kubernetes.io/zh/docs/concepts/storage/volumes/#hostpath">文档</a><br>配置方式简单，需要手动指定 Pod 跑在某个固定的节点。<br>仅供单节点测试使用；不适用于多节点集群。<br>minikube 提供了 hostPath 存储，<a target="_blank" rel="noopener" href="https://minikube.sigs.k8s.io/docs/handbook/persistent_volumes/">文档</a></p>
+<p>将容器卷的挂载路径（<code>volumeMounts</code>）指向节点的卷路径（<code>volumes</code>）</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">StatefulSet</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">mongodb</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">replicas:</span> <span class="number">1</span></span><br><span class="line">  <span class="attr">serviceName:</span> <span class="string">mongodb</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">matchLabels:</span></span><br><span class="line">      <span class="attr">app:</span> <span class="string">mongodb</span></span><br><span class="line">  <span class="attr">template:</span></span><br><span class="line">    <span class="attr">metadata:</span></span><br><span class="line">      <span class="attr">labels:</span></span><br><span class="line">        <span class="attr">app:</span> <span class="string">mongodb</span></span><br><span class="line">    <span class="attr">spec:</span></span><br><span class="line">      <span class="attr">containers:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">mongo</span></span><br><span class="line">          <span class="attr">image:</span> <span class="string">mongo:4.4</span></span><br><span class="line">          <span class="comment"># IfNotPresent 仅本地没有镜像时才远程拉，Always 永远都是从远程拉，Never 永远只用本地镜像，本地没有则报错</span></span><br><span class="line">          <span class="attr">imagePullPolicy:</span> <span class="string">IfNotPresent</span></span><br><span class="line">          <span class="attr">volumeMounts:</span></span><br><span class="line">            <span class="bullet">-</span> <span class="attr">mountPath:</span> <span class="string">/data/db</span> <span class="comment"># 容器里面的挂载路径</span></span><br><span class="line">              <span class="attr">name:</span> <span class="string">mongo-data</span>    <span class="comment"># 卷名字，必须跟下面定义的名字一致</span></span><br><span class="line">      <span class="attr">volumes:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">mongo-data</span>              <span class="comment"># 卷名字</span></span><br><span class="line">          <span class="attr">hostPath:</span></span><br><span class="line">            <span class="attr">path:</span> <span class="string">/data/mongo-data</span>      <span class="comment"># 节点上的路径</span></span><br><span class="line">            <span class="attr">type:</span> <span class="string">DirectoryOrCreate</span>     <span class="comment"># 指向一个目录，不存在时自动创建</span></span><br><span class="line"><span class="comment">#        - name: mongo-data</span></span><br><span class="line"><span class="comment">#            persistentVolumeClaim:</span></span><br><span class="line"><span class="comment">#              claimName: mongodata</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Service</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">mongodb</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">app:</span> <span class="string">mongodb</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">ClusterIP</span></span><br><span class="line">  <span class="comment"># HeadLess</span></span><br><span class="line">  <span class="attr">clusterIP:</span> <span class="string">None</span></span><br><span class="line">  <span class="attr">ports:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">port:</span> <span class="number">27017</span></span><br><span class="line">      <span class="attr">protocol:</span> <span class="string">TCP</span></span><br><span class="line">      <span class="attr">targetPort:</span> <span class="number">27017</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="ConfigMap"><a href="#ConfigMap" class="headerlink" title="ConfigMap"></a>ConfigMap</h2><p>yaml文件的kind是<code>ConfigMap</code>，<a target="_blank" rel="noopener" href="https://kubernetes.io/zh/docs/concepts/configuration/configmap/">官方文档</a></p>
+<h3 id="示例-2"><a href="#示例-2" class="headerlink" title="示例"></a>示例</h3><p>configmap.yaml</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ConfigMap</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="comment"># config-map的名称</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">mongo-config</span></span><br><span class="line"></span><br><span class="line"><span class="attr">data:</span></span><br><span class="line">  <span class="comment"># key-value</span></span><br><span class="line">  <span class="attr">mongo-address:</span> <span class="string">mongodb-0.mongodb:27017</span></span><br></pre></td></tr></table></figure>
+
+<p>运行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl apply -f configmap.yaml</span><br></pre></td></tr></table></figure>
+
+<p>通过get查看并且输出为yaml格式</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl get cm mongo-config -o yaml</span><br></pre></td></tr></table></figure>
+
+<p>接下来就可以在其他地方被读取了，这里以一个App的环境变量为例：</p>
+<p>app.yaml</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Deployment</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="comment"># 部署名字</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">test-k8s</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">replicas:</span> <span class="number">2</span></span><br><span class="line">  <span class="comment"># 用来查找关联的 Pod，所有标签都匹配才行</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">matchLabels:</span></span><br><span class="line">      <span class="attr">app:</span> <span class="string">test-k8s</span></span><br><span class="line">  <span class="comment"># 定义 Pod 相关数据</span></span><br><span class="line">  <span class="attr">template:</span></span><br><span class="line">    <span class="attr">metadata:</span></span><br><span class="line">      <span class="attr">labels:</span></span><br><span class="line">        <span class="attr">app:</span> <span class="string">test-k8s</span></span><br><span class="line">    <span class="attr">spec:</span></span><br><span class="line">      <span class="comment"># 等待 mongodb 起来后才启动</span></span><br><span class="line">      <span class="attr">initContainers:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">wait-mongo</span></span><br><span class="line">        <span class="attr">image:</span> <span class="string">busybox:1.28</span></span><br><span class="line">        <span class="attr">command:</span> [<span class="string">&#x27;sh&#x27;</span>, <span class="string">&#x27;-c&#x27;</span>, <span class="string">&quot;until nslookup mongodb; do echo waiting for mongo; sleep 2; done&quot;</span>]</span><br><span class="line">      <span class="comment"># 定义容器，可以多个</span></span><br><span class="line">      <span class="attr">containers:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">test-k8s</span> <span class="comment"># 容器名字</span></span><br><span class="line">        <span class="attr">image:</span> <span class="string">ccr.ccs.tencentyun.com/k8s-tutorial/test-k8s:v4-configmap</span> <span class="comment"># 镜像</span></span><br><span class="line">        <span class="attr">env:</span></span><br><span class="line">          <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">MONGO_USERNAME</span></span><br><span class="line">            <span class="attr">valueFrom:</span></span><br><span class="line">              <span class="attr">secretKeyRef:</span></span><br><span class="line">                <span class="attr">name:</span> <span class="string">mongo-secret</span></span><br><span class="line">                <span class="attr">key:</span> <span class="string">mongo-username</span></span><br><span class="line">          <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">MONGO_PASSWORD</span></span><br><span class="line">            <span class="attr">valueFrom:</span></span><br><span class="line">              <span class="attr">secretKeyRef:</span></span><br><span class="line">                <span class="attr">name:</span> <span class="string">mongo-secret</span></span><br><span class="line">                <span class="attr">key:</span> <span class="string">mongo-password</span></span><br><span class="line">          <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">MONGO_ADDRESS</span></span><br><span class="line">            <span class="attr">valueFrom:</span></span><br><span class="line">              <span class="comment"># 从config map资源中取</span></span><br><span class="line">              <span class="attr">configMapKeyRef:</span></span><br><span class="line">                <span class="comment"># 资源名称</span></span><br><span class="line">                <span class="attr">name:</span> <span class="string">mongo-config</span></span><br><span class="line">                <span class="comment"># 取资源中对应的key的value</span></span><br><span class="line">                <span class="attr">key:</span> <span class="string">mongo-address</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Service</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">test-k8s</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">app:</span> <span class="string">test-k8s</span></span><br><span class="line">  <span class="comment"># 默认 ClusterIp 集群内可访问，NodePort 节点可访问，LoadBalancer 负载均衡模式（需要负载均衡器才可用）</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">NodePort</span></span><br><span class="line">  <span class="attr">ports:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">nodePort:</span> <span class="number">31000</span>   <span class="comment"># 节点端口，范围固定 30000 ~ 32767</span></span><br><span class="line">      <span class="attr">port:</span> <span class="number">8080</span>        <span class="comment"># 本 Service 的端口</span></span><br><span class="line">      <span class="attr">targetPort:</span> <span class="number">8080</span>  <span class="comment"># 容器端口</span></span><br></pre></td></tr></table></figure>
+
+<p>可以看到env[2].name的valueFrom中是configMapKeyRef，则代表使用ConfigMap资源中取，并且指定ConfigMap资源的名称和key，即可以读取到内容了。</p>
+<p>这里的<code>env:MONGO_ADDRESS</code>是从名叫<code>mongo-config</code>的ConfigMap资源中读取key为<code>mongo-address</code>对应的value，即<code>mongodb-0.mongodb:27017</code>。</p>
+<h2 id="Secret"><a href="#Secret" class="headerlink" title="Secret"></a>Secret</h2><p>yaml文件的kind是<code>Secret</code>，<a target="_blank" rel="noopener" href="https://kubernetes.io/zh/docs/concepts/configuration/secret/">官方文档</a></p>
+<h3 id="示例-3"><a href="#示例-3" class="headerlink" title="示例"></a>示例</h3><p>secret.yaml</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Secret</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="comment"># secret的名称</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">mongo-secret</span></span><br><span class="line"><span class="comment"># 默认的type是Opaque</span></span><br><span class="line"><span class="attr">type:</span> <span class="string">Opaque</span></span><br><span class="line"></span><br><span class="line"><span class="attr">data:</span></span><br><span class="line">  <span class="comment"># key-value</span></span><br><span class="line">  <span class="comment"># 需要进行base64加密处理</span></span><br><span class="line">  <span class="attr">mongo-username:</span> <span class="string">bW9uZ291c2Vy</span></span><br><span class="line">  <span class="attr">mongo-password:</span> <span class="string">bW9uZ29wYXNz</span></span><br></pre></td></tr></table></figure>
+<p>运行</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl apply -f secret.yaml</span><br></pre></td></tr></table></figure>
+
+<p>以yaml文件格式查看</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl get secret mongo-secret -o yaml</span><br></pre></td></tr></table></figure>
+
+<p>接下来就可以被其他地方读取了，这里mongo的statefulset为例</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">StatefulSet</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">mongodb</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">replicas:</span> <span class="number">1</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">matchLabels:</span></span><br><span class="line">      <span class="attr">app:</span> <span class="string">mongodb</span></span><br><span class="line">  <span class="attr">serviceName:</span> <span class="string">mongodb</span></span><br><span class="line">  <span class="attr">template:</span></span><br><span class="line">    <span class="attr">metadata:</span></span><br><span class="line">      <span class="attr">labels:</span></span><br><span class="line">        <span class="attr">app:</span> <span class="string">mongodb</span></span><br><span class="line">    <span class="attr">spec:</span></span><br><span class="line">      <span class="attr">containers:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">mongo</span></span><br><span class="line">          <span class="attr">image:</span> <span class="string">mongo:4.4</span></span><br><span class="line">          <span class="comment"># IfNotPresent：仅本地没有镜像时才远程拉，Always：永远都是从远程拉，Never：永远只用本地镜像，本地没有则报错</span></span><br><span class="line">          <span class="attr">imagePullPolicy:</span> <span class="string">IfNotPresent</span></span><br><span class="line">          <span class="comment"># 该container的环境变量列表</span></span><br><span class="line">          <span class="attr">env:</span>  </span><br><span class="line">          <span class="comment"># 环境变量名称</span></span><br><span class="line">          <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">MONGO_INITDB_ROOT_USERNAME</span></span><br><span class="line">            <span class="attr">valueFrom:</span></span><br><span class="line">              <span class="comment"># &#x27;secretKeyRef&#x27;表示从secret资源中取</span></span><br><span class="line">              <span class="attr">secretKeyRef:</span></span><br><span class="line">                <span class="comment"># 指定secret的名称</span></span><br><span class="line">                <span class="attr">name:</span> <span class="string">mongo-secret</span></span><br><span class="line">                <span class="comment"># 取secret中的key对应的value</span></span><br><span class="line">                <span class="attr">key:</span> <span class="string">mongo-username</span>                                          </span><br><span class="line">          <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">MONGO_INITDB_ROOT_PASSWORD</span></span><br><span class="line">            <span class="attr">valueFrom:</span></span><br><span class="line">              <span class="attr">secretKeyRef:</span></span><br><span class="line">                <span class="attr">name:</span> <span class="string">mongo-secret</span></span><br><span class="line">                <span class="attr">key:</span> <span class="string">mongo-password</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Service</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">mongodb</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">app:</span> <span class="string">mongodb</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">ClusterIP</span></span><br><span class="line">  <span class="comment"># HeadLess</span></span><br><span class="line">  <span class="attr">clusterIP:</span> <span class="string">None</span></span><br><span class="line">  <span class="attr">ports:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">port:</span> <span class="number">27017</span></span><br><span class="line">      <span class="attr">protocol:</span> <span class="string">TCP</span></span><br><span class="line">      <span class="attr">targetPort:</span> <span class="number">27017</span></span><br></pre></td></tr></table></figure>
+
+<p>可以看到env[0].name的valueFrom中是secretKeyRef，则代表使用Secret资源中取，并且指定Secret资源的名称和key，即可以读取到内容了。</p>
+<p>这里的<code>env:MONGO_INITDB_ROOT_USERNAME</code>是从名叫<code>mongo-secret</code>的ConfigMap资源中读取key为<code>mongo-username</code>对应的value，即<code>bW9uZ291c2Vy</code>,<code>env:MONGO_INITDB_ROOT_PASSWORD</code>同理。</p>
+<p>可以看到，configMap和secret读取的方式是差不多的。</p>
+<blockquote>
+<p>Tips</p>
+<p>如果type是Opaque的话，那么data需要进行<strong>base64处理</strong></p>
+</blockquote>
+<h2 id="Helm"><a href="#Helm" class="headerlink" title="Helm"></a>Helm</h2><p><code>Helm</code>类似 npm，pip，docker hub, 可以理解为是一个软件库，可以方便快速的为我们的集群安装一些第三方软件。<br>使用 Helm 我们可以非常方便的就搭建出来 MongoDB &#x2F; MySQL 副本集群，YAML 文件别人都给我们写好了，直接使用。<a target="_blank" rel="noopener" href="https://helm.sh/zh/">官网</a>，<a target="_blank" rel="noopener" href="https://artifacthub.io/">应用中心</a></p>
+<p>我们可以在应用中心搜索集群，然后添加源并且安装就可以快速创建集群了，不需要自己手动写配置文件，并且我们可以在安装集群的时候手动指定一些参数。</p>
+<h3 id="示例：安装mongodb"><a href="#示例：安装mongodb" class="headerlink" title="示例：安装mongodb"></a>示例：安装mongodb</h3><h4 id="1、添加源"><a href="#1、添加源" class="headerlink" title="1、添加源"></a>1、添加源</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">helm repo add bitnami https://charts.bitnami.com/bitnami</span><br></pre></td></tr></table></figure>
+
+<h4 id="2、安装"><a href="#2、安装" class="headerlink" title="2、安装"></a>2、安装</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 默认安装</span></span><br><span class="line">helm install first-mongo bitnami/mongodb	</span><br><span class="line"><span class="comment"># 指定参数安装</span></span><br><span class="line">helm install my-mongo bitnami/mongodb --<span class="built_in">set</span> architecture=<span class="string">&quot;replicaset&quot;</span>,auth.rootPassword=<span class="string">&quot;mongopass&quot;</span>  </span><br></pre></td></tr></table></figure>
+
+<p>具体可以手动指定的参数可以在应用中心中查看</p>
+<h4 id="3、查看密码"><a href="#3、查看密码" class="headerlink" title="3、查看密码"></a>3、查看密码</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">kubectl get secret my-mongo-mongodb -o yaml</span><br><span class="line"><span class="comment"># 查看密码并且写入文件</span></span><br><span class="line">kubectl get secret my-mongo-mongodb -o yaml &gt; secret.yaml</span><br></pre></td></tr></table></figure>
+
+<h4 id="4、查看"><a href="#4、查看" class="headerlink" title="4、查看"></a>4、查看</h4><p>可以查看到通过helm，已经自动安装好了包含可以扩展的pod、service、statefulset的集群。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl get all</span><br></pre></td></tr></table></figure>
+
+<h4 id="5、测试"><a href="#5、测试" class="headerlink" title="5、测试"></a>5、测试</h4><p>临时运行一个包含 mongo client 的 debian 系统</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl run mongodb-client --<span class="built_in">rm</span> --<span class="built_in">tty</span> -i --restart=<span class="string">&#x27;Never&#x27;</span> --image docker.io/bitnami/mongodb:4.4.10-debian-10-r20 --<span class="built_in">command</span> -- bash</span><br></pre></td></tr></table></figure>
+
+<p>在client中利用url、username、password连接mongo server</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mongo --host my-mongo-mongodb-0.my-mongo-mongodb-headless.default.svc.cluster.local:27017 -u root -p mongopass</span><br></pre></td></tr></table></figure>
+
+<h4 id="6、转发集群端口到宿主机"><a href="#6、转发集群端口到宿主机" class="headerlink" title="6、转发集群端口到宿主机"></a>6、转发集群端口到宿主机</h4><p>此时可以通过宿主机的工具来尝试连接mongo server，如Navicat、DateGrip等。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl port-forward svc/my-mongo-mongodb-headless 27018:27017</span><br></pre></td></tr></table></figure>
+
+<h4 id="7、删除集群"><a href="#7、删除集群" class="headerlink" title="7、删除集群"></a>7、删除集群</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">helm delete first-mongo</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="namespace"><a href="#namespace" class="headerlink" title="namespace"></a>namespace</h2><h3 id="列出所有命名空间"><a href="#列出所有命名空间" class="headerlink" title="列出所有命名空间"></a>列出所有命名空间</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl get ns</span><br></pre></td></tr></table></figure>
+
+<h3 id="查看默认的命名空间"><a href="#查看默认的命名空间" class="headerlink" title="查看默认的命名空间"></a>查看默认的命名空间</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl get all</span><br></pre></td></tr></table></figure>
+
+<h3 id="查看指定的命名空间"><a href="#查看指定的命名空间" class="headerlink" title="查看指定的命名空间"></a>查看指定的命名空间</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl get all -n &lt;namespace&gt;</span><br></pre></td></tr></table></figure>
+
+<h4 id="示例-4"><a href="#示例-4" class="headerlink" title="示例"></a>示例</h4><p>查看k8s系统的命名空间</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl get all -n kube-system</span><br></pre></td></tr></table></figure>
+
+<h3 id="创建命名空间"><a href="#创建命名空间" class="headerlink" title="创建命名空间"></a>创建命名空间</h3><p>每次部署或者查询时候都需要指定命名空间</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl create namespace testns</span><br></pre></td></tr></table></figure>
+
+<h3 id="部署应用到指定命名空间"><a href="#部署应用到指定命名空间" class="headerlink" title="部署应用到指定命名空间"></a>部署应用到指定命名空间</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl apply -f app.yml [-n|--namespace] &lt;namespace&gt;</span><br></pre></td></tr></table></figure>
+
+<p>然后查询</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl get pod [-n|--namespace] &lt;namespace&gt;</span><br></pre></td></tr></table></figure>
+
+<p>每次部署应用或者查询时候都需要指定命名空间</p>
+<h3 id="kubens"><a href="#kubens" class="headerlink" title="kubens"></a>kubens</h3><p>每次部署或者查询时候都需要指定命名空间有点麻烦，可以利用<code>kubens</code>快速切换命名空间，后续的命令就不需要再利用<code>-n｜--namespace</code>指定命名空间了。</p>
+<h4 id="查看所有命名空间"><a href="#查看所有命名空间" class="headerlink" title="查看所有命名空间"></a>查看所有命名空间</h4><p>高亮显示当前所位于的命名空间</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubens</span><br></pre></td></tr></table></figure>
+
+<h4 id="切换到指定命名空间"><a href="#切换到指定命名空间" class="headerlink" title="切换到指定命名空间"></a>切换到指定命名空间</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubens &lt;namespace&gt;</span><br></pre></td></tr></table></figure>
+
+<h4 id="切换回上一命名空间"><a href="#切换回上一命名空间" class="headerlink" title="切换回上一命名空间"></a>切换回上一命名空间</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubens -</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="kubectx"><a href="#kubectx" class="headerlink" title="kubectx"></a>kubectx</h3><p>快速切换集群</p>
+<h2 id="Ingress"><a href="#Ingress" class="headerlink" title="Ingress"></a>Ingress</h2><p>yaml文件的kind是<code>Ingress</code>，<a target="_blank" rel="noopener" href="https://kubernetes.io/zh/docs/concepts/services-networking/ingress/">官方文档</a>，是一个作用类似于Nginx的，能够提供对集群中的服务的外部访问进行管理的API对象</p>
+<h3 id="示例-5"><a href="#示例-5" class="headerlink" title="示例"></a>示例</h3><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">networking.k8s.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Ingress</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">simple-example</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">ingressClassName:</span> <span class="string">nginx</span></span><br><span class="line">  <span class="attr">rules:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">host:</span> <span class="string">tools.fun</span></span><br><span class="line">    <span class="attr">http:</span></span><br><span class="line">      <span class="attr">paths:</span></span><br><span class="line">      <span class="comment"># 匹配&#x27;/easydoc&#x27;转发到service1</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">path:</span> <span class="string">/easydoc</span></span><br><span class="line">        <span class="attr">pathType:</span> <span class="string">Prefix</span></span><br><span class="line">        <span class="attr">backend:</span></span><br><span class="line">          <span class="attr">service:</span></span><br><span class="line">            <span class="attr">name:</span> <span class="string">service1</span></span><br><span class="line">            <span class="attr">port:</span></span><br><span class="line">              <span class="attr">number:</span> <span class="number">4200</span></span><br><span class="line">      <span class="comment"># 匹配&#x27;/svnbucket&#x27;转发到service2</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">path:</span> <span class="string">/svnbucket</span></span><br><span class="line">        <span class="attr">pathType:</span> <span class="string">Prefix</span></span><br><span class="line">        <span class="attr">backend:</span></span><br><span class="line">          <span class="attr">service:</span></span><br><span class="line">            <span class="attr">name:</span> <span class="string">service2</span></span><br><span class="line">            <span class="attr">port:</span></span><br><span class="line">              <span class="attr">number:</span> <span class="number">8080</span></span><br></pre></td></tr></table></figure>
+
+
+
+
+
+<h2 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h2><h3 id="Service中type为ClusterIP和NodePort的区别"><a href="#Service中type为ClusterIP和NodePort的区别" class="headerlink" title="Service中type为ClusterIP和NodePort的区别"></a>Service中type为ClusterIP和NodePort的区别</h3><p><code>ClusterIP</code>：通过集群内部的IP暴露服务，选择该值的时候服务只能在集群内部访问。是<code>service</code>默认的type。</p>
+<p><code>NodePort</code>：通过每个节点上的IP和静态端口暴露服务。<code>NodePort</code>服务会路由到自动创建的<code>ClusterIP</code>服务，通过请求 <code>&lt;节点 IP&gt;:&lt;节点端口&gt;</code>，你可以从集群的外部访问一个 <code>NodePort</code> 服务。</p>
+<h3 id="ConfigMap和Secret的区别"><a href="#ConfigMap和Secret的区别" class="headerlink" title="ConfigMap和Secret的区别"></a>ConfigMap和Secret的区别</h3><p>ConfigMap 是一种 API 对象，用来将<strong>非机密性</strong>的数据保存到键值对中。</p>
+<blockquote>
+<p><strong>注意：</strong></p>
+<p>ConfigMap 并不提供保密或者加密功能。 如果你想存储的数据是机密的，请使用 <a target="_blank" rel="noopener" href="https://kubernetes.io/zh/docs/concepts/configuration/secret/">Secret</a>， 或者使用其他第三方工具来保证你的数据的私密性，而不是用 ConfigMap。</p>
+</blockquote>
+<p>Secret 是一种包含少量<strong>敏感信息</strong>例如密码、令牌或密钥的对象。</p>
+<h3 id="使用dashboard可视化管理"><a href="#使用dashboard可视化管理" class="headerlink" title="使用dashboard可视化管理"></a>使用dashboard可视化管理</h3><p>默认情况下不会部署 Dashboard。可以通过以下命令部署：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.5.0/aio/deploy/recommended.yaml</span><br></pre></td></tr></table></figure>
+
+<p>使用</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl proxy</span><br></pre></td></tr></table></figure>
+
+<p>输入网址：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/</span><br></pre></td></tr></table></figure>
+
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://fangaoxs.github.io/2022/04/06/back-end/kubenates/kubernetes/" data-id="clsrb81uo000pcak68ookh5qo" data-title="kubernates的学习" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/kubernates/" rel="tag">kubernates</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2022/05/19/back-end/go/golang%E5%BA%93/dig/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">前一篇</strong>
+      <div class="article-nav-title">
+        
+          Go的依赖注入库dig
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2021/12/23/back-end/go/grpc-web/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">后一篇</strong>
+      <div class="article-nav-title">第一个gRPC-web项目</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Cookie/" rel="tag">Cookie</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/GRPC/" rel="tag">GRPC</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Golang/" rel="tag">Golang</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JWT/" rel="tag">JWT</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java/" rel="tag">Java</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OIDC/" rel="tag">OIDC</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Spring/" rel="tag">Spring</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/devops/" rel="tag">devops</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/echarts/" rel="tag">echarts</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/http/" rel="tag">http</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/javascript/" rel="tag">javascript</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kubernates/" rel="tag">kubernates</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/python/" rel="tag">python</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/redis/" rel="tag">redis</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/uni-app/" rel="tag">uni-app</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vue/" rel="tag">vue</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/webpack/" rel="tag">webpack</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/websocket/" rel="tag">websocket</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag">数据库</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" rel="tag">数据结构</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/" rel="tag">网络安全</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" rel="tag">计算机网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" rel="tag">设计模式</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/Cookie/" style="font-size: 10px;">Cookie</a> <a href="/tags/GRPC/" style="font-size: 13.33px;">GRPC</a> <a href="/tags/Golang/" style="font-size: 18.33px;">Golang</a> <a href="/tags/JWT/" style="font-size: 10px;">JWT</a> <a href="/tags/Java/" style="font-size: 20px;">Java</a> <a href="/tags/OIDC/" style="font-size: 13.33px;">OIDC</a> <a href="/tags/Spring/" style="font-size: 13.33px;">Spring</a> <a href="/tags/devops/" style="font-size: 10px;">devops</a> <a href="/tags/docker/" style="font-size: 11.67px;">docker</a> <a href="/tags/echarts/" style="font-size: 10px;">echarts</a> <a href="/tags/http/" style="font-size: 11.67px;">http</a> <a href="/tags/java/" style="font-size: 10px;">java</a> <a href="/tags/javascript/" style="font-size: 15px;">javascript</a> <a href="/tags/kubernates/" style="font-size: 10px;">kubernates</a> <a href="/tags/python/" style="font-size: 10px;">python</a> <a href="/tags/redis/" style="font-size: 11.67px;">redis</a> <a href="/tags/uni-app/" style="font-size: 10px;">uni-app</a> <a href="/tags/vue/" style="font-size: 16.67px;">vue</a> <a href="/tags/webpack/" style="font-size: 10px;">webpack</a> <a href="/tags/websocket/" style="font-size: 10px;">websocket</a> <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" style="font-size: 11.67px;">数据库</a> <a href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" style="font-size: 11.67px;">数据结构</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/" style="font-size: 11.67px;">网络安全</a> <a href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" style="font-size: 10px;">计算机网络</a> <a href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" style="font-size: 11.67px;">设计模式</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/01/">一月 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/11/">十一月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/07/">七月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/06/">六月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/02/">二月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">一月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/12/">十二月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/10/">十月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/09/">九月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/08/">八月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/07/">七月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/05/">五月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/04/">四月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/12/">十二月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/11/">十一月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/10/">十月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/08/">八月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/06/">六月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/03/">三月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/12/">十二月 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/11/">十一月 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/10/">十月 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/08/">八月 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/07/">七月 2020</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2024/01/31/back-end/docker/dockerfile/">dockerfile</a>
+          </li>
+        
+          <li>
+            <a href="/2023/11/07/network/caddy/http%E5%8F%8D%E5%90%91%E4%BB%A3%E7%90%86/">利用Caddy实现http反向代理</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/25/network/OIDC/%E7%BB%93%E5%90%88OIDC%E5%92%8CCookie%E5%AE%9E%E7%8E%B0SSO/">结合OIDC和Cookie实现SSO</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/24/back-end/Java/Java%E5%AE%B9%E5%99%A8/%E9%9B%86%E5%90%88/">Java集合</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/19/back-end/DevOps/CI_CD/">CI_CD</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2024 FanGaoXS<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>
