@@ -69,6 +69,110 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-back-end/go/Goroutine调度器GMP" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2024/03/12/back-end/go/Goroutine%E8%B0%83%E5%BA%A6%E5%99%A8GMP/" class="article-date">
+  <time class="dt-published" datetime="2024-03-12T09:23:39.000Z" itemprop="datePublished">2024-03-12</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2024/03/12/back-end/go/Goroutine%E8%B0%83%E5%BA%A6%E5%99%A8GMP/">Goroutine调度器GMP</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="学习目标"><a href="#学习目标" class="headerlink" title="学习目标"></a>学习目标</h2><p>掌握Golang调度器原理，为什么Goroutine的调度器是很快的</p>
+<h2 id="GMP模型简介"><a href="#GMP模型简介" class="headerlink" title="GMP模型简介"></a>GMP模型简介</h2><p>G：goroutine 协程</p>
+<p>P：Processer 处理器</p>
+<p>M：Thread 内核线程</p>
+<p>全局G队列：存放等待运行的G</p>
+<p>P的本地队列：存放等待运行的G，优先将新创建的G放在P的本地队列中，如果满了则会放到全局队列中。</p>
+<p>P列表：程序启动时创建，最多有<code>GOMAXPROCS</code>个（可配置项）</p>
+<p>M列表：当前操作系统分配到当前Go程序的内核线程数</p>
+<p>P数量：环境变量<code>$GOMAXPROCS</code>；在Go程序中使用<code>GOMAXPROCS()</code>来设置。</p>
+<p>M数量：Go语言限定M的最大量是10000；在Go程序中使用<code>SetMaxThreads()</code>来设置；M的数量是<strong>动态</strong>的：有M阻塞，就会创建新的M，有M空闲，就会回收M或者睡眠M。</p>
+<h2 id="调度器的设计策略"><a href="#调度器的设计策略" class="headerlink" title="调度器的设计策略"></a>调度器的设计策略</h2><h3 id="复用线程"><a href="#复用线程" class="headerlink" title="复用线程"></a>复用线程</h3><p>避免频繁地创建、销毁线程，而是对线程的<strong>复用</strong>。</p>
+<ul>
+<li><p>work stealing机制</p>
+<p>当本线程无可运行的G时，尝试去其他线程绑定的P偷取G，而不是销毁本线程。</p>
+</li>
+<li><p>hand off（交接）机制</p>
+<p>当本线程因为G进行系统调用阻塞时，线程释放绑定的P，把P转移给其他空闲的线程（或创建新线程）执行。</p>
+</li>
+</ul>
+<h3 id="利用并行"><a href="#利用并行" class="headerlink" title="利用并行"></a>利用并行</h3><p><code>GOMAXPROCS</code>设置P的数量，最多有GOMAXPROCS个线程分布在多个CPU上同时运行。</p>
+<h3 id="抢占"><a href="#抢占" class="headerlink" title="抢占"></a>抢占</h3><p>在Coroutine设计中要等待一个协程主动让出CPU才执行下一个协程。</p>
+<p>在Goroutine设计中，一个goroutine最多占用CPU 10ms，防止其他Goroutine被饿死。</p>
+<h3 id="全局G队列"><a href="#全局G队列" class="headerlink" title="全局G队列"></a>全局G队列</h3><p>当M执行work stealing从其他P偷不到G时，它可以从全局G队列中获取G。</p>
+<h2 id="go-func-经历了什么过程"><a href="#go-func-经历了什么过程" class="headerlink" title="go func()经历了什么过程"></a><code>go func()</code>经历了什么过程</h2><p><img src="/./image-20240311164307141.png" alt="image-20240311164307141"></p>
+<h2 id="调度器的生命周期"><a href="#调度器的生命周期" class="headerlink" title="调度器的生命周期"></a>调度器的生命周期</h2><h3 id="M0"><a href="#M0" class="headerlink" title="M0"></a>M0</h3><p>M0是启动程序后的编号为0的主线程，这个M对应的实例会在全局变量runtime.m0中，不需要在heap上分配，M0负责执行初始化操作合启动第一个G，在之后M0就和其他的M一样了。</p>
+<h3 id="G0"><a href="#G0" class="headerlink" title="G0"></a>G0</h3><p>G0是每次启动一个M都会创建的一个Goroutine，G0<strong>仅负责调度</strong>其他G，G0不指向任何可执行的函数，每个M都有一个自己的G0。在调度或系统调用的时会使用G0的栈空间，全局变量的G0是M0的G0。</p>
+<h2 id="可视化的GMP编程"><a href="#可视化的GMP编程" class="headerlink" title="可视化的GMP编程"></a>可视化的GMP编程</h2><h3 id="使用go-tool-trace工具"><a href="#使用go-tool-trace工具" class="headerlink" title="使用go tool trace工具"></a>使用go tool trace工具</h3><p>应用程序</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;fmt&quot;</span></span><br><span class="line">	<span class="string">&quot;os&quot;</span></span><br><span class="line">	<span class="string">&quot;runtime/trace&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="comment">// 1 创建trace信息的输出文件</span></span><br><span class="line">	f, err := os.Create(<span class="string">&quot;trace.out&quot;</span>)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="built_in">panic</span>(err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 2 启动</span></span><br><span class="line">	err = trace.Start(f)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="built_in">panic</span>(err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 需要调试的业务代码</span></span><br><span class="line">	fmt.Println(<span class="string">&quot;Hello, world!&quot;</span>)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 3 停止</span></span><br><span class="line">	trace.Stop()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>运行应用程序</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$&gt; go run main.go</span><br></pre></td></tr></table></figure>
+
+
+
+<p>查看trace</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$&gt; go tool trace trace.out</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="Debug-trace查看GMP信息"><a href="#Debug-trace查看GMP信息" class="headerlink" title="Debug trace查看GMP信息"></a>Debug trace查看GMP信息</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$&gt; GODEBUG=schedtrace=1000 ./main</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="场景分析"><a href="#场景分析" class="headerlink" title="场景分析"></a>场景分析</h2><h3 id="场景1：创建G"><a href="#场景1：创建G" class="headerlink" title="场景1：创建G"></a>场景1：创建G</h3><img src="./image-20240312153221549.png" style="zoom:50%;" />
+
+<h3 id="场景2：G1执行完毕"><a href="#场景2：G1执行完毕" class="headerlink" title="场景2：G1执行完毕"></a>场景2：G1执行完毕</h3><img src="./image-20240312153759841.png" style="zoom:50%;" />
+
+<h3 id="场景3：G2开辟过多的G"><a href="#场景3：G2开辟过多的G" class="headerlink" title="场景3：G2开辟过多的G"></a>场景3：G2开辟过多的G</h3><img src="./image-20240312162114670.png" style="zoom:50%;" />
+
+<h3 id="场景4：G2本地满再创建G"><a href="#场景4：G2本地满再创建G" class="headerlink" title="场景4：G2本地满再创建G"></a>场景4：G2本地满再创建G</h3><img src="./image-20240312162135419.png" style="zoom:50%;" />
+
+<h3 id="场景5：G2本地未满再创建G"><a href="#场景5：G2本地未满再创建G" class="headerlink" title="场景5：G2本地未满再创建G"></a>场景5：G2本地未满再创建G</h3><img src="./image-20240312162155485.png" style="zoom:50%;" />
+
+<h3 id="场景6：唤醒正在休眠的M"><a href="#场景6：唤醒正在休眠的M" class="headerlink" title="场景6：唤醒正在休眠的M"></a>场景6：唤醒正在休眠的M</h3><img src="./image-20240312162904430.png" style="zoom:75%;" />
+
+<h3 id="场景7：被唤醒的M从全局队列取批量G"><a href="#场景7：被唤醒的M从全局队列取批量G" class="headerlink" title="场景7：被唤醒的M从全局队列取批量G"></a>场景7：被唤醒的M从全局队列取批量G</h3><p>从全局队列到P本地队列的<strong>负载均衡</strong></p>
+<p> <img src="/./image-20240312163750692.png"></p>
+<h3 id="场景8：M2从M1中偷取G"><a href="#场景8：M2从M1中偷取G" class="headerlink" title="场景8：M2从M1中偷取G"></a>场景8：M2从M1中偷取G</h3><img src="./image-20240312164244697.png" style="zoom:75%;" />
+
+<h3 id="场景9：自旋线程的最大限制"><a href="#场景9：自旋线程的最大限制" class="headerlink" title="场景9：自旋线程的最大限制"></a>场景9：自旋线程的最大限制</h3><p><img src="/./image-20240312164633519.png"></p>
+<h3 id="场景10：G发生系统调用-阻塞"><a href="#场景10：G发生系统调用-阻塞" class="headerlink" title="场景10：G发生系统调用&#x2F;阻塞"></a>场景10：G发生系统调用&#x2F;阻塞</h3><p><img src="/./image-20240312165016390.png"></p>
+<h3 id="场景11：G发生系统调用-非阻塞"><a href="#场景11：G发生系统调用-非阻塞" class="headerlink" title="场景11：G发生系统调用&#x2F;非阻塞"></a>场景11：G发生系统调用&#x2F;非阻塞</h3><p><img src="/./image-20240312170847130.png"></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://fangaoxs.github.io/2024/03/12/back-end/go/Goroutine%E8%B0%83%E5%BA%A6%E5%99%A8GMP/" data-id="clto66l4m000msck6gffw53on" data-title="Goroutine调度器GMP" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Golang/" rel="tag">Golang</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
     <article id="post-back-end/docker/dockerfile" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
   <div class="article-meta">
     <a href="/2024/01/31/back-end/docker/dockerfile/" class="article-date">
@@ -163,7 +267,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://fangaoxs.github.io/2024/01/31/back-end/docker/dockerfile/" data-id="clsrb81uf000dcak6cjk64lur" data-title="dockerfile" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://fangaoxs.github.io/2024/01/31/back-end/docker/dockerfile/" data-id="clto66l4k000isck639z34hgs" data-title="dockerfile" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -247,7 +351,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://fangaoxs.github.io/2023/11/07/network/caddy/http%E5%8F%8D%E5%90%91%E4%BB%A3%E7%90%86/" data-id="clsrb81uu0011cak6fzue02p5" data-title="利用Caddy实现http反向代理" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://fangaoxs.github.io/2023/11/07/network/caddy/http%E5%8F%8D%E5%90%91%E4%BB%A3%E7%90%86/" data-id="clto66l56001hsck697vv0cds" data-title="利用Caddy实现http反向代理" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -359,7 +463,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://fangaoxs.github.io/2023/07/25/network/OIDC/%E7%BB%93%E5%90%88OIDC%E5%92%8CCookie%E5%AE%9E%E7%8E%B0SSO/" data-id="clsrb81uy0017cak6340egbdh" data-title="结合OIDC和Cookie实现SSO" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://fangaoxs.github.io/2023/07/25/network/OIDC/%E7%BB%93%E5%90%88OIDC%E5%92%8CCookie%E5%AE%9E%E7%8E%B0SSO/" data-id="clto66l55001fsck6g3jugnmd" data-title="结合OIDC和Cookie实现SSO" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -868,7 +972,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://fangaoxs.github.io/2023/07/24/back-end/Java/Java%E5%AE%B9%E5%99%A8/%E9%9B%86%E5%90%88/" data-id="clsrb81vm002jcak65quvf4gi" data-title="Java集合" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://fangaoxs.github.io/2023/07/24/back-end/Java/Java%E5%AE%B9%E5%99%A8/%E9%9B%86%E5%90%88/" data-id="clto66l5g0024sck6344baomf" data-title="Java集合" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -921,7 +1025,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://fangaoxs.github.io/2023/07/19/back-end/DevOps/CI_CD/" data-id="clsrb81u90007cak6748q7cwb" data-title="CI_CD" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://fangaoxs.github.io/2023/07/19/back-end/DevOps/CI_CD/" data-id="clto66l4e000esck69bl3aaq0" data-title="CI_CD" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -1008,7 +1112,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://fangaoxs.github.io/2023/07/19/back-end/go/gorm/" data-id="clsrb81ui000icak664mgehk0" data-title="GORM框架的学习" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://fangaoxs.github.io/2023/07/19/back-end/go/gorm/" data-id="clto66l4p000psck69ueidi07" data-title="GORM框架的学习" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -1068,7 +1172,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://fangaoxs.github.io/2023/07/19/back-end/python/python3/" data-id="clsrb81uo000qcak6hkrt2pv0" data-title="初学python3" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://fangaoxs.github.io/2023/07/19/back-end/python/python3/" data-id="clto66l4w000xsck693clfc5i" data-title="初学python3" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -1157,7 +1261,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://fangaoxs.github.io/2023/07/19/design-pattern/design-pattern/%E7%BB%93%E5%90%88Java%E5%92%8CGolang%E5%AD%A6%E4%B9%A0%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" data-id="clsrb81us000xcak65k5l3uq8" data-title="结合Java和Golang学习设计模式" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://fangaoxs.github.io/2023/07/19/design-pattern/design-pattern/%E7%BB%93%E5%90%88Java%E5%92%8CGolang%E5%AD%A6%E4%B9%A0%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" data-id="clto66l500015sck640ku1seq" data-title="结合Java和Golang学习设计模式" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -1404,194 +1508,11 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://fangaoxs.github.io/2023/07/19/front-end/uni-app/uni-app/" data-id="clsrb81ut000zcak68np24y2z" data-title="uni-app学习笔记" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://fangaoxs.github.io/2023/07/19/front-end/uni-app/uni-app/" data-id="clto66l520019sck61ha237oh" data-title="uni-app学习笔记" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/javascript/" rel="tag">javascript</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/uni-app/" rel="tag">uni-app</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/vue/" rel="tag">vue</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-network/OIDC/搭建OIDC Provider，以Golang为例" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
-  <div class="article-meta">
-    <a href="/2023/07/19/network/OIDC/%E6%90%AD%E5%BB%BAOIDC%20Provider%EF%BC%8C%E4%BB%A5Golang%E4%B8%BA%E4%BE%8B/" class="article-date">
-  <time class="dt-published" datetime="2023-07-19T07:30:39.000Z" itemprop="datePublished">2023-07-19</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="p-name article-title" href="/2023/07/19/network/OIDC/%E6%90%AD%E5%BB%BAOIDC%20Provider%EF%BC%8C%E4%BB%A5Golang%E4%B8%BA%E4%BE%8B/">搭建OIDC Provider，以Golang为例</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="e-content article-entry" itemprop="articleBody">
-      
-        <h2 id="1-需求"><a href="#1-需求" class="headerlink" title="1 需求"></a>1 需求</h2><p>结合对OIDC：<a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_45747080/article/details/131810562"></a>的理解，我尝试自己搭建OIDC的demo。在搭建demo之前，我需要先确定我想要实现成什么样子。以上文提到的<a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_45747080/article/details/131303150"></a>为例，我想要手动来实现Github授权以及用户认证的服务，此时Github就是作为一个OIDC Provider（以下简称“OP”）。同时我将手动实现第三方应用程序来作为OP的Relying Party（受OP信赖的客户端，以下简称“RP”）。</p>
-<p>在Github注册然后登录用户后，我们就能在我的Github里创建和查看自己的Repository（代码仓库，以下简称“Repo”），同时我有两个App，一个叫Gitee，Gitlab，这两个App实现了能够访问用Github登录的用户的Repo。</p>
-<blockquote>
-<p>Tips</p>
-<p>这个需求非常实用，目前Gitee也有能够直接复制Github的仓库到Gitee这个功能。</p>
-</blockquote>
-<h2 id="2-功能实现"><a href="#2-功能实现" class="headerlink" title="2 功能实现"></a>2 功能实现</h2><p>所以我现在要手动实现：</p>
-<ol>
-<li>Github的Repo的创建和查看功能</li>
-<li>用户在登录Gitee的时候能够使用Github登录，并且访问该用户存放于Github的Repo</li>
-<li>用户在登录Gitlab的时候能够使用Github登录，并且访问该用户存放于Github的Repo</li>
-<li>Github作为OIDC Provider，发起授权并且认证用户。</li>
-</ol>
-<blockquote>
-<p>Tips</p>
-<p>这里所提到的Github、Gitee和Gitlab并不是真正的“它们”，而是用我手动实现类似它们的上述功能，方便理解。</p>
-</blockquote>
-<h2 id="3-工作流程"><a href="#3-工作流程" class="headerlink" title="3 工作流程"></a>3 工作流程</h2><p><img src="/2023/07/19/network/OIDC/%E6%90%AD%E5%BB%BAOIDC%20Provider%EF%BC%8C%E4%BB%A5Golang%E4%B8%BA%E4%BE%8B/image-20230719172238488.png"></p>
-<ol>
-<li>已在Github注册的用户在登录Gitlab的时候选择以Github登录。</li>
-<li>此时Gitlab向Github的OP发起请求要求用户登录Github并且确认访问的范围（scope）。</li>
-<li>OP验证用户成功后返回<code>access_token</code>和<code>id_token</code>给Gitlab。</li>
-<li>Gitlab解析id_token以获得用户的信息并进行存储。</li>
-</ol>
-<p>Gitee同理。</p>
-<h2 id="4-选用库"><a href="#4-选用库" class="headerlink" title="4 选用库"></a>4 选用库</h2><p>用Golang实现的话，Golang有现成的实现了OIDC的库：<a target="_blank" rel="noopener" href="https://dexidp.io/docs/using-dex/">dex</a>。感谢Authing提供参考：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/118037137"></a>，文章里有提到不同的OIDC Provider的实现，如在node上的实现，在Golang上的实现，在Python上的实现等。所以这里我选用dex作为OIDC的Provider。</p>
-<h2 id="5-Token的授权方式"><a href="#5-Token的授权方式" class="headerlink" title="5 Token的授权方式"></a>5 Token的授权方式</h2><p>demo中授权的方式采用授权码模式，即向OP发起授权请求的<code>response_type</code>是<code>code</code>。</p>
-<h2 id="6-Provider的Endpoint"><a href="#6-Provider的Endpoint" class="headerlink" title="6 Provider的Endpoint"></a>6 Provider的Endpoint</h2><p>Provider会暴露一些常用的接口：如授权接口，token接口，用户信息接口。一般通过访问</p>
-<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123;$issuer&#125;/.well-known/openid-configuration</span><br></pre></td></tr></table></figure>
-
-<p>即可查看。</p>
-<ul>
-<li>授权接口：<code>&#123;$issuer&#125;/auth</code></li>
-</ul>
-<p>访问该接口的时候需携带ClientID，ClientSecret，ResponseType，Scope。OP会返回code。</p>
-<ul>
-<li>token接口：<code>&#123;$issuer&#125;/token</code></li>
-</ul>
-<p>访问该接口的时候需携带code，用于和OP交换token。</p>
-<ul>
-<li>用户信息接口：<code>&#123;$issuer&#125;/userinfo</code></li>
-</ul>
-<p>访问该接口需要携带accessToken，用户获取EU的个人信息。</p>
-<h2 id="7-Repo的服务"><a href="#7-Repo的服务" class="headerlink" title="7 Repo的服务"></a>7 Repo的服务</h2><p>首先我们需要一个resource的服务用于存放Repo。</p>
-<h3 id="storage"><a href="#storage" class="headerlink" title="storage"></a>storage</h3><p>我们需要选用持久化来存储Repo同时对Repo进行增加和查看（这里为了演示方便就直接采用一次性的HashMap来暂存数据，服务重启则HashMap被清空）：</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> repo <span class="keyword">struct</span> &#123;</span><br><span class="line">	Name      <span class="type">string</span></span><br><span class="line">	CreatedBy <span class="type">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Storage <span class="keyword">struct</span> &#123;</span><br><span class="line">	set   <span class="keyword">map</span>[<span class="type">string</span>]<span class="keyword">struct</span>&#123;&#125;</span><br><span class="line">	repos []*repo</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> instance *Storage <span class="comment">// single instance</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">New</span><span class="params">()</span></span> *Storage &#123;</span><br><span class="line">	<span class="keyword">if</span> instance == <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Println(<span class="string">&quot;create a new storage&quot;</span>)</span><br><span class="line">		instance = &amp;Storage&#123;</span><br><span class="line">			set:   <span class="built_in">make</span>(<span class="keyword">map</span>[<span class="type">string</span>]<span class="keyword">struct</span>&#123;&#125;),</span><br><span class="line">			repos: <span class="built_in">make</span>([]*repo, <span class="number">0</span>),</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">return</span> instance</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	fmt.Println(<span class="string">&quot;storage already exists&quot;</span>)</span><br><span class="line">	<span class="keyword">return</span> instance</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *Storage)</span></span> AddRepo(name, subject <span class="type">string</span>) <span class="type">bool</span> &#123;</span><br><span class="line">	<span class="keyword">if</span> _, ok := s.set[name]; ok &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	r := &amp;repo&#123;</span><br><span class="line">		Name:      name,</span><br><span class="line">		CreatedBy: subject,</span><br><span class="line">	&#125;</span><br><span class="line">	s.repos = <span class="built_in">append</span>(s.repos, r)</span><br><span class="line">	s.set[name] = <span class="keyword">struct</span>&#123;&#125;&#123;&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *Storage)</span></span> GetRepoBySubject(subject <span class="type">string</span>) []*repo &#123;</span><br><span class="line">	<span class="keyword">var</span> res []*repo</span><br><span class="line">	<span class="keyword">for</span> _, r := <span class="keyword">range</span> s.repos &#123;</span><br><span class="line">		<span class="keyword">if</span> r.CreatedBy == subject &#123;</span><br><span class="line">			res = <span class="built_in">append</span>(res, r)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> res</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *Storage)</span></span> AllRepo() []*repo &#123;</span><br><span class="line">	<span class="keyword">return</span> s.repos</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>有三个对数据的操作，分别是<code>添加Repo</code>，<code>根据subject查询Repo</code>，<code>列出所有的Repo</code>。</p>
-<h3 id="APIs"><a href="#APIs" class="headerlink" title="APIs"></a>APIs</h3><p>向外暴露3个API：<code>添加Repo</code>，<code>查看用户自己创建的Repo</code>，<code>列出所有Repo</code></p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">AddRepo</span><span class="params">(w http.ResponseWriter, r *http.Request)</span></span> &#123;</span><br><span class="line">	name := r.FormValue(<span class="string">&quot;name&quot;</span>)</span><br><span class="line">	<span class="keyword">if</span> name = strings.TrimSpace(name); name == <span class="string">&quot;&quot;</span> &#123;</span><br><span class="line">		http.Error(w, fmt.Sprintf(<span class="string">&quot;invalid repo name: empty repo name&quot;</span>), http.StatusBadRequest)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	ok := s.AddRepo(name, ui.Subject)</span><br><span class="line">	fmt.Fprintf(w, <span class="string">&quot;%t&quot;</span>, ok)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">MyRepo</span><span class="params">(w http.ResponseWriter, r *http.Request)</span></span> &#123;</span><br><span class="line">	books := s.GetRepoBySubject(ui.Subject)</span><br><span class="line">	bytes, _ := json.Marshal(books)</span><br><span class="line">	w.Write(bytes)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">AllRepo</span><span class="params">(w http.ResponseWriter, r *http.Request)</span></span> &#123;</span><br><span class="line">	<span class="comment">// for admin</span></span><br><span class="line"></span><br><span class="line">	books := s.AllRepo()</span><br><span class="line">	bytes, _ := json.Marshal(books)</span><br><span class="line">	w.Write(bytes)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>其中添加Repo和查看自己的Repo需要将用户创建的资源与用户进行绑定，首先需要拿到access_token（这里是从http header中取的），再用access_token去userinfo_endpoint拿到用户的个人信息。</p>
-<blockquote>
-<p>Tips</p>
-<p>OAuth2.0中可以通过访问userinfo_endpoint来获取用户的个人信息，并且个人信息中的subject就能唯一标识一个用户，所以这里将subject与用户创建的资源进行绑定。</p>
-</blockquote>
-<p>从header中获得access_token：</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">tokenFromHeader</span><span class="params">(header http.Header)</span></span> (typ <span class="type">string</span>, token <span class="type">string</span>, err <span class="type">error</span>) &#123;</span><br><span class="line">	token = header.Get(<span class="string">&quot;Authorization&quot;</span>)</span><br><span class="line">	splits := strings.SplitN(token, <span class="string">&quot; &quot;</span>, <span class="number">2</span>)</span><br><span class="line">	<span class="keyword">if</span> <span class="built_in">len</span>(splits) &lt; <span class="number">2</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="string">&quot;&quot;</span>, <span class="string">&quot;&quot;</span>, fmt.Errorf(<span class="string">&quot;invalid authorization: empty authorization&quot;</span>)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	typ = splits[<span class="number">0</span>]</span><br><span class="line">	token = splits[<span class="number">1</span>]</span><br><span class="line">	<span class="keyword">if</span> typ != <span class="string">&quot;Bearer&quot;</span> &amp;&amp; typ != <span class="string">&quot;bearer&quot;</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="string">&quot;&quot;</span>, <span class="string">&quot;&quot;</span>, fmt.Errorf(<span class="string">&quot;invalid authorization type: %s&quot;</span>, typ)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> typ, token, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>用access_token访问userinfo_endpoint：</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">getUserInfo</span><span class="params">(typ, accessToken <span class="type">string</span>)</span></span> (*userinfo.Userinfo, <span class="type">error</span>) &#123;</span><br><span class="line">	client := http.DefaultClient</span><br><span class="line"></span><br><span class="line">	<span class="comment">// get the configurations from &#123;issuer&#125;/.well-known/openid-configuration</span></span><br><span class="line">	u, _ := url.Parse(OidcIssuer)</span><br><span class="line">	u.Path = filepath.Join(u.Path, <span class="string">&quot;/.well-known/openid-configuration&quot;</span>)</span><br><span class="line">	res, err := client.Get(u.String())</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, fmt.Errorf(<span class="string">&quot;list openid-configuration from %s failed: %s&quot;</span>, u.String(), err)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">defer</span> res.Body.Close()</span><br><span class="line">	<span class="keyword">if</span> res.StatusCode != <span class="number">200</span> &#123;</span><br><span class="line">		msg, _ := ioutil.ReadAll(res.Body)</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, fmt.Errorf(<span class="string">&quot;list openid-configuration from %s failed: %s&quot;</span>, u.String(), msg)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">var</span> configurations <span class="keyword">map</span>[<span class="type">string</span>]<span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">	<span class="keyword">if</span> err = json.NewDecoder(res.Body).Decode(&amp;configurations); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, fmt.Errorf(<span class="string">&quot;parse configurations from %s failed: %s&quot;</span>, u.String(), err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// get the userinfo from &#123;issuer&#125;/&#123;userinfo_endpoint&#125;</span></span><br><span class="line">	userinfoEndpoint := configurations[<span class="string">&quot;userinfo_endpoint&quot;</span>].(<span class="type">string</span>)</span><br><span class="line">	req, _ := http.NewRequest(<span class="string">&quot;GET&quot;</span>, userinfoEndpoint, <span class="literal">nil</span>)</span><br><span class="line">	req.Header.Set(<span class="string">&quot;Authorization&quot;</span>, fmt.Sprintf(<span class="string">&quot;%s %s&quot;</span>, typ, accessToken))</span><br><span class="line">	resp, err := client.Do(req)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, fmt.Errorf(<span class="string">&quot;get userinfo from %s failed: %s&quot;</span>, u.String(), err)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">defer</span> resp.Body.Close()</span><br><span class="line">	<span class="keyword">if</span> resp.StatusCode != <span class="number">200</span> &#123;</span><br><span class="line">		msg, _ := ioutil.ReadAll(resp.Body)</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, fmt.Errorf(<span class="string">&quot;get userinfo from %s failed: %s&quot;</span>, u.String(), msg)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">var</span> ui userinfo.Userinfo</span><br><span class="line">	<span class="keyword">if</span> err = json.NewDecoder(resp.Body).Decode(&amp;ui); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, fmt.Errorf(<span class="string">&quot;parse userinfo from %s failed: %s&quot;</span>, userinfoEndpoint, err)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> &amp;ui, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>这里先访问<code>&#123;issuer&#125;/.well-known/openid-configuration</code>获得OP所提供的openid-configurations，是以json格式返回的各种endpoint，这里拿到userinfo_endpoint的值，然后通过http Get请求携带access_token向userinfo_endpoint发起访问返回json格式的用户信息。</p>
-<p>所以现在将token的获取和用户个人信息的获取加入到APIs中，代码如下：</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">AddRepo</span><span class="params">(w http.ResponseWriter, r *http.Request)</span></span> &#123;</span><br><span class="line">	name := r.FormValue(<span class="string">&quot;name&quot;</span>)</span><br><span class="line">	<span class="keyword">if</span> name = strings.TrimSpace(name); name == <span class="string">&quot;&quot;</span> &#123;</span><br><span class="line">		http.Error(w, fmt.Sprintf(<span class="string">&quot;invalid repo name: empty repo name&quot;</span>), http.StatusBadRequest)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	typ, accessToken, err := tokenFromHeader(r.Header)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		http.Error(w, fmt.Sprintf(<span class="string">&quot;get token from header failed: %s&quot;</span>, err), http.StatusUnauthorized)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line">	ui, err := getUserInfo(typ, accessToken)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		http.Error(w, fmt.Sprintf(<span class="string">&quot;get userinfo failed: %s&quot;</span>, err), http.StatusUnauthorized)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	ok := s.AddRepo(name, ui.Subject)</span><br><span class="line">	fmt.Fprintf(w, <span class="string">&quot;%t&quot;</span>, ok)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">MyRepo</span><span class="params">(w http.ResponseWriter, r *http.Request)</span></span> &#123;</span><br><span class="line">	typ, accessToken, err := tokenFromHeader(r.Header)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		http.Error(w, fmt.Sprintf(<span class="string">&quot;get token from header failed: %s&quot;</span>, err), http.StatusUnauthorized)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line">	ui, err := getUserInfo(typ, accessToken)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		http.Error(w, fmt.Sprintf(<span class="string">&quot;get userinfo failed: %s&quot;</span>, err), http.StatusUnauthorized)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	books := s.GetRepoBySubject(ui.Subject)</span><br><span class="line">	bytes, _ := json.Marshal(books)</span><br><span class="line">	w.Write(bytes)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<p>此时资源服务就能增加和查看用户自己的Repo了。</p>
-<h2 id="8-gitee"><a href="#8-gitee" class="headerlink" title="8 gitee"></a>8 gitee</h2><h3 id="storage-1"><a href="#storage-1" class="headerlink" title="storage"></a>storage</h3><p>得益于IDToken，gitee能够在用户使用github的账户登录后得到他在github的信息，还可以存储在自己的数据库里。所以这里用storage来存储Github登录后的该用户的个人信息。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> user <span class="keyword">struct</span> &#123;</span><br><span class="line">	Subject  <span class="type">string</span></span><br><span class="line">	Name     <span class="type">string</span></span><br><span class="line">	Audience <span class="type">string</span></span><br><span class="line">	Email    <span class="type">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Storage <span class="keyword">struct</span> &#123;</span><br><span class="line">	set   <span class="keyword">map</span>[<span class="type">string</span>]<span class="keyword">struct</span>&#123;&#125;</span><br><span class="line">	users []*user</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> instance *Storage</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">New</span><span class="params">()</span></span> *Storage &#123;</span><br><span class="line">	<span class="keyword">if</span> instance == <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Println(<span class="string">&quot;create a new storage&quot;</span>)</span><br><span class="line">		instance = &amp;Storage&#123;</span><br><span class="line">			set:   <span class="built_in">make</span>(<span class="keyword">map</span>[<span class="type">string</span>]<span class="keyword">struct</span>&#123;&#125;),</span><br><span class="line">			users: <span class="built_in">make</span>([]*user, <span class="number">0</span>),</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">return</span> instance</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	fmt.Println(<span class="string">&quot;storage already exists&quot;</span>)</span><br><span class="line">	<span class="keyword">return</span> instance</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *Storage)</span></span> AddUser(subject, name, audience, email <span class="type">string</span>) <span class="type">bool</span> &#123;</span><br><span class="line">	<span class="keyword">if</span> _, ok := s.set[subject]; ok &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	u := &amp;user&#123;</span><br><span class="line">		Subject:  subject,</span><br><span class="line">		Name:     name,</span><br><span class="line">		Audience: audience,</span><br><span class="line">		Email:    email,</span><br><span class="line">	&#125;</span><br><span class="line">	s.users = <span class="built_in">append</span>(s.users, u)</span><br><span class="line">	s.set[subject] = <span class="keyword">struct</span>&#123;&#125;&#123;&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *Storage)</span></span> AllUser() []*user &#123;</span><br><span class="line">	<span class="keyword">return</span> s.users</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<h3 id="OP授权"><a href="#OP授权" class="headerlink" title="OP授权"></a>OP授权</h3><h4 id="login"><a href="#login" class="headerlink" title="login"></a>login</h4><p>在用户尝试登录后，gitee就会拼凑ClientId，ClientSecret，ResponseType等发送给OP请求获取code。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Oauth2Config</span><span class="params">(provider *oidc.Provider)</span></span> *oauth2.Config &#123;</span><br><span class="line">	<span class="keyword">return</span> &amp;oauth2.Config&#123;</span><br><span class="line">		ClientID:     ClientID,</span><br><span class="line">		ClientSecret: ClientSecret,</span><br><span class="line">		RedirectURL:  RedirectURL,</span><br><span class="line">		Endpoint:     provider.Endpoint(),</span><br><span class="line">		Scopes:       []<span class="type">string</span>&#123;oidc.ScopeOpenID, oidc.ScopeOfflineAccess, <span class="string">&quot;profile&quot;</span>, <span class="string">&quot;email&quot;</span>, <span class="string">&quot;groups&quot;</span>&#125;,</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Login http redirect to oidc provider</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Login</span><span class="params">(w http.ResponseWriter, r *http.Request)</span></span> &#123;</span><br><span class="line">	ctx := r.Context()</span><br><span class="line">	provider, err := oidc.NewProvider(ctx, OidcIssuer)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		http.Error(w, fmt.Sprintf(<span class="string">&quot;init provider failed: %s&quot;</span>, err), http.StatusInternalServerError)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	config := Oauth2Config(provider)</span><br><span class="line">	url := config.AuthCodeURL(<span class="string">&quot;state&quot;</span>)</span><br><span class="line"></span><br><span class="line">	http.Redirect(w, r, url, http.StatusFound)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<h4 id="loginCallback"><a href="#loginCallback" class="headerlink" title="loginCallback"></a>loginCallback</h4><p>此时OP会带着code发回给回调地址redirect_url。在回调中，用code与OP交换token，然后解析IDToken获取用户个人信息并存储到gitee的数据库中。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// LoginCallback the callback that the oidc provider with call when the user login successfully</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">LoginCallback</span><span class="params">(w http.ResponseWriter, r *http.Request)</span></span> &#123;</span><br><span class="line">	ctx := r.Context()</span><br><span class="line"></span><br><span class="line">	provider, err := oidc.NewProvider(ctx, OidcIssuer)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		http.Error(w, fmt.Sprintf(<span class="string">&quot;init provider failed: %s&quot;</span>, err), http.StatusInternalServerError)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// exchange token with the server using authorization code</span></span><br><span class="line">	config := Oauth2Config(provider)</span><br><span class="line">	oauth2Token, err := config.Exchange(ctx, r.URL.Query().Get(<span class="string">&quot;code&quot;</span>))</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		http.Error(w, fmt.Sprintf(<span class="string">&quot;exchange token with server failed: %s&quot;</span>, err), http.StatusUnauthorized)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// get rawIDToken with token</span></span><br><span class="line">	rawIDToken, ok := oauth2Token.Extra(<span class="string">&quot;id_token&quot;</span>).(<span class="type">string</span>)</span><br><span class="line">	<span class="keyword">if</span> !ok &#123;</span><br><span class="line">		http.Error(w, fmt.Sprintf(<span class="string">&quot;get rawIDToken with token failed&quot;</span>), http.StatusUnauthorized)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// verify IDToken with idTokenVerifier, the idTokenVerifier is generated by provider</span></span><br><span class="line">	idTokenVerifier := provider.Verifier(&amp;oidc.Config&#123;ClientID: ClientID&#125;)</span><br><span class="line">	idToken, err := idTokenVerifier.Verify(ctx, rawIDToken)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		http.Error(w, fmt.Sprintf(<span class="string">&quot;verify IDToken with oidc provider failed: %s&quot;</span>, err), http.StatusUnauthorized)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">var</span> ui userinfo.UserInfo</span><br><span class="line">	<span class="keyword">if</span> err = idToken.Claims(&amp;ui); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		http.Error(w, fmt.Sprintf(<span class="string">&quot;parse id token failed: %s&quot;</span>, err), http.StatusInternalServerError)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line">	ui.AccessToken = oauth2Token.AccessToken</span><br><span class="line">	ui.IDToken = rawIDToken</span><br><span class="line"></span><br><span class="line">	s.AddUser(ui.Subject, ui.Name, ui.Audience, ui.Email)</span><br><span class="line"></span><br><span class="line">	bytes, _ := json.Marshal(&amp;ui)</span><br><span class="line">	w.Write(bytes) <span class="comment">// output the userinfo structure as json</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>这里最好将获取到的access_token、refresh_token、expiry、id_token等存入cookie中，方便下次用户登录的时候不需要重新登录。</p>
-<blockquote>
-<p>Tips</p>
-<p>此时的IDToken照理说只能在gitee中使用的，该IDToken的aud是gitee。</p>
-</blockquote>
-<h3 id="API"><a href="#API" class="headerlink" title="API"></a>API</h3><p>访问用户存储在github的repo：</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">ReadMyRepo</span><span class="params">(w http.ResponseWriter, r *http.Request)</span></span> &#123;</span><br><span class="line">	ctx := r.Context()</span><br><span class="line">	token, err := auth.GetFromCookie(r)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		http.Error(w, fmt.Sprintf(<span class="string">&quot;get token from request failed: %s&quot;</span>, err), http.StatusUnauthorized)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line">	accessToken := token.AccessToken</span><br><span class="line">	tokenType := token.TokenType</span><br><span class="line">	rawIDToken := token.IdToken</span><br><span class="line"></span><br><span class="line">	provider, err := oidc.NewProvider(ctx, OidcIssuer)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		http.Error(w, fmt.Sprintf(<span class="string">&quot;init oidc provider failed: %s&quot;</span>, err), http.StatusInternalServerError)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line">	idTokenVerifier := provider.Verifier(&amp;oidc.Config&#123;ClientID: ClientID&#125;)</span><br><span class="line">	idToken, err := idTokenVerifier.Verify(ctx, rawIDToken)</span><br><span class="line">	<span class="keyword">if</span> err = idToken.VerifyAccessToken(accessToken); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		http.Error(w, fmt.Sprintf(<span class="string">&quot;id_token does not match access_token&quot;</span>), http.StatusUnauthorized)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125; <span class="comment">// check if id_token matches access_token</span></span><br><span class="line"></span><br><span class="line">	client := http.DefaultClient</span><br><span class="line">	req, _ := http.NewRequest(<span class="string">&quot;GET&quot;</span>, ResourceMyBook, <span class="literal">nil</span>)</span><br><span class="line">	req.Header.Set(<span class="string">&quot;Authorization&quot;</span>, fmt.Sprintf(<span class="string">&quot;%s %s&quot;</span>, tokenType, accessToken))</span><br><span class="line">	res, err := client.Do(req) <span class="comment">// do get request with Authorization (access_token)</span></span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		http.Error(w, fmt.Sprintf(<span class="string">&quot;get my book from resource failed: %s&quot;</span>, err), http.StatusInternalServerError)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">defer</span> res.Body.Close()</span><br><span class="line">	bytes, _ := ioutil.ReadAll(res.Body)</span><br><span class="line">	w.Write(bytes)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>先从cookie中取出accessToken和IDToken，然后校验并解析IDToken，同时检查accessToken和IDToken是否匹配。<code>provider.Verifier(&amp;oidc.Config&#123;ClientID: ClientID&#125;)</code>的目的是校验器需要校验IDToken的aud是否与ClientID匹配，即校验该IDToken是否是发给其他Client的而不是gitee。此时我们拿着登录用户的AccessToken发送Get请求给<code>Repo的服务</code>的<code>查看自己Repo</code>的API。</p>
-<p>需要注意的是，来自cookie中的token可能会过期，于是需要利用refresh_token来刷新token以保证即使access_token过期了也能刷新access_token去访问资源。</p>
-<p>如果access_token过期可以使用refresh_token去获取新的token</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> err != <span class="literal">nil</span> &amp;&amp; strings.Contains(err.Error(), <span class="string">&quot;oidc: token is expired&quot;</span>) &#123;</span><br><span class="line">		<span class="comment">// use refresh_token to refresh token</span></span><br><span class="line">		config := auth.Oauth2Config(provider)</span><br><span class="line">		ts := config.TokenSource(ctx, &amp;oauth2.Token&#123;RefreshToken: token.RefreshToken&#125;)</span><br><span class="line">		newToken, err := ts.Token()</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			http.Error(w, fmt.Sprintf(<span class="string">&quot;refresh token failed: %s&quot;</span>, err), http.StatusInternalServerError)</span><br><span class="line">			<span class="keyword">return</span></span><br><span class="line">		&#125;</span><br><span class="line">		auth.SetIntoCookie(w, newToken) <span class="comment">// set new token(contains access_token, refresh_token, id_token...) into cookie</span></span><br><span class="line">		accessToken = newToken.AccessToken</span><br><span class="line">		tokenType = newToken.TokenType</span><br><span class="line">		rawIDToken = newToken.Extra(<span class="string">&quot;id_token&quot;</span>).(<span class="type">string</span>)</span><br><span class="line">		idToken, _ = idTokenVerifier.Verify(ctx, rawIDToken)</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<blockquote>
-<p>Tips</p>
-<p>具体要不要在访问资源的时候检查token是否过期可以根据需求，也可以在前端采用各种策略（如轮询）来检查用户token是否过期，过期即要求用户重新登录，此时的access_token就会是最新的了，访问资源的时候就不需要再重新刷新access_token了。</p>
-</blockquote>
-<h2 id="9-gitlab"><a href="#9-gitlab" class="headerlink" title="9 gitlab"></a>9 gitlab</h2><p>gitlab同理，只是同gitee的clientId和clientSecret以及服务启动的端口不同。</p>
-<h2 id="10-OIDC-Provider"><a href="#10-OIDC-Provider" class="headerlink" title="10 OIDC Provider"></a>10 OIDC Provider</h2><p>根据<a target="_blank" rel="noopener" href="https://dexidp.io/docs/using-dex/">dex</a>的说明，启动Provider需要先修改配置文件，在<code>./examples/config-dev.yaml</code>里的<code>staticClients</code>里添加gitee和gitlab两个client：</p>
-<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">staticClients:</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">id:</span> <span class="string">example-app</span></span><br><span class="line">  <span class="attr">redirectURIs:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="string">&#x27;http://127.0.0.1:5555/callback&#x27;</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">&#x27;Example App&#x27;</span></span><br><span class="line">  <span class="attr">secret:</span> <span class="string">ZXhhbXBsZS1hcHAtc2VjcmV0</span></span><br><span class="line"><span class="comment">#  - id: example-device-client</span></span><br><span class="line"><span class="comment">#    redirectURIs:</span></span><br><span class="line"><span class="comment">#      - /device/callback</span></span><br><span class="line"><span class="comment">#    name: &#x27;Static Client for Device Flow&#x27;</span></span><br><span class="line"><span class="comment">#    public: true</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">id:</span> <span class="string">gitee</span></span><br><span class="line">  <span class="attr">secret:</span> <span class="string">gitee-secret</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">&#x27;Example Gitee&#x27;</span></span><br><span class="line">  <span class="attr">redirectURIs:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="string">&#x27;http://app1:8080/callback&#x27;</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">id:</span> <span class="string">gitlab</span></span><br><span class="line">  <span class="attr">secret:</span> <span class="string">gitlab-secret</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">&#x27;Example Github&#x27;</span></span><br><span class="line">  <span class="attr">redirectURIs:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="string">&#x27;http://app2:8081/callback&#x27;</span></span><br></pre></td></tr></table></figure>
-<p>所以gitee的地址就是<code>http://app1:8080</code>，gitlab的地址就是<code>http://app2:8081</code>。</p>
-<blockquote>
-<p>Tips	</p>
-<p>gitee和gitlab的回调地址分别是<code>http://app1:8080/callback</code>和<code>http://app2:8081/callback</code>。这里需要修改本机的host地址，修改127.0.0.1映射到<code>app1</code>和<code>app2</code>上。这里这么做的目的是如果不修改的话gitee和gitlab的监听地址分别是<code>http://localhost:8080/callback</code>和<code>http://localhost:8081/callback</code>此时由于浏览器cookie的存储策略问题（同一domain不同port仍然共用cookie），这两App就会共用同一个cookie，这显然是不正确的，所以这里需要修改host的映射地址，最终在浏览器中gitee和gitlab就不会共用同一cookie了。</p>
-</blockquote>
-<h2 id="11-测试演示"><a href="#11-测试演示" class="headerlink" title="11 测试演示"></a>11 测试演示</h2><ol>
-<li><p>登录github</p>
-<p><img src="/2023/07/19/network/OIDC/%E6%90%AD%E5%BB%BAOIDC%20Provider%EF%BC%8C%E4%BB%A5Golang%E4%B8%BA%E4%BE%8B/image-20230720173315225.png"></p>
-<p><img src="/2023/07/19/network/OIDC/%E6%90%AD%E5%BB%BAOIDC%20Provider%EF%BC%8C%E4%BB%A5Golang%E4%B8%BA%E4%BE%8B/image-20230720173337983.png"></p>
-<p><img src="/2023/07/19/network/OIDC/%E6%90%AD%E5%BB%BAOIDC%20Provider%EF%BC%8C%E4%BB%A5Golang%E4%B8%BA%E4%BE%8B/image-20230720173401114.png"></p>
-<p><img src="/2023/07/19/network/OIDC/%E6%90%AD%E5%BB%BAOIDC%20Provider%EF%BC%8C%E4%BB%A5Golang%E4%B8%BA%E4%BE%8B/image-20230720173838469.png"></p>
-</li>
-<li><p>添加Repo</p>
-<p>使用access_token添加名为test、test1、test2、test3的Repo</p>
-<p><img src="/2023/07/19/network/OIDC/%E6%90%AD%E5%BB%BAOIDC%20Provider%EF%BC%8C%E4%BB%A5Golang%E4%B8%BA%E4%BE%8B/image-20230720173952398.png"></p>
-</li>
-<li><p>查看Repo</p>
-<p>使用access_token查看Repo</p>
-<p><img src="/2023/07/19/network/OIDC/%E6%90%AD%E5%BB%BAOIDC%20Provider%EF%BC%8C%E4%BB%A5Golang%E4%B8%BA%E4%BE%8B/image-20230720174052500.png"></p>
-</li>
-<li><p>在gitee使用github登录</p>
-<p>浏览器输入<code>http://app1:8080/login</code>登录在github中注册的用户确认访问范围</p>
-<p><img src="/2023/07/19/network/OIDC/%E6%90%AD%E5%BB%BAOIDC%20Provider%EF%BC%8C%E4%BB%A5Golang%E4%B8%BA%E4%BE%8B/image-20230720174219887.png"></p>
-<p>此时浏览器的cookie中已经存了该用户的access_token、id_token等。</p>
-</li>
-<li><p>在gitee中查看github中的Repo</p>
-<p>浏览器输入<code>http://app1:8080/read</code></p>
-<p><img src="/2023/07/19/network/OIDC/%E6%90%AD%E5%BB%BAOIDC%20Provider%EF%BC%8C%E4%BB%A5Golang%E4%B8%BA%E4%BE%8B/image-20230720174327025.png"></p>
-<p>此时该用户就成功在gitee访问到了该用户存在github的Repo。</p>
-</li>
-<li><p>同样地，我在gitee登录另外一个账号</p>
-</li>
-<li><p>调用gitee的管理员接口就能查看到登录过gitee的用户了</p>
-<p><img src="/2023/07/19/network/OIDC/%E6%90%AD%E5%BB%BAOIDC%20Provider%EF%BC%8C%E4%BB%A5Golang%E4%B8%BA%E4%BE%8B/image-20230720175005289.png"></p>
-</li>
-</ol>
-<p>至此，便完成了我的需求。在gitee使用github登录，并且存储登录用户的个人信息，同时还可以在gitee直接访问登录用户存储于github的资源。</p>
-<p>那么同样地，gitlab也可以使用github登录，也可以存储登录用户的个人信息，同时也可以在gitlab直接访问登录用户存储与github的资源。</p>
-<h2 id="仓库地址"><a href="#仓库地址" class="headerlink" title="仓库地址"></a>仓库地址</h2><p><a target="_blank" rel="noopener" href="https://github.com/FanGaoXS/oidc-demo">https://github.com/FanGaoXS/oidc-demo</a></p>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="https://fangaoxs.github.io/2023/07/19/network/OIDC/%E6%90%AD%E5%BB%BAOIDC%20Provider%EF%BC%8C%E4%BB%A5Golang%E4%B8%BA%E4%BE%8B/" data-id="clsrb81uv0013cak68c1ihz7d" data-title="搭建OIDC Provider，以Golang为例" class="article-share-link"><span class="fa fa-share">分享</span></a>
-      
-      
-      
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OIDC/" rel="tag">OIDC</a></li></ul>
 
     </footer>
   </div>
@@ -1638,7 +1559,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">归档</h3>
     <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/01/">一月 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/11/">十一月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/07/">七月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/06/">六月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/02/">二月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">一月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/12/">十二月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/10/">十月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/09/">九月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/08/">八月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/07/">七月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/05/">五月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/04/">四月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/12/">十二月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/11/">十一月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/10/">十月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/08/">八月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/06/">六月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/03/">三月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/12/">十二月 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/11/">十一月 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/10/">十月 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/08/">八月 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/07/">七月 2020</a></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/03/">三月 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/01/">一月 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/11/">十一月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/07/">七月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/06/">六月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/02/">二月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">一月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/12/">十二月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/10/">十月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/09/">九月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/08/">八月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/07/">七月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/05/">五月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/04/">四月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/12/">十二月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/11/">十一月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/10/">十月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/08/">八月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/06/">六月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/03/">三月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/12/">十二月 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/11/">十一月 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/10/">十月 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/08/">八月 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/07/">七月 2020</a></li></ul>
     </div>
   </div>
 
@@ -1649,6 +1570,10 @@
     <h3 class="widget-title">最新文章</h3>
     <div class="widget">
       <ul>
+        
+          <li>
+            <a href="/2024/03/12/back-end/go/Goroutine%E8%B0%83%E5%BA%A6%E5%99%A8GMP/">Goroutine调度器GMP</a>
+          </li>
         
           <li>
             <a href="/2024/01/31/back-end/docker/dockerfile/">dockerfile</a>
@@ -1664,10 +1589,6 @@
         
           <li>
             <a href="/2023/07/24/back-end/Java/Java%E5%AE%B9%E5%99%A8/%E9%9B%86%E5%90%88/">Java集合</a>
-          </li>
-        
-          <li>
-            <a href="/2023/07/19/back-end/DevOps/CI_CD/">CI_CD</a>
           </li>
         
       </ul>

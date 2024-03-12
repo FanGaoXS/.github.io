@@ -69,6 +69,189 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-network/OIDC/搭建OIDC Provider，以Golang为例" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2023/07/19/network/OIDC/%E6%90%AD%E5%BB%BAOIDC%20Provider%EF%BC%8C%E4%BB%A5Golang%E4%B8%BA%E4%BE%8B/" class="article-date">
+  <time class="dt-published" datetime="2023-07-19T07:30:39.000Z" itemprop="datePublished">2023-07-19</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2023/07/19/network/OIDC/%E6%90%AD%E5%BB%BAOIDC%20Provider%EF%BC%8C%E4%BB%A5Golang%E4%B8%BA%E4%BE%8B/">搭建OIDC Provider，以Golang为例</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="1-需求"><a href="#1-需求" class="headerlink" title="1 需求"></a>1 需求</h2><p>结合对OIDC：<a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_45747080/article/details/131810562"></a>的理解，我尝试自己搭建OIDC的demo。在搭建demo之前，我需要先确定我想要实现成什么样子。以上文提到的<a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_45747080/article/details/131303150"></a>为例，我想要手动来实现Github授权以及用户认证的服务，此时Github就是作为一个OIDC Provider（以下简称“OP”）。同时我将手动实现第三方应用程序来作为OP的Relying Party（受OP信赖的客户端，以下简称“RP”）。</p>
+<p>在Github注册然后登录用户后，我们就能在我的Github里创建和查看自己的Repository（代码仓库，以下简称“Repo”），同时我有两个App，一个叫Gitee，Gitlab，这两个App实现了能够访问用Github登录的用户的Repo。</p>
+<blockquote>
+<p>Tips</p>
+<p>这个需求非常实用，目前Gitee也有能够直接复制Github的仓库到Gitee这个功能。</p>
+</blockquote>
+<h2 id="2-功能实现"><a href="#2-功能实现" class="headerlink" title="2 功能实现"></a>2 功能实现</h2><p>所以我现在要手动实现：</p>
+<ol>
+<li>Github的Repo的创建和查看功能</li>
+<li>用户在登录Gitee的时候能够使用Github登录，并且访问该用户存放于Github的Repo</li>
+<li>用户在登录Gitlab的时候能够使用Github登录，并且访问该用户存放于Github的Repo</li>
+<li>Github作为OIDC Provider，发起授权并且认证用户。</li>
+</ol>
+<blockquote>
+<p>Tips</p>
+<p>这里所提到的Github、Gitee和Gitlab并不是真正的“它们”，而是用我手动实现类似它们的上述功能，方便理解。</p>
+</blockquote>
+<h2 id="3-工作流程"><a href="#3-工作流程" class="headerlink" title="3 工作流程"></a>3 工作流程</h2><p><img src="/2023/07/19/network/OIDC/%E6%90%AD%E5%BB%BAOIDC%20Provider%EF%BC%8C%E4%BB%A5Golang%E4%B8%BA%E4%BE%8B/image-20230719172238488.png"></p>
+<ol>
+<li>已在Github注册的用户在登录Gitlab的时候选择以Github登录。</li>
+<li>此时Gitlab向Github的OP发起请求要求用户登录Github并且确认访问的范围（scope）。</li>
+<li>OP验证用户成功后返回<code>access_token</code>和<code>id_token</code>给Gitlab。</li>
+<li>Gitlab解析id_token以获得用户的信息并进行存储。</li>
+</ol>
+<p>Gitee同理。</p>
+<h2 id="4-选用库"><a href="#4-选用库" class="headerlink" title="4 选用库"></a>4 选用库</h2><p>用Golang实现的话，Golang有现成的实现了OIDC的库：<a target="_blank" rel="noopener" href="https://dexidp.io/docs/using-dex/">dex</a>。感谢Authing提供参考：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/118037137"></a>，文章里有提到不同的OIDC Provider的实现，如在node上的实现，在Golang上的实现，在Python上的实现等。所以这里我选用dex作为OIDC的Provider。</p>
+<h2 id="5-Token的授权方式"><a href="#5-Token的授权方式" class="headerlink" title="5 Token的授权方式"></a>5 Token的授权方式</h2><p>demo中授权的方式采用授权码模式，即向OP发起授权请求的<code>response_type</code>是<code>code</code>。</p>
+<h2 id="6-Provider的Endpoint"><a href="#6-Provider的Endpoint" class="headerlink" title="6 Provider的Endpoint"></a>6 Provider的Endpoint</h2><p>Provider会暴露一些常用的接口：如授权接口，token接口，用户信息接口。一般通过访问</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123;$issuer&#125;/.well-known/openid-configuration</span><br></pre></td></tr></table></figure>
+
+<p>即可查看。</p>
+<ul>
+<li>授权接口：<code>&#123;$issuer&#125;/auth</code></li>
+</ul>
+<p>访问该接口的时候需携带ClientID，ClientSecret，ResponseType，Scope。OP会返回code。</p>
+<ul>
+<li>token接口：<code>&#123;$issuer&#125;/token</code></li>
+</ul>
+<p>访问该接口的时候需携带code，用于和OP交换token。</p>
+<ul>
+<li>用户信息接口：<code>&#123;$issuer&#125;/userinfo</code></li>
+</ul>
+<p>访问该接口需要携带accessToken，用户获取EU的个人信息。</p>
+<h2 id="7-Repo的服务"><a href="#7-Repo的服务" class="headerlink" title="7 Repo的服务"></a>7 Repo的服务</h2><p>首先我们需要一个resource的服务用于存放Repo。</p>
+<h3 id="storage"><a href="#storage" class="headerlink" title="storage"></a>storage</h3><p>我们需要选用持久化来存储Repo同时对Repo进行增加和查看（这里为了演示方便就直接采用一次性的HashMap来暂存数据，服务重启则HashMap被清空）：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> repo <span class="keyword">struct</span> &#123;</span><br><span class="line">	Name      <span class="type">string</span></span><br><span class="line">	CreatedBy <span class="type">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Storage <span class="keyword">struct</span> &#123;</span><br><span class="line">	set   <span class="keyword">map</span>[<span class="type">string</span>]<span class="keyword">struct</span>&#123;&#125;</span><br><span class="line">	repos []*repo</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> instance *Storage <span class="comment">// single instance</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">New</span><span class="params">()</span></span> *Storage &#123;</span><br><span class="line">	<span class="keyword">if</span> instance == <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Println(<span class="string">&quot;create a new storage&quot;</span>)</span><br><span class="line">		instance = &amp;Storage&#123;</span><br><span class="line">			set:   <span class="built_in">make</span>(<span class="keyword">map</span>[<span class="type">string</span>]<span class="keyword">struct</span>&#123;&#125;),</span><br><span class="line">			repos: <span class="built_in">make</span>([]*repo, <span class="number">0</span>),</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">return</span> instance</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	fmt.Println(<span class="string">&quot;storage already exists&quot;</span>)</span><br><span class="line">	<span class="keyword">return</span> instance</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *Storage)</span></span> AddRepo(name, subject <span class="type">string</span>) <span class="type">bool</span> &#123;</span><br><span class="line">	<span class="keyword">if</span> _, ok := s.set[name]; ok &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	r := &amp;repo&#123;</span><br><span class="line">		Name:      name,</span><br><span class="line">		CreatedBy: subject,</span><br><span class="line">	&#125;</span><br><span class="line">	s.repos = <span class="built_in">append</span>(s.repos, r)</span><br><span class="line">	s.set[name] = <span class="keyword">struct</span>&#123;&#125;&#123;&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *Storage)</span></span> GetRepoBySubject(subject <span class="type">string</span>) []*repo &#123;</span><br><span class="line">	<span class="keyword">var</span> res []*repo</span><br><span class="line">	<span class="keyword">for</span> _, r := <span class="keyword">range</span> s.repos &#123;</span><br><span class="line">		<span class="keyword">if</span> r.CreatedBy == subject &#123;</span><br><span class="line">			res = <span class="built_in">append</span>(res, r)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> res</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *Storage)</span></span> AllRepo() []*repo &#123;</span><br><span class="line">	<span class="keyword">return</span> s.repos</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>有三个对数据的操作，分别是<code>添加Repo</code>，<code>根据subject查询Repo</code>，<code>列出所有的Repo</code>。</p>
+<h3 id="APIs"><a href="#APIs" class="headerlink" title="APIs"></a>APIs</h3><p>向外暴露3个API：<code>添加Repo</code>，<code>查看用户自己创建的Repo</code>，<code>列出所有Repo</code></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">AddRepo</span><span class="params">(w http.ResponseWriter, r *http.Request)</span></span> &#123;</span><br><span class="line">	name := r.FormValue(<span class="string">&quot;name&quot;</span>)</span><br><span class="line">	<span class="keyword">if</span> name = strings.TrimSpace(name); name == <span class="string">&quot;&quot;</span> &#123;</span><br><span class="line">		http.Error(w, fmt.Sprintf(<span class="string">&quot;invalid repo name: empty repo name&quot;</span>), http.StatusBadRequest)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	ok := s.AddRepo(name, ui.Subject)</span><br><span class="line">	fmt.Fprintf(w, <span class="string">&quot;%t&quot;</span>, ok)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">MyRepo</span><span class="params">(w http.ResponseWriter, r *http.Request)</span></span> &#123;</span><br><span class="line">	books := s.GetRepoBySubject(ui.Subject)</span><br><span class="line">	bytes, _ := json.Marshal(books)</span><br><span class="line">	w.Write(bytes)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">AllRepo</span><span class="params">(w http.ResponseWriter, r *http.Request)</span></span> &#123;</span><br><span class="line">	<span class="comment">// for admin</span></span><br><span class="line"></span><br><span class="line">	books := s.AllRepo()</span><br><span class="line">	bytes, _ := json.Marshal(books)</span><br><span class="line">	w.Write(bytes)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>其中添加Repo和查看自己的Repo需要将用户创建的资源与用户进行绑定，首先需要拿到access_token（这里是从http header中取的），再用access_token去userinfo_endpoint拿到用户的个人信息。</p>
+<blockquote>
+<p>Tips</p>
+<p>OAuth2.0中可以通过访问userinfo_endpoint来获取用户的个人信息，并且个人信息中的subject就能唯一标识一个用户，所以这里将subject与用户创建的资源进行绑定。</p>
+</blockquote>
+<p>从header中获得access_token：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">tokenFromHeader</span><span class="params">(header http.Header)</span></span> (typ <span class="type">string</span>, token <span class="type">string</span>, err <span class="type">error</span>) &#123;</span><br><span class="line">	token = header.Get(<span class="string">&quot;Authorization&quot;</span>)</span><br><span class="line">	splits := strings.SplitN(token, <span class="string">&quot; &quot;</span>, <span class="number">2</span>)</span><br><span class="line">	<span class="keyword">if</span> <span class="built_in">len</span>(splits) &lt; <span class="number">2</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="string">&quot;&quot;</span>, <span class="string">&quot;&quot;</span>, fmt.Errorf(<span class="string">&quot;invalid authorization: empty authorization&quot;</span>)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	typ = splits[<span class="number">0</span>]</span><br><span class="line">	token = splits[<span class="number">1</span>]</span><br><span class="line">	<span class="keyword">if</span> typ != <span class="string">&quot;Bearer&quot;</span> &amp;&amp; typ != <span class="string">&quot;bearer&quot;</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="string">&quot;&quot;</span>, <span class="string">&quot;&quot;</span>, fmt.Errorf(<span class="string">&quot;invalid authorization type: %s&quot;</span>, typ)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> typ, token, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>用access_token访问userinfo_endpoint：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">getUserInfo</span><span class="params">(typ, accessToken <span class="type">string</span>)</span></span> (*userinfo.Userinfo, <span class="type">error</span>) &#123;</span><br><span class="line">	client := http.DefaultClient</span><br><span class="line"></span><br><span class="line">	<span class="comment">// get the configurations from &#123;issuer&#125;/.well-known/openid-configuration</span></span><br><span class="line">	u, _ := url.Parse(OidcIssuer)</span><br><span class="line">	u.Path = filepath.Join(u.Path, <span class="string">&quot;/.well-known/openid-configuration&quot;</span>)</span><br><span class="line">	res, err := client.Get(u.String())</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, fmt.Errorf(<span class="string">&quot;list openid-configuration from %s failed: %s&quot;</span>, u.String(), err)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">defer</span> res.Body.Close()</span><br><span class="line">	<span class="keyword">if</span> res.StatusCode != <span class="number">200</span> &#123;</span><br><span class="line">		msg, _ := ioutil.ReadAll(res.Body)</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, fmt.Errorf(<span class="string">&quot;list openid-configuration from %s failed: %s&quot;</span>, u.String(), msg)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">var</span> configurations <span class="keyword">map</span>[<span class="type">string</span>]<span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">	<span class="keyword">if</span> err = json.NewDecoder(res.Body).Decode(&amp;configurations); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, fmt.Errorf(<span class="string">&quot;parse configurations from %s failed: %s&quot;</span>, u.String(), err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// get the userinfo from &#123;issuer&#125;/&#123;userinfo_endpoint&#125;</span></span><br><span class="line">	userinfoEndpoint := configurations[<span class="string">&quot;userinfo_endpoint&quot;</span>].(<span class="type">string</span>)</span><br><span class="line">	req, _ := http.NewRequest(<span class="string">&quot;GET&quot;</span>, userinfoEndpoint, <span class="literal">nil</span>)</span><br><span class="line">	req.Header.Set(<span class="string">&quot;Authorization&quot;</span>, fmt.Sprintf(<span class="string">&quot;%s %s&quot;</span>, typ, accessToken))</span><br><span class="line">	resp, err := client.Do(req)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, fmt.Errorf(<span class="string">&quot;get userinfo from %s failed: %s&quot;</span>, u.String(), err)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">defer</span> resp.Body.Close()</span><br><span class="line">	<span class="keyword">if</span> resp.StatusCode != <span class="number">200</span> &#123;</span><br><span class="line">		msg, _ := ioutil.ReadAll(resp.Body)</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, fmt.Errorf(<span class="string">&quot;get userinfo from %s failed: %s&quot;</span>, u.String(), msg)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">var</span> ui userinfo.Userinfo</span><br><span class="line">	<span class="keyword">if</span> err = json.NewDecoder(resp.Body).Decode(&amp;ui); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, fmt.Errorf(<span class="string">&quot;parse userinfo from %s failed: %s&quot;</span>, userinfoEndpoint, err)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> &amp;ui, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里先访问<code>&#123;issuer&#125;/.well-known/openid-configuration</code>获得OP所提供的openid-configurations，是以json格式返回的各种endpoint，这里拿到userinfo_endpoint的值，然后通过http Get请求携带access_token向userinfo_endpoint发起访问返回json格式的用户信息。</p>
+<p>所以现在将token的获取和用户个人信息的获取加入到APIs中，代码如下：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">AddRepo</span><span class="params">(w http.ResponseWriter, r *http.Request)</span></span> &#123;</span><br><span class="line">	name := r.FormValue(<span class="string">&quot;name&quot;</span>)</span><br><span class="line">	<span class="keyword">if</span> name = strings.TrimSpace(name); name == <span class="string">&quot;&quot;</span> &#123;</span><br><span class="line">		http.Error(w, fmt.Sprintf(<span class="string">&quot;invalid repo name: empty repo name&quot;</span>), http.StatusBadRequest)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	typ, accessToken, err := tokenFromHeader(r.Header)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		http.Error(w, fmt.Sprintf(<span class="string">&quot;get token from header failed: %s&quot;</span>, err), http.StatusUnauthorized)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line">	ui, err := getUserInfo(typ, accessToken)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		http.Error(w, fmt.Sprintf(<span class="string">&quot;get userinfo failed: %s&quot;</span>, err), http.StatusUnauthorized)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	ok := s.AddRepo(name, ui.Subject)</span><br><span class="line">	fmt.Fprintf(w, <span class="string">&quot;%t&quot;</span>, ok)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">MyRepo</span><span class="params">(w http.ResponseWriter, r *http.Request)</span></span> &#123;</span><br><span class="line">	typ, accessToken, err := tokenFromHeader(r.Header)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		http.Error(w, fmt.Sprintf(<span class="string">&quot;get token from header failed: %s&quot;</span>, err), http.StatusUnauthorized)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line">	ui, err := getUserInfo(typ, accessToken)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		http.Error(w, fmt.Sprintf(<span class="string">&quot;get userinfo failed: %s&quot;</span>, err), http.StatusUnauthorized)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	books := s.GetRepoBySubject(ui.Subject)</span><br><span class="line">	bytes, _ := json.Marshal(books)</span><br><span class="line">	w.Write(bytes)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>此时资源服务就能增加和查看用户自己的Repo了。</p>
+<h2 id="8-gitee"><a href="#8-gitee" class="headerlink" title="8 gitee"></a>8 gitee</h2><h3 id="storage-1"><a href="#storage-1" class="headerlink" title="storage"></a>storage</h3><p>得益于IDToken，gitee能够在用户使用github的账户登录后得到他在github的信息，还可以存储在自己的数据库里。所以这里用storage来存储Github登录后的该用户的个人信息。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> user <span class="keyword">struct</span> &#123;</span><br><span class="line">	Subject  <span class="type">string</span></span><br><span class="line">	Name     <span class="type">string</span></span><br><span class="line">	Audience <span class="type">string</span></span><br><span class="line">	Email    <span class="type">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Storage <span class="keyword">struct</span> &#123;</span><br><span class="line">	set   <span class="keyword">map</span>[<span class="type">string</span>]<span class="keyword">struct</span>&#123;&#125;</span><br><span class="line">	users []*user</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> instance *Storage</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">New</span><span class="params">()</span></span> *Storage &#123;</span><br><span class="line">	<span class="keyword">if</span> instance == <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Println(<span class="string">&quot;create a new storage&quot;</span>)</span><br><span class="line">		instance = &amp;Storage&#123;</span><br><span class="line">			set:   <span class="built_in">make</span>(<span class="keyword">map</span>[<span class="type">string</span>]<span class="keyword">struct</span>&#123;&#125;),</span><br><span class="line">			users: <span class="built_in">make</span>([]*user, <span class="number">0</span>),</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">return</span> instance</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	fmt.Println(<span class="string">&quot;storage already exists&quot;</span>)</span><br><span class="line">	<span class="keyword">return</span> instance</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *Storage)</span></span> AddUser(subject, name, audience, email <span class="type">string</span>) <span class="type">bool</span> &#123;</span><br><span class="line">	<span class="keyword">if</span> _, ok := s.set[subject]; ok &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	u := &amp;user&#123;</span><br><span class="line">		Subject:  subject,</span><br><span class="line">		Name:     name,</span><br><span class="line">		Audience: audience,</span><br><span class="line">		Email:    email,</span><br><span class="line">	&#125;</span><br><span class="line">	s.users = <span class="built_in">append</span>(s.users, u)</span><br><span class="line">	s.set[subject] = <span class="keyword">struct</span>&#123;&#125;&#123;&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *Storage)</span></span> AllUser() []*user &#123;</span><br><span class="line">	<span class="keyword">return</span> s.users</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="OP授权"><a href="#OP授权" class="headerlink" title="OP授权"></a>OP授权</h3><h4 id="login"><a href="#login" class="headerlink" title="login"></a>login</h4><p>在用户尝试登录后，gitee就会拼凑ClientId，ClientSecret，ResponseType等发送给OP请求获取code。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Oauth2Config</span><span class="params">(provider *oidc.Provider)</span></span> *oauth2.Config &#123;</span><br><span class="line">	<span class="keyword">return</span> &amp;oauth2.Config&#123;</span><br><span class="line">		ClientID:     ClientID,</span><br><span class="line">		ClientSecret: ClientSecret,</span><br><span class="line">		RedirectURL:  RedirectURL,</span><br><span class="line">		Endpoint:     provider.Endpoint(),</span><br><span class="line">		Scopes:       []<span class="type">string</span>&#123;oidc.ScopeOpenID, oidc.ScopeOfflineAccess, <span class="string">&quot;profile&quot;</span>, <span class="string">&quot;email&quot;</span>, <span class="string">&quot;groups&quot;</span>&#125;,</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Login http redirect to oidc provider</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Login</span><span class="params">(w http.ResponseWriter, r *http.Request)</span></span> &#123;</span><br><span class="line">	ctx := r.Context()</span><br><span class="line">	provider, err := oidc.NewProvider(ctx, OidcIssuer)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		http.Error(w, fmt.Sprintf(<span class="string">&quot;init provider failed: %s&quot;</span>, err), http.StatusInternalServerError)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	config := Oauth2Config(provider)</span><br><span class="line">	url := config.AuthCodeURL(<span class="string">&quot;state&quot;</span>)</span><br><span class="line"></span><br><span class="line">	http.Redirect(w, r, url, http.StatusFound)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="loginCallback"><a href="#loginCallback" class="headerlink" title="loginCallback"></a>loginCallback</h4><p>此时OP会带着code发回给回调地址redirect_url。在回调中，用code与OP交换token，然后解析IDToken获取用户个人信息并存储到gitee的数据库中。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// LoginCallback the callback that the oidc provider with call when the user login successfully</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">LoginCallback</span><span class="params">(w http.ResponseWriter, r *http.Request)</span></span> &#123;</span><br><span class="line">	ctx := r.Context()</span><br><span class="line"></span><br><span class="line">	provider, err := oidc.NewProvider(ctx, OidcIssuer)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		http.Error(w, fmt.Sprintf(<span class="string">&quot;init provider failed: %s&quot;</span>, err), http.StatusInternalServerError)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// exchange token with the server using authorization code</span></span><br><span class="line">	config := Oauth2Config(provider)</span><br><span class="line">	oauth2Token, err := config.Exchange(ctx, r.URL.Query().Get(<span class="string">&quot;code&quot;</span>))</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		http.Error(w, fmt.Sprintf(<span class="string">&quot;exchange token with server failed: %s&quot;</span>, err), http.StatusUnauthorized)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// get rawIDToken with token</span></span><br><span class="line">	rawIDToken, ok := oauth2Token.Extra(<span class="string">&quot;id_token&quot;</span>).(<span class="type">string</span>)</span><br><span class="line">	<span class="keyword">if</span> !ok &#123;</span><br><span class="line">		http.Error(w, fmt.Sprintf(<span class="string">&quot;get rawIDToken with token failed&quot;</span>), http.StatusUnauthorized)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// verify IDToken with idTokenVerifier, the idTokenVerifier is generated by provider</span></span><br><span class="line">	idTokenVerifier := provider.Verifier(&amp;oidc.Config&#123;ClientID: ClientID&#125;)</span><br><span class="line">	idToken, err := idTokenVerifier.Verify(ctx, rawIDToken)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		http.Error(w, fmt.Sprintf(<span class="string">&quot;verify IDToken with oidc provider failed: %s&quot;</span>, err), http.StatusUnauthorized)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">var</span> ui userinfo.UserInfo</span><br><span class="line">	<span class="keyword">if</span> err = idToken.Claims(&amp;ui); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		http.Error(w, fmt.Sprintf(<span class="string">&quot;parse id token failed: %s&quot;</span>, err), http.StatusInternalServerError)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line">	ui.AccessToken = oauth2Token.AccessToken</span><br><span class="line">	ui.IDToken = rawIDToken</span><br><span class="line"></span><br><span class="line">	s.AddUser(ui.Subject, ui.Name, ui.Audience, ui.Email)</span><br><span class="line"></span><br><span class="line">	bytes, _ := json.Marshal(&amp;ui)</span><br><span class="line">	w.Write(bytes) <span class="comment">// output the userinfo structure as json</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里最好将获取到的access_token、refresh_token、expiry、id_token等存入cookie中，方便下次用户登录的时候不需要重新登录。</p>
+<blockquote>
+<p>Tips</p>
+<p>此时的IDToken照理说只能在gitee中使用的，该IDToken的aud是gitee。</p>
+</blockquote>
+<h3 id="API"><a href="#API" class="headerlink" title="API"></a>API</h3><p>访问用户存储在github的repo：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">ReadMyRepo</span><span class="params">(w http.ResponseWriter, r *http.Request)</span></span> &#123;</span><br><span class="line">	ctx := r.Context()</span><br><span class="line">	token, err := auth.GetFromCookie(r)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		http.Error(w, fmt.Sprintf(<span class="string">&quot;get token from request failed: %s&quot;</span>, err), http.StatusUnauthorized)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line">	accessToken := token.AccessToken</span><br><span class="line">	tokenType := token.TokenType</span><br><span class="line">	rawIDToken := token.IdToken</span><br><span class="line"></span><br><span class="line">	provider, err := oidc.NewProvider(ctx, OidcIssuer)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		http.Error(w, fmt.Sprintf(<span class="string">&quot;init oidc provider failed: %s&quot;</span>, err), http.StatusInternalServerError)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line">	idTokenVerifier := provider.Verifier(&amp;oidc.Config&#123;ClientID: ClientID&#125;)</span><br><span class="line">	idToken, err := idTokenVerifier.Verify(ctx, rawIDToken)</span><br><span class="line">	<span class="keyword">if</span> err = idToken.VerifyAccessToken(accessToken); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		http.Error(w, fmt.Sprintf(<span class="string">&quot;id_token does not match access_token&quot;</span>), http.StatusUnauthorized)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125; <span class="comment">// check if id_token matches access_token</span></span><br><span class="line"></span><br><span class="line">	client := http.DefaultClient</span><br><span class="line">	req, _ := http.NewRequest(<span class="string">&quot;GET&quot;</span>, ResourceMyBook, <span class="literal">nil</span>)</span><br><span class="line">	req.Header.Set(<span class="string">&quot;Authorization&quot;</span>, fmt.Sprintf(<span class="string">&quot;%s %s&quot;</span>, tokenType, accessToken))</span><br><span class="line">	res, err := client.Do(req) <span class="comment">// do get request with Authorization (access_token)</span></span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		http.Error(w, fmt.Sprintf(<span class="string">&quot;get my book from resource failed: %s&quot;</span>, err), http.StatusInternalServerError)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">defer</span> res.Body.Close()</span><br><span class="line">	bytes, _ := ioutil.ReadAll(res.Body)</span><br><span class="line">	w.Write(bytes)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>先从cookie中取出accessToken和IDToken，然后校验并解析IDToken，同时检查accessToken和IDToken是否匹配。<code>provider.Verifier(&amp;oidc.Config&#123;ClientID: ClientID&#125;)</code>的目的是校验器需要校验IDToken的aud是否与ClientID匹配，即校验该IDToken是否是发给其他Client的而不是gitee。此时我们拿着登录用户的AccessToken发送Get请求给<code>Repo的服务</code>的<code>查看自己Repo</code>的API。</p>
+<p>需要注意的是，来自cookie中的token可能会过期，于是需要利用refresh_token来刷新token以保证即使access_token过期了也能刷新access_token去访问资源。</p>
+<p>如果access_token过期可以使用refresh_token去获取新的token</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> err != <span class="literal">nil</span> &amp;&amp; strings.Contains(err.Error(), <span class="string">&quot;oidc: token is expired&quot;</span>) &#123;</span><br><span class="line">		<span class="comment">// use refresh_token to refresh token</span></span><br><span class="line">		config := auth.Oauth2Config(provider)</span><br><span class="line">		ts := config.TokenSource(ctx, &amp;oauth2.Token&#123;RefreshToken: token.RefreshToken&#125;)</span><br><span class="line">		newToken, err := ts.Token()</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			http.Error(w, fmt.Sprintf(<span class="string">&quot;refresh token failed: %s&quot;</span>, err), http.StatusInternalServerError)</span><br><span class="line">			<span class="keyword">return</span></span><br><span class="line">		&#125;</span><br><span class="line">		auth.SetIntoCookie(w, newToken) <span class="comment">// set new token(contains access_token, refresh_token, id_token...) into cookie</span></span><br><span class="line">		accessToken = newToken.AccessToken</span><br><span class="line">		tokenType = newToken.TokenType</span><br><span class="line">		rawIDToken = newToken.Extra(<span class="string">&quot;id_token&quot;</span>).(<span class="type">string</span>)</span><br><span class="line">		idToken, _ = idTokenVerifier.Verify(ctx, rawIDToken)</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<blockquote>
+<p>Tips</p>
+<p>具体要不要在访问资源的时候检查token是否过期可以根据需求，也可以在前端采用各种策略（如轮询）来检查用户token是否过期，过期即要求用户重新登录，此时的access_token就会是最新的了，访问资源的时候就不需要再重新刷新access_token了。</p>
+</blockquote>
+<h2 id="9-gitlab"><a href="#9-gitlab" class="headerlink" title="9 gitlab"></a>9 gitlab</h2><p>gitlab同理，只是同gitee的clientId和clientSecret以及服务启动的端口不同。</p>
+<h2 id="10-OIDC-Provider"><a href="#10-OIDC-Provider" class="headerlink" title="10 OIDC Provider"></a>10 OIDC Provider</h2><p>根据<a target="_blank" rel="noopener" href="https://dexidp.io/docs/using-dex/">dex</a>的说明，启动Provider需要先修改配置文件，在<code>./examples/config-dev.yaml</code>里的<code>staticClients</code>里添加gitee和gitlab两个client：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">staticClients:</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">id:</span> <span class="string">example-app</span></span><br><span class="line">  <span class="attr">redirectURIs:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="string">&#x27;http://127.0.0.1:5555/callback&#x27;</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">&#x27;Example App&#x27;</span></span><br><span class="line">  <span class="attr">secret:</span> <span class="string">ZXhhbXBsZS1hcHAtc2VjcmV0</span></span><br><span class="line"><span class="comment">#  - id: example-device-client</span></span><br><span class="line"><span class="comment">#    redirectURIs:</span></span><br><span class="line"><span class="comment">#      - /device/callback</span></span><br><span class="line"><span class="comment">#    name: &#x27;Static Client for Device Flow&#x27;</span></span><br><span class="line"><span class="comment">#    public: true</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">id:</span> <span class="string">gitee</span></span><br><span class="line">  <span class="attr">secret:</span> <span class="string">gitee-secret</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">&#x27;Example Gitee&#x27;</span></span><br><span class="line">  <span class="attr">redirectURIs:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="string">&#x27;http://app1:8080/callback&#x27;</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">id:</span> <span class="string">gitlab</span></span><br><span class="line">  <span class="attr">secret:</span> <span class="string">gitlab-secret</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">&#x27;Example Github&#x27;</span></span><br><span class="line">  <span class="attr">redirectURIs:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="string">&#x27;http://app2:8081/callback&#x27;</span></span><br></pre></td></tr></table></figure>
+<p>所以gitee的地址就是<code>http://app1:8080</code>，gitlab的地址就是<code>http://app2:8081</code>。</p>
+<blockquote>
+<p>Tips	</p>
+<p>gitee和gitlab的回调地址分别是<code>http://app1:8080/callback</code>和<code>http://app2:8081/callback</code>。这里需要修改本机的host地址，修改127.0.0.1映射到<code>app1</code>和<code>app2</code>上。这里这么做的目的是如果不修改的话gitee和gitlab的监听地址分别是<code>http://localhost:8080/callback</code>和<code>http://localhost:8081/callback</code>此时由于浏览器cookie的存储策略问题（同一domain不同port仍然共用cookie），这两App就会共用同一个cookie，这显然是不正确的，所以这里需要修改host的映射地址，最终在浏览器中gitee和gitlab就不会共用同一cookie了。</p>
+</blockquote>
+<h2 id="11-测试演示"><a href="#11-测试演示" class="headerlink" title="11 测试演示"></a>11 测试演示</h2><ol>
+<li><p>登录github</p>
+<p><img src="/2023/07/19/network/OIDC/%E6%90%AD%E5%BB%BAOIDC%20Provider%EF%BC%8C%E4%BB%A5Golang%E4%B8%BA%E4%BE%8B/image-20230720173315225.png"></p>
+<p><img src="/2023/07/19/network/OIDC/%E6%90%AD%E5%BB%BAOIDC%20Provider%EF%BC%8C%E4%BB%A5Golang%E4%B8%BA%E4%BE%8B/image-20230720173337983.png"></p>
+<p><img src="/2023/07/19/network/OIDC/%E6%90%AD%E5%BB%BAOIDC%20Provider%EF%BC%8C%E4%BB%A5Golang%E4%B8%BA%E4%BE%8B/image-20230720173401114.png"></p>
+<p><img src="/2023/07/19/network/OIDC/%E6%90%AD%E5%BB%BAOIDC%20Provider%EF%BC%8C%E4%BB%A5Golang%E4%B8%BA%E4%BE%8B/image-20230720173838469.png"></p>
+</li>
+<li><p>添加Repo</p>
+<p>使用access_token添加名为test、test1、test2、test3的Repo</p>
+<p><img src="/2023/07/19/network/OIDC/%E6%90%AD%E5%BB%BAOIDC%20Provider%EF%BC%8C%E4%BB%A5Golang%E4%B8%BA%E4%BE%8B/image-20230720173952398.png"></p>
+</li>
+<li><p>查看Repo</p>
+<p>使用access_token查看Repo</p>
+<p><img src="/2023/07/19/network/OIDC/%E6%90%AD%E5%BB%BAOIDC%20Provider%EF%BC%8C%E4%BB%A5Golang%E4%B8%BA%E4%BE%8B/image-20230720174052500.png"></p>
+</li>
+<li><p>在gitee使用github登录</p>
+<p>浏览器输入<code>http://app1:8080/login</code>登录在github中注册的用户确认访问范围</p>
+<p><img src="/2023/07/19/network/OIDC/%E6%90%AD%E5%BB%BAOIDC%20Provider%EF%BC%8C%E4%BB%A5Golang%E4%B8%BA%E4%BE%8B/image-20230720174219887.png"></p>
+<p>此时浏览器的cookie中已经存了该用户的access_token、id_token等。</p>
+</li>
+<li><p>在gitee中查看github中的Repo</p>
+<p>浏览器输入<code>http://app1:8080/read</code></p>
+<p><img src="/2023/07/19/network/OIDC/%E6%90%AD%E5%BB%BAOIDC%20Provider%EF%BC%8C%E4%BB%A5Golang%E4%B8%BA%E4%BE%8B/image-20230720174327025.png"></p>
+<p>此时该用户就成功在gitee访问到了该用户存在github的Repo。</p>
+</li>
+<li><p>同样地，我在gitee登录另外一个账号</p>
+</li>
+<li><p>调用gitee的管理员接口就能查看到登录过gitee的用户了</p>
+<p><img src="/2023/07/19/network/OIDC/%E6%90%AD%E5%BB%BAOIDC%20Provider%EF%BC%8C%E4%BB%A5Golang%E4%B8%BA%E4%BE%8B/image-20230720175005289.png"></p>
+</li>
+</ol>
+<p>至此，便完成了我的需求。在gitee使用github登录，并且存储登录用户的个人信息，同时还可以在gitee直接访问登录用户存储于github的资源。</p>
+<p>那么同样地，gitlab也可以使用github登录，也可以存储登录用户的个人信息，同时也可以在gitlab直接访问登录用户存储与github的资源。</p>
+<h2 id="仓库地址"><a href="#仓库地址" class="headerlink" title="仓库地址"></a>仓库地址</h2><p><a target="_blank" rel="noopener" href="https://github.com/FanGaoXS/oidc-demo">https://github.com/FanGaoXS/oidc-demo</a></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://fangaoxs.github.io/2023/07/19/network/OIDC/%E6%90%AD%E5%BB%BAOIDC%20Provider%EF%BC%8C%E4%BB%A5Golang%E4%B8%BA%E4%BE%8B/" data-id="clto66l53001bsck6c70v64hz" data-title="搭建OIDC Provider，以Golang为例" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OIDC/" rel="tag">OIDC</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
     <article id="post-network/OIDC/深入浅出理解OIDC" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
   <div class="article-meta">
     <a href="/2023/07/19/network/OIDC/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E7%90%86%E8%A7%A3OIDC/" class="article-date">
@@ -168,7 +351,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://fangaoxs.github.io/2023/07/19/network/OIDC/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E7%90%86%E8%A7%A3OIDC/" data-id="clsrb81uw0014cak66w4tedt5" data-title="深入浅出理解OIDC" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://fangaoxs.github.io/2023/07/19/network/OIDC/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E7%90%86%E8%A7%A3OIDC/" data-id="clto66l54001dsck6byn47ep3" data-title="深入浅出理解OIDC" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -238,7 +421,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://fangaoxs.github.io/2023/07/19/back-end/Java/JavaSE/JavaSE01%E4%B9%8B%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/" data-id="clsrb81vb0020cak6gxq3c0s4" data-title="JavaSE01之数据类型" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://fangaoxs.github.io/2023/07/19/back-end/Java/JavaSE/JavaSE01%E4%B9%8B%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/" data-id="clto66l5a001qsck660ga6nt2" data-title="JavaSE01之数据类型" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -289,7 +472,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://fangaoxs.github.io/2023/07/19/back-end/Java/JavaSE/JavaSE02%E4%B9%8B%E4%BB%A3%E7%A0%81%E5%9D%97/" data-id="clsrb81vc0021cak6d3s7hf7b" data-title="JavaSE02之类面的代码块" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://fangaoxs.github.io/2023/07/19/back-end/Java/JavaSE/JavaSE02%E4%B9%8B%E4%BB%A3%E7%A0%81%E5%9D%97/" data-id="clto66l5b001ssck61c6f8lgh" data-title="JavaSE02之类面的代码块" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -334,136 +517,11 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://fangaoxs.github.io/2023/07/19/back-end/Java/MyBatis/MyBatis%E7%BC%93%E5%AD%98/" data-id="clsrb81vk002gcak6bp5bbdyj" data-title="MyBatis缓存简单梳理" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://fangaoxs.github.io/2023/07/19/back-end/Java/MyBatis/MyBatis%E7%BC%93%E5%AD%98/" data-id="clto66l5f0021sck6d3umfnhy" data-title="MyBatis缓存简单梳理" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Java/" rel="tag">Java</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-back-end/go/golang库/cobra" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
-  <div class="article-meta">
-    <a href="/2023/07/19/back-end/go/golang%E5%BA%93/cobra/" class="article-date">
-  <time class="dt-published" datetime="2023-07-19T07:30:39.000Z" itemprop="datePublished">2023-07-19</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="p-name article-title" href="/2023/07/19/back-end/go/golang%E5%BA%93/cobra/">cobra命令行程序库</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="e-content article-entry" itemprop="articleBody">
-      
-        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p><code>cobra</code>是一个命令行程序库，可以用来编写命令行程序。同时，它还提供了一个脚手架，用于生成基于cobra的应用程序。知名的开源项目：<code>Kubernates</code>、<code>Hugo</code>、<code>etcd</code>等。</p>
-<h2 id="快速开始"><a href="#快速开始" class="headerlink" title="快速开始"></a>快速开始</h2><p>安装第三方库</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ go get github.com/spf13/cobra/cobra</span><br></pre></td></tr></table></figure>
-
-<p>依据darjun的指引，我们尝试实现一个简单的命令行程序git，当然并不是真正的git，而是模拟其命令行，最后其实还是通过调用<code>os/exec</code>库调用外部程序去执行真正的git命令，返回其结果。</p>
-<p>目录结构</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">quick_start</span><br><span class="line">  ├── cmd</span><br><span class="line">  │   ├── helper.go</span><br><span class="line">  │   ├── root.go</span><br><span class="line">  │   └── version.go</span><br><span class="line">  └── main.go</span><br></pre></td></tr></table></figure>
-
-
-
-<p>root.go</p>
-<p><strong>根命令git</strong></p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> cmd</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;errors&quot;</span></span><br><span class="line">	<span class="string">&quot;log&quot;</span></span><br><span class="line">	</span><br><span class="line">	<span class="string">&quot;github.com/spf13/cobra&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> rootCmd = &amp;cobra.Command&#123;</span><br><span class="line">	Use:   <span class="string">&quot;git&quot;</span>,</span><br><span class="line">	Short: <span class="string">&quot;Git is a distributed version control system.&quot;</span>,</span><br><span class="line">	Long: <span class="string">`Git is a free and open source distributed version control system</span></span><br><span class="line"><span class="string">designed to handle everything from small to very large projects </span></span><br><span class="line"><span class="string">with speed and efficiency.`</span>,</span><br><span class="line">	Run: <span class="function"><span class="keyword">func</span><span class="params">(cmd *cobra.Command, args []<span class="type">string</span>)</span></span> &#123;</span><br><span class="line">		Error(cmd, args, errors.New(<span class="string">&quot;unimplemented command&quot;</span>))</span><br><span class="line">	&#125;,</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Execute</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="comment">// 执行root及其子命令</span></span><br><span class="line">	<span class="keyword">if</span> err := rootCmd.Execute(); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Fatalln(<span class="string">&quot;execute root command failed&quot;</span>)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-
-
-<p>version.go</p>
-<p><strong>子命令git version</strong></p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> cmd</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;fmt&quot;</span></span><br><span class="line">	<span class="string">&quot;os/exec&quot;</span></span><br><span class="line">	</span><br><span class="line">	<span class="string">&quot;github.com/spf13/cobra&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> versionCmd = &amp;cobra.Command&#123;</span><br><span class="line">	Use:   <span class="string">&quot;version&quot;</span>,</span><br><span class="line">	Short: <span class="string">&quot;version subcommand show git version info.&quot;</span>,</span><br><span class="line">	Run: <span class="function"><span class="keyword">func</span><span class="params">(cmd *cobra.Command, args []<span class="type">string</span>)</span></span> &#123;</span><br><span class="line">    <span class="comment">// 使用exec库直接执行 git version 命令</span></span><br><span class="line">		command := exec.Command(<span class="string">&quot;git&quot;</span>, <span class="string">&quot;version&quot;</span>)</span><br><span class="line">		output, err := command.CombinedOutput()</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			Error(cmd, args, err)</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		fmt.Print(<span class="type">string</span>(output)) <span class="comment">// 打印执行的结果</span></span><br><span class="line">	&#125;,</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">init</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="comment">// 将version命令添加为root命令的子命令</span></span><br><span class="line">	rootCmd.AddCommand(versionCmd)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<p>main.go</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> <span class="string">&quot;lib_cobra/quick_start/cmd&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">   cmd.Execute() <span class="comment">// 执行root命令</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<p>terminal</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">&gt; $ go build -o diygit main.go <span class="comment"># 为了避免和真正的git冲突，我们将其命名为diygit</span></span><br><span class="line">&gt; $ diygit -h</span><br><span class="line">Git is a free and open <span class="built_in">source</span> distributed version control system</span><br><span class="line">designed to handle everything from small to very large projects </span><br><span class="line">with speed and efficiency.</span><br><span class="line"></span><br><span class="line">Usage:</span><br><span class="line">  git [flags]</span><br><span class="line">  git [<span class="built_in">command</span>]</span><br><span class="line"></span><br><span class="line">Available Commands:</span><br><span class="line">  completion  Generate the autocompletion script <span class="keyword">for</span> the specified shell</span><br><span class="line">  <span class="built_in">help</span>        Help about any <span class="built_in">command</span></span><br><span class="line">  version     version subcommand show git version info.</span><br><span class="line"></span><br><span class="line">Flags:</span><br><span class="line">  -h, --<span class="built_in">help</span>   <span class="built_in">help</span> <span class="keyword">for</span> git</span><br><span class="line"></span><br><span class="line">Use <span class="string">&quot;git [command] --help&quot;</span> <span class="keyword">for</span> more information about a <span class="built_in">command</span>.</span><br><span class="line"></span><br><span class="line">&gt; $ diygit version -h</span><br><span class="line">version subcommand show git version info.</span><br><span class="line"></span><br><span class="line">Usage:</span><br><span class="line">  git version [flags]</span><br><span class="line"></span><br><span class="line">Flags:</span><br><span class="line">  -h, --<span class="built_in">help</span>   <span class="built_in">help</span> <span class="keyword">for</span> version</span><br><span class="line"></span><br><span class="line">&gt; $ diygit version</span><br><span class="line">git version 2.26.2</span><br></pre></td></tr></table></figure>
-
-<p>此时的经过go build后的<code>diygit</code>即是<code>git</code>命令</p>
-<h2 id="目录结构"><a href="#目录结构" class="headerlink" title="目录结构"></a>目录结构</h2><p>使用cobra构建命令行工具时，程序的目录结构推荐使用以下结构</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">app_name</span><br><span class="line">  ├── cmd</span><br><span class="line">  │   ├── root.go</span><br><span class="line">  │   ├── cmd1.go</span><br><span class="line">  │   ├── cmd2.go</span><br><span class="line">  │   └── cmd3.go</span><br><span class="line">  └── main.go</span><br></pre></td></tr></table></figure>
-
-<p>cmd下的每个文件实现一个命令，外层的main.go的作用仅仅是初始化root命令。</p>
-<h2 id="特性"><a href="#特性" class="headerlink" title="特性"></a>特性</h2><p>cobra提供非常丰富的功能：</p>
-<ul>
-<li>支持子命令，如<code>app server</code>，<code>app fetch</code></li>
-<li>支持长短选项，如<code>-v</code>，<code>--verbose</code></li>
-<li>子命令嵌套</li>
-<li>全局、本地层级选项</li>
-<li>使用脚手架自动生成程序和命令</li>
-</ul>
-<p>三个基本概念：</p>
-<ul>
-<li>命令（Command）：需要执行的操作</li>
-<li>参数（Args）：命令的参数，即操作的对象</li>
-<li>选项（Flag）：命令选项可以调整命令的行为</li>
-</ul>
-<p>如示例<code>git branch -D dev</code>，<code>branch</code>是子命令，<code>-D</code>是该子命令的选项，<code>dev</code>是该子命令的参数</p>
-<p>如示例<code>curl -X example.com</code>，<code>curl</code>是命令，<code>-X</code>是该命令的选项，<code>example.com</code>是该参数</p>
-<h3 id="命令（Command）"><a href="#命令（Command）" class="headerlink" title="命令（Command）"></a>命令（Command）</h3><p>每个命令基本上只需要对<code>cobra.Command</code>的<code>Use</code>、<code>Short</code>、<code>Long</code>、<code>Run</code>四个属性进行赋值差不多就可以了。</p>
-<ul>
-<li>Use：命令的使用信息。Tips：在这里可以解释如何使用该命令，但是只有该属性的第一个词会被录入到<strong>help</strong>即帮助信息中</li>
-<li>Short：命令的短描述，可以通过<code>--help</code>查看</li>
-<li>Long：命令的长描述，可以通过<code>--help &lt;command&gt; </code>查看</li>
-<li>Run：该命令的具体执行逻辑，类型是<code>func(cmd *cobra.Command, args []string)</code>，其中cmd是该命令本身的一些属性，args是该命令的选项列表。</li>
-</ul>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&amp;cobra.Command&#123;</span><br><span class="line">   Use:   <span class="string">&quot;&quot;</span>,</span><br><span class="line">   Short: <span class="string">&quot;&quot;</span>,	</span><br><span class="line">   Long:  <span class="string">&quot;&quot;</span>,</span><br><span class="line">   Run:   <span class="literal">nil</span>,	</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>很多时候，还可以使用<code>Args</code>属性，类型是<code>func(cmd *cobra.Command, args []string) error</code>，它可以帮助你提前校验<code>args</code>是否符合规范，如果不符合，请返回err</p>
-<h3 id="选项（Flag）"><a href="#选项（Flag）" class="headerlink" title="选项（Flag）"></a>选项（Flag）</h3><p>cobra的选项分为两种，一种是<strong>永久选项</strong>，该选项可以被定义它的命令及其子命令使用。另一种是<strong>本地选项</strong>，只能在定义它的命令中使用。cobra使用pflag来解析命令后选项，pflag的使用基本和flag相同。</p>
-<ul>
-<li><p>定义好存储选项的变量</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> (</span><br><span class="line">	Sex  <span class="type">bool</span></span><br><span class="line">	Name <span class="type">string</span></span><br><span class="line">	Age  <span class="type">int</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
-
-
-</li>
-<li><p>设置永久选项</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">registerCmd.PersistentFlags().BoolVarP(&amp;Sex, <span class="string">&quot;sex&quot;</span>, <span class="string">&quot;s&quot;</span>, <span class="literal">false</span>, <span class="string">&quot;sex of user&quot;</span>)</span><br></pre></td></tr></table></figure>
-
-
-</li>
-<li><p>设置本地选项</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">registerCmd.Flags().StringVar(&amp;Name, <span class="string">&quot;name&quot;</span>, <span class="string">&quot;&quot;</span>, <span class="string">&quot;name of user&quot;</span>)</span><br><span class="line">registerCmd.Flags().IntVarP(&amp;Age, <span class="string">&quot;age&quot;</span>, <span class="string">&quot;a&quot;</span>, <span class="number">0</span>, <span class="string">&quot;age of user&quot;</span>)</span><br></pre></td></tr></table></figure>
-
-<p><code>TypeVar</code>和<code>TypeVarP</code>的区别在于，后者支持短选项。</p>
-</li>
-</ul>
-<p>使用<code>id</code>和<code>uuid</code>联合来移除用户的简单操作：如果id或者uuid存在则使用id或者uuid来移除用户，如果同时存在，则联合来移除。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> (</span><br><span class="line">	Id   <span class="type">string</span></span><br><span class="line">	Uuid <span class="type">string</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> removeCmd = &amp;cobra.Command&#123;</span><br><span class="line">	Use:   <span class="string">&quot;remove&quot;</span>,</span><br><span class="line">	Short: <span class="string">&quot;remove user&quot;</span>,</span><br><span class="line">	Long:  <span class="string">&quot;remove user with given information&quot;</span>,</span><br><span class="line">	Run: <span class="function"><span class="keyword">func</span><span class="params">(cmd *cobra.Command, args []<span class="type">string</span>)</span></span> &#123;</span><br><span class="line">		removeUser(Id, Uuid)</span><br><span class="line">	&#125;,</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">removeUser</span><span class="params">(id <span class="type">string</span>, uuid <span class="type">string</span>)</span></span> &#123;</span><br><span class="line">	<span class="comment">// do remove</span></span><br><span class="line">	<span class="keyword">if</span> id != <span class="string">&quot;&quot;</span> &#123;</span><br><span class="line">		fmt.Printf(<span class="string">&quot;remove user with id: %s\n&quot;</span>, id)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> uuid != <span class="string">&quot;&quot;</span> &#123;</span><br><span class="line">		fmt.Printf(<span class="string">&quot;remove user with uuid: %s\n&quot;</span>, uuid)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> id != <span class="string">&quot;&quot;</span> &amp;&amp; uuid != <span class="string">&quot;&quot;</span> &#123;</span><br><span class="line">		fmt.Printf(<span class="string">&quot;remove user with id: %s and uuid: %s\n&quot;</span>, id, uuid)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">init</span><span class="params">()</span></span> &#123;</span><br><span class="line">	removeCmd.Flags().StringVar(&amp;Id, <span class="string">&quot;id&quot;</span>, <span class="string">&quot;&quot;</span>, <span class="string">&quot;id of user&quot;</span>)</span><br><span class="line">	removeCmd.Flags().StringVar(&amp;Uuid, <span class="string">&quot;uuid&quot;</span>, <span class="string">&quot;&quot;</span>, <span class="string">&quot;uuid of user&quot;</span>)</span><br><span class="line">	rootCmd.AddCommand(removeCmd)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a target="_blank" rel="noopener" href="https://darjun.github.io/2020/01/17/godailylib/cobra/">每日一库之cobra</a></p>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="https://fangaoxs.github.io/2023/07/19/back-end/go/golang%E5%BA%93/cobra/" data-id="clsrb81vs002vcak6dq54c99x" data-title="cobra命令行程序库" class="article-share-link"><span class="fa fa-share">分享</span></a>
-      
-      
-      
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Golang/" rel="tag">Golang</a></li></ul>
 
     </footer>
   </div>
@@ -595,11 +653,136 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://fangaoxs.github.io/2023/07/19/back-end/Java/SpringCloud%E5%85%A5%E9%97%A8/SpringCloud/" data-id="clsrb81vy003acak68uze4nq2" data-title="SpringCloud实际上手" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://fangaoxs.github.io/2023/07/19/back-end/Java/SpringCloud%E5%85%A5%E9%97%A8/SpringCloud/" data-id="clto66l5k002esck6aa9ib4ng" data-title="SpringCloud实际上手" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Java/" rel="tag">Java</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Spring/" rel="tag">Spring</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-back-end/go/golang库/cobra" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2023/07/19/back-end/go/golang%E5%BA%93/cobra/" class="article-date">
+  <time class="dt-published" datetime="2023-07-19T07:30:39.000Z" itemprop="datePublished">2023-07-19</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2023/07/19/back-end/go/golang%E5%BA%93/cobra/">cobra命令行程序库</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p><code>cobra</code>是一个命令行程序库，可以用来编写命令行程序。同时，它还提供了一个脚手架，用于生成基于cobra的应用程序。知名的开源项目：<code>Kubernates</code>、<code>Hugo</code>、<code>etcd</code>等。</p>
+<h2 id="快速开始"><a href="#快速开始" class="headerlink" title="快速开始"></a>快速开始</h2><p>安装第三方库</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ go get github.com/spf13/cobra/cobra</span><br></pre></td></tr></table></figure>
+
+<p>依据darjun的指引，我们尝试实现一个简单的命令行程序git，当然并不是真正的git，而是模拟其命令行，最后其实还是通过调用<code>os/exec</code>库调用外部程序去执行真正的git命令，返回其结果。</p>
+<p>目录结构</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">quick_start</span><br><span class="line">  ├── cmd</span><br><span class="line">  │   ├── helper.go</span><br><span class="line">  │   ├── root.go</span><br><span class="line">  │   └── version.go</span><br><span class="line">  └── main.go</span><br></pre></td></tr></table></figure>
+
+
+
+<p>root.go</p>
+<p><strong>根命令git</strong></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> cmd</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;errors&quot;</span></span><br><span class="line">	<span class="string">&quot;log&quot;</span></span><br><span class="line">	</span><br><span class="line">	<span class="string">&quot;github.com/spf13/cobra&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> rootCmd = &amp;cobra.Command&#123;</span><br><span class="line">	Use:   <span class="string">&quot;git&quot;</span>,</span><br><span class="line">	Short: <span class="string">&quot;Git is a distributed version control system.&quot;</span>,</span><br><span class="line">	Long: <span class="string">`Git is a free and open source distributed version control system</span></span><br><span class="line"><span class="string">designed to handle everything from small to very large projects </span></span><br><span class="line"><span class="string">with speed and efficiency.`</span>,</span><br><span class="line">	Run: <span class="function"><span class="keyword">func</span><span class="params">(cmd *cobra.Command, args []<span class="type">string</span>)</span></span> &#123;</span><br><span class="line">		Error(cmd, args, errors.New(<span class="string">&quot;unimplemented command&quot;</span>))</span><br><span class="line">	&#125;,</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Execute</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="comment">// 执行root及其子命令</span></span><br><span class="line">	<span class="keyword">if</span> err := rootCmd.Execute(); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Fatalln(<span class="string">&quot;execute root command failed&quot;</span>)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+
+<p>version.go</p>
+<p><strong>子命令git version</strong></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> cmd</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;fmt&quot;</span></span><br><span class="line">	<span class="string">&quot;os/exec&quot;</span></span><br><span class="line">	</span><br><span class="line">	<span class="string">&quot;github.com/spf13/cobra&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> versionCmd = &amp;cobra.Command&#123;</span><br><span class="line">	Use:   <span class="string">&quot;version&quot;</span>,</span><br><span class="line">	Short: <span class="string">&quot;version subcommand show git version info.&quot;</span>,</span><br><span class="line">	Run: <span class="function"><span class="keyword">func</span><span class="params">(cmd *cobra.Command, args []<span class="type">string</span>)</span></span> &#123;</span><br><span class="line">    <span class="comment">// 使用exec库直接执行 git version 命令</span></span><br><span class="line">		command := exec.Command(<span class="string">&quot;git&quot;</span>, <span class="string">&quot;version&quot;</span>)</span><br><span class="line">		output, err := command.CombinedOutput()</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			Error(cmd, args, err)</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		fmt.Print(<span class="type">string</span>(output)) <span class="comment">// 打印执行的结果</span></span><br><span class="line">	&#125;,</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">init</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="comment">// 将version命令添加为root命令的子命令</span></span><br><span class="line">	rootCmd.AddCommand(versionCmd)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>main.go</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> <span class="string">&quot;lib_cobra/quick_start/cmd&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">   cmd.Execute() <span class="comment">// 执行root命令</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>terminal</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">&gt; $ go build -o diygit main.go <span class="comment"># 为了避免和真正的git冲突，我们将其命名为diygit</span></span><br><span class="line">&gt; $ diygit -h</span><br><span class="line">Git is a free and open <span class="built_in">source</span> distributed version control system</span><br><span class="line">designed to handle everything from small to very large projects </span><br><span class="line">with speed and efficiency.</span><br><span class="line"></span><br><span class="line">Usage:</span><br><span class="line">  git [flags]</span><br><span class="line">  git [<span class="built_in">command</span>]</span><br><span class="line"></span><br><span class="line">Available Commands:</span><br><span class="line">  completion  Generate the autocompletion script <span class="keyword">for</span> the specified shell</span><br><span class="line">  <span class="built_in">help</span>        Help about any <span class="built_in">command</span></span><br><span class="line">  version     version subcommand show git version info.</span><br><span class="line"></span><br><span class="line">Flags:</span><br><span class="line">  -h, --<span class="built_in">help</span>   <span class="built_in">help</span> <span class="keyword">for</span> git</span><br><span class="line"></span><br><span class="line">Use <span class="string">&quot;git [command] --help&quot;</span> <span class="keyword">for</span> more information about a <span class="built_in">command</span>.</span><br><span class="line"></span><br><span class="line">&gt; $ diygit version -h</span><br><span class="line">version subcommand show git version info.</span><br><span class="line"></span><br><span class="line">Usage:</span><br><span class="line">  git version [flags]</span><br><span class="line"></span><br><span class="line">Flags:</span><br><span class="line">  -h, --<span class="built_in">help</span>   <span class="built_in">help</span> <span class="keyword">for</span> version</span><br><span class="line"></span><br><span class="line">&gt; $ diygit version</span><br><span class="line">git version 2.26.2</span><br></pre></td></tr></table></figure>
+
+<p>此时的经过go build后的<code>diygit</code>即是<code>git</code>命令</p>
+<h2 id="目录结构"><a href="#目录结构" class="headerlink" title="目录结构"></a>目录结构</h2><p>使用cobra构建命令行工具时，程序的目录结构推荐使用以下结构</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">app_name</span><br><span class="line">  ├── cmd</span><br><span class="line">  │   ├── root.go</span><br><span class="line">  │   ├── cmd1.go</span><br><span class="line">  │   ├── cmd2.go</span><br><span class="line">  │   └── cmd3.go</span><br><span class="line">  └── main.go</span><br></pre></td></tr></table></figure>
+
+<p>cmd下的每个文件实现一个命令，外层的main.go的作用仅仅是初始化root命令。</p>
+<h2 id="特性"><a href="#特性" class="headerlink" title="特性"></a>特性</h2><p>cobra提供非常丰富的功能：</p>
+<ul>
+<li>支持子命令，如<code>app server</code>，<code>app fetch</code></li>
+<li>支持长短选项，如<code>-v</code>，<code>--verbose</code></li>
+<li>子命令嵌套</li>
+<li>全局、本地层级选项</li>
+<li>使用脚手架自动生成程序和命令</li>
+</ul>
+<p>三个基本概念：</p>
+<ul>
+<li>命令（Command）：需要执行的操作</li>
+<li>参数（Args）：命令的参数，即操作的对象</li>
+<li>选项（Flag）：命令选项可以调整命令的行为</li>
+</ul>
+<p>如示例<code>git branch -D dev</code>，<code>branch</code>是子命令，<code>-D</code>是该子命令的选项，<code>dev</code>是该子命令的参数</p>
+<p>如示例<code>curl -X example.com</code>，<code>curl</code>是命令，<code>-X</code>是该命令的选项，<code>example.com</code>是该参数</p>
+<h3 id="命令（Command）"><a href="#命令（Command）" class="headerlink" title="命令（Command）"></a>命令（Command）</h3><p>每个命令基本上只需要对<code>cobra.Command</code>的<code>Use</code>、<code>Short</code>、<code>Long</code>、<code>Run</code>四个属性进行赋值差不多就可以了。</p>
+<ul>
+<li>Use：命令的使用信息。Tips：在这里可以解释如何使用该命令，但是只有该属性的第一个词会被录入到<strong>help</strong>即帮助信息中</li>
+<li>Short：命令的短描述，可以通过<code>--help</code>查看</li>
+<li>Long：命令的长描述，可以通过<code>--help &lt;command&gt; </code>查看</li>
+<li>Run：该命令的具体执行逻辑，类型是<code>func(cmd *cobra.Command, args []string)</code>，其中cmd是该命令本身的一些属性，args是该命令的选项列表。</li>
+</ul>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&amp;cobra.Command&#123;</span><br><span class="line">   Use:   <span class="string">&quot;&quot;</span>,</span><br><span class="line">   Short: <span class="string">&quot;&quot;</span>,	</span><br><span class="line">   Long:  <span class="string">&quot;&quot;</span>,</span><br><span class="line">   Run:   <span class="literal">nil</span>,	</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>很多时候，还可以使用<code>Args</code>属性，类型是<code>func(cmd *cobra.Command, args []string) error</code>，它可以帮助你提前校验<code>args</code>是否符合规范，如果不符合，请返回err</p>
+<h3 id="选项（Flag）"><a href="#选项（Flag）" class="headerlink" title="选项（Flag）"></a>选项（Flag）</h3><p>cobra的选项分为两种，一种是<strong>永久选项</strong>，该选项可以被定义它的命令及其子命令使用。另一种是<strong>本地选项</strong>，只能在定义它的命令中使用。cobra使用pflag来解析命令后选项，pflag的使用基本和flag相同。</p>
+<ul>
+<li><p>定义好存储选项的变量</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> (</span><br><span class="line">	Sex  <span class="type">bool</span></span><br><span class="line">	Name <span class="type">string</span></span><br><span class="line">	Age  <span class="type">int</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+
+</li>
+<li><p>设置永久选项</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">registerCmd.PersistentFlags().BoolVarP(&amp;Sex, <span class="string">&quot;sex&quot;</span>, <span class="string">&quot;s&quot;</span>, <span class="literal">false</span>, <span class="string">&quot;sex of user&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+
+</li>
+<li><p>设置本地选项</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">registerCmd.Flags().StringVar(&amp;Name, <span class="string">&quot;name&quot;</span>, <span class="string">&quot;&quot;</span>, <span class="string">&quot;name of user&quot;</span>)</span><br><span class="line">registerCmd.Flags().IntVarP(&amp;Age, <span class="string">&quot;age&quot;</span>, <span class="string">&quot;a&quot;</span>, <span class="number">0</span>, <span class="string">&quot;age of user&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<p><code>TypeVar</code>和<code>TypeVarP</code>的区别在于，后者支持短选项。</p>
+</li>
+</ul>
+<p>使用<code>id</code>和<code>uuid</code>联合来移除用户的简单操作：如果id或者uuid存在则使用id或者uuid来移除用户，如果同时存在，则联合来移除。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> (</span><br><span class="line">	Id   <span class="type">string</span></span><br><span class="line">	Uuid <span class="type">string</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> removeCmd = &amp;cobra.Command&#123;</span><br><span class="line">	Use:   <span class="string">&quot;remove&quot;</span>,</span><br><span class="line">	Short: <span class="string">&quot;remove user&quot;</span>,</span><br><span class="line">	Long:  <span class="string">&quot;remove user with given information&quot;</span>,</span><br><span class="line">	Run: <span class="function"><span class="keyword">func</span><span class="params">(cmd *cobra.Command, args []<span class="type">string</span>)</span></span> &#123;</span><br><span class="line">		removeUser(Id, Uuid)</span><br><span class="line">	&#125;,</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">removeUser</span><span class="params">(id <span class="type">string</span>, uuid <span class="type">string</span>)</span></span> &#123;</span><br><span class="line">	<span class="comment">// do remove</span></span><br><span class="line">	<span class="keyword">if</span> id != <span class="string">&quot;&quot;</span> &#123;</span><br><span class="line">		fmt.Printf(<span class="string">&quot;remove user with id: %s\n&quot;</span>, id)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> uuid != <span class="string">&quot;&quot;</span> &#123;</span><br><span class="line">		fmt.Printf(<span class="string">&quot;remove user with uuid: %s\n&quot;</span>, uuid)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> id != <span class="string">&quot;&quot;</span> &amp;&amp; uuid != <span class="string">&quot;&quot;</span> &#123;</span><br><span class="line">		fmt.Printf(<span class="string">&quot;remove user with id: %s and uuid: %s\n&quot;</span>, id, uuid)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">init</span><span class="params">()</span></span> &#123;</span><br><span class="line">	removeCmd.Flags().StringVar(&amp;Id, <span class="string">&quot;id&quot;</span>, <span class="string">&quot;&quot;</span>, <span class="string">&quot;id of user&quot;</span>)</span><br><span class="line">	removeCmd.Flags().StringVar(&amp;Uuid, <span class="string">&quot;uuid&quot;</span>, <span class="string">&quot;&quot;</span>, <span class="string">&quot;uuid of user&quot;</span>)</span><br><span class="line">	rootCmd.AddCommand(removeCmd)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a target="_blank" rel="noopener" href="https://darjun.github.io/2020/01/17/godailylib/cobra/">每日一库之cobra</a></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://fangaoxs.github.io/2023/07/19/back-end/go/golang%E5%BA%93/cobra/" data-id="clto66l5p002psck68ah91h6m" data-title="cobra命令行程序库" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Golang/" rel="tag">Golang</a></li></ul>
 
     </footer>
   </div>
@@ -653,7 +836,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://fangaoxs.github.io/2023/07/19/front-end/vue/vue-element-admin/vue-element-admin%E6%95%B4%E5%90%88SpringBoot/" data-id="clsrb81vz003ccak6e0dq51e2" data-title="vue-element-admin整合springboot学习笔记" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://fangaoxs.github.io/2023/07/19/front-end/vue/vue-element-admin/vue-element-admin%E6%95%B4%E5%90%88SpringBoot/" data-id="clto66l60003bsck65l1n2sz8" data-title="vue-element-admin整合springboot学习笔记" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -709,7 +892,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://fangaoxs.github.io/2023/07/19/full-stack/%E6%95%B0%E6%8D%AE%E5%8A%A0%E5%AF%86/%E5%89%8D%E5%90%8E%E7%AB%AF%E9%A1%B9%E7%9B%AE%E7%9A%84%E7%BD%91%E7%BB%9C%E8%AF%B7%E6%B1%82%E6%95%B0%E6%8D%AE%E4%BC%A0%E8%BE%93%E5%8A%A0%E5%AF%86%E5%A4%84%E7%90%86/%E5%89%8D%E5%90%8E%E7%AB%AF%E9%A1%B9%E7%9B%AE%E7%9A%84%E7%BD%91%E7%BB%9C%E8%AF%B7%E6%B1%82%E6%97%B6%E6%95%B0%E6%8D%AE%E7%9A%84%E5%8A%A0%E5%AF%86%E5%A4%84%E7%90%86/" data-id="clsrb81w9003ycak64hgo6k49" data-title="前后端项目的网络请求数据传输加密处理" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://fangaoxs.github.io/2023/07/19/full-stack/%E6%95%B0%E6%8D%AE%E5%8A%A0%E5%AF%86/%E5%89%8D%E5%90%8E%E7%AB%AF%E9%A1%B9%E7%9B%AE%E7%9A%84%E7%BD%91%E7%BB%9C%E8%AF%B7%E6%B1%82%E6%95%B0%E6%8D%AE%E4%BC%A0%E8%BE%93%E5%8A%A0%E5%AF%86%E5%A4%84%E7%90%86/%E5%89%8D%E5%90%8E%E7%AB%AF%E9%A1%B9%E7%9B%AE%E7%9A%84%E7%BD%91%E7%BB%9C%E8%AF%B7%E6%B1%82%E6%97%B6%E6%95%B0%E6%8D%AE%E7%9A%84%E5%8A%A0%E5%AF%86%E5%A4%84%E7%90%86/" data-id="clto66l67003qsck6f7scflja" data-title="前后端项目的网络请求数据传输加密处理" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -845,330 +1028,11 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://fangaoxs.github.io/2023/06/20/network/oauth2.0/OAuth2.0/" data-id="clsrb81uz0018cak6e5kf9s4u" data-title="了解OAuth2.0" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://fangaoxs.github.io/2023/06/20/network/oauth2.0/OAuth2.0/" data-id="clto66l58001jsck61hp07fzw" data-title="了解OAuth2.0" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/" rel="tag">网络安全</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-network/http/超文本传输协议http" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
-  <div class="article-meta">
-    <a href="/2023/02/24/network/http/%E8%B6%85%E6%96%87%E6%9C%AC%E4%BC%A0%E8%BE%93%E5%8D%8F%E8%AE%AEhttp/" class="article-date">
-  <time class="dt-published" datetime="2023-02-24T07:30:39.000Z" itemprop="datePublished">2023-02-24</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="p-name article-title" href="/2023/02/24/network/http/%E8%B6%85%E6%96%87%E6%9C%AC%E4%BC%A0%E8%BE%93%E5%8D%8F%E8%AE%AEhttp/">由浅入深了解超文本传输协议</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="e-content article-entry" itemprop="articleBody">
-      
-        <h2 id="什么是超文本传输协议？"><a href="#什么是超文本传输协议？" class="headerlink" title="什么是超文本传输协议？"></a>什么是超文本传输协议？</h2><p><strong>超文本传输协议</strong>（英语：<strong>H</strong>yper<strong>T</strong>ext <strong>T</strong>ransfer <strong>P</strong>rotocol，缩写：<strong>HTTP</strong>）是一种用于分布式、协作式和超媒体信息系统的应用层协议。<strong>HTTP</strong>是万维网的数据通信的基础。</p>
-<p>通过HTTP或HTTPS协议请求的资源由统一资源标识符（Uniform Resource Identifiers，URI）来标识。</p>
-<h2 id="协议概述"><a href="#协议概述" class="headerlink" title="协议概述"></a>协议概述</h2><p>HTTP是一个客户端（client）和服务端（server）之间请求和应答的标准，通常使用TCP协议。通过使用浏览器、网络爬虫或者其他工具，客户端发起一个HTTP请求到服务器上的指定端口（默认端口为80）。我们称这个客户端为用户代理程序（user agent）。应答的服务器上存储着一些资源，比如HTML文件或者图像。我们称这个应答服务器为源服务器（origin server）。在用户代理或者源服务器中间可能存在多个“中间层”，比如代理服务器、网关或者隧道。</p>
-<p>通常，由HTTP客户端（client）发起一个请求，创建一个到服务器（server）指定端口的TCP连接。HTTP服务器则在那个端口监听客户端的请求。一旦收到请求，服务器会向客户端返回一个状态，比如“HTTP&#x2F;1.1 200 OK”，以及返回的内容，如请求的文件、错误信息或者其它信息。</p>
-<h2 id="请求方法"><a href="#请求方法" class="headerlink" title="请求方法"></a>请求方法</h2><p>HTTP&#x2F;1.1协议中一共定义了<strong>八种方法</strong>（也叫“动作”）来以不同方式操作指定的资源：</p>
-<h3 id="Get"><a href="#Get" class="headerlink" title="Get"></a>Get</h3><p>向指定的资源发出“显示”请求。使用GET方法应该只用在读取资料，而不应当被用于产生“<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E8%B6%85%E6%96%87%E6%9C%AC%E4%BC%A0%E8%BE%93%E5%8D%8F%E8%AE%AE#%E5%89%AF%E4%BD%9C%E7%94%A8">副作用</a>”的操作中。</p>
-<h3 id="Post"><a href="#Post" class="headerlink" title="Post"></a>Post</h3><p>向指定资源提交数据，请求服务器进行处理（例如提交表单或者上传文件）。数据被包含在请求本文中。这个请求可能会<strong>创建</strong>新的资源或<strong>修改</strong>现有资源，或<strong>二者</strong>皆有。每次提交，表单的数据被浏览器用编码到HTTP请求的body里。浏览器发出的POST请求的body主要有两种格式，一种是<strong>application&#x2F;x-www-form-urlencoded</strong>用来传输简单的数据，另外一种是传文件，会采用<strong>multipart&#x2F;form-data</strong>格式。</p>
-<h3 id="Put"><a href="#Put" class="headerlink" title="Put"></a>Put</h3><p>向指定资源位置上传其最新内容。一般用作<strong>修改</strong>资源内容</p>
-<h3 id="Delete"><a href="#Delete" class="headerlink" title="Delete"></a>Delete</h3><p>请求服务器<strong>删除</strong>Request-URI所标识的资源。</p>
-<h3 id="Head"><a href="#Head" class="headerlink" title="Head"></a>Head</h3><p>与GET方法一样，都是向服务器发出指定资源的请求。只不过服务器将不传回资源的本文部分。它的好处在于，使用这个方法可以在不必传输全部内容的情况下，就可以获取其中“关于该资源的信息”（元信息或称元数据）。</p>
-<h3 id="Trace"><a href="#Trace" class="headerlink" title="Trace"></a>Trace</h3><p>回显服务器收到的请求，主要用于测试或诊断。</p>
-<h3 id="Options"><a href="#Options" class="headerlink" title="Options"></a>Options</h3><p>这个方法可使服务器传回该资源所支持的所有HTTP请求方法。用’*’来代替资源名称，向Web服务器发送OPTIONS请求，可以<strong>测试服务器功能是否正常运作</strong>。</p>
-<h3 id="Connect"><a href="#Connect" class="headerlink" title="Connect"></a>Connect</h3><p>HTTP&#x2F;1.1协议中预留给能够将连接改为隧道方式的代理服务器。通常用于SSL加密服务器的链接（经由非加密的HTTP代理服务器）。</p>
-<p>方法名称是<strong>区分大小写</strong>的。<strong>HTTP服务器至少应该实现GET和HEAD方法</strong>，其他方法都是可选的。对于GET和HEAD方法而言，除了进行获取资源信息外，这些请求不应当再有其他意义。也就是说，这些方法应当被认为是“安全的”。 客户端可能会使用其他“非安全”方法，例如POST，PUT及DELETE，应该以特殊的方式（通常是按钮而不是<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E8%B6%85%E9%93%BE%E6%8E%A5">超链接</a>）告知客户可能的后果（例如一个按钮控制的资金交易），或请求的操作可能是不安全的（例如某个文件将被上传或删除）。</p>
-<h2 id="HTTP-流"><a href="#HTTP-流" class="headerlink" title="HTTP 流"></a>HTTP 流</h2><p>当客户端想要和服务端进行信息交互时，过程表现为下面几步：</p>
-<ol>
-<li><p>打开一个TCP连接：TCP连接被用来<strong>发送</strong>一条或者多条请求，以及<strong>接受</strong>响应消息。</p>
-</li>
-<li><p>发送一个 HTTP 报文：HTTP 报文（在 HTTP&#x2F;2 之前）是语义可读的。</p>
-<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">GET</span> <span class="string">/</span> <span class="meta">HTTP/1.1</span></span><br><span class="line"><span class="attribute">Host</span><span class="punctuation">: </span>developer.mozilla.org</span><br><span class="line"><span class="attribute">Accept-Language</span><span class="punctuation">: </span>fr</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>读取服务端返回的报文消息：</p>
-<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">HTTP/1.1</span> <span class="number">200</span> OK</span><br><span class="line"><span class="attribute">Date</span><span class="punctuation">: </span>Sat, 09 Oct 2010 14:28:02 GMT</span><br><span class="line"><span class="attribute">Server</span><span class="punctuation">: </span>Apache</span><br><span class="line"><span class="attribute">Last-Modified</span><span class="punctuation">: </span>Tue, 01 Dec 2009 20:18:22 GMT</span><br><span class="line"><span class="attribute">ETag</span><span class="punctuation">: </span>&quot;51142bc1-7449-479b075b2891b&quot;</span><br><span class="line"><span class="attribute">Accept-Ranges</span><span class="punctuation">: </span>bytes</span><br><span class="line"><span class="attribute">Content-Length</span><span class="punctuation">: </span>29769</span><br><span class="line"><span class="attribute">Content-Type</span><span class="punctuation">: </span>text/html</span><br><span class="line"></span><br><span class="line"><span class="language-xml"><span class="meta">&lt;!DOCTYPE <span class="keyword">html</span>... (<span class="keyword">here</span> <span class="keyword">comes</span> <span class="keyword">the</span> 29769 <span class="keyword">bytes</span> <span class="keyword">of</span> <span class="keyword">the</span> <span class="keyword">requested</span> <span class="keyword">web</span> <span class="keyword">page</span>)</span></span></span><br></pre></td></tr></table></figure>
-</li>
-<li><p>关闭连接或者为后续请求重用连接。</p>
-</li>
-</ol>
-<h2 id="HTTP-报文"><a href="#HTTP-报文" class="headerlink" title="HTTP 报文"></a>HTTP 报文</h2><p>HTTP&#x2F;1.1 以及更早的 HTTP 协议报文都是语义可读的。</p>
-<p>有两种 HTTP 报文的类型，请求与响应，每种都有其特定的格式。</p>
-<h3 id="请求"><a href="#请求" class="headerlink" title="请求"></a>请求</h3><p><img src="/2023/02/24/network/http/%E8%B6%85%E6%96%87%E6%9C%AC%E4%BC%A0%E8%BE%93%E5%8D%8F%E8%AE%AEhttp/http_request.png" alt="A basic HTTP request"></p>
-<p>请求元素：</p>
-<ul>
-<li>HTTP的请求方法（<strong>Method</strong>）：经常是由一个动词GET、POST或者名词OPTIONS、HEAD来定义客户端的动作行为。</li>
-<li>要获取的资源的路径（<strong>Path</strong>）：通常是上下文中就很明显的元素资源的URL，它没有protocol（<code>http://</code>），domain（<code>developer.mozilla.org</code>）或是TCP的port（80）。</li>
-<li>HTTP协议的版本号（<strong>Version of the protocol</strong>）。</li>
-<li>为服务端表达其他信息的可选标头（<strong>Headers</strong>）。</li>
-<li>对于一些像POST这样的方法，报文的主体（body）就包含了发送的资源，这与响应报文的主体类似。</li>
-</ul>
-<h3 id="响应"><a href="#响应" class="headerlink" title="响应"></a>响应</h3><p><img src="/2023/02/24/network/http/%E8%B6%85%E6%96%87%E6%9C%AC%E4%BC%A0%E8%BE%93%E5%8D%8F%E8%AE%AEhttp/http_response.png"></p>
-<p>响应元素：</p>
-<ul>
-<li>HTTP协议版本号（<strong>Version of the protocol</strong>）。</li>
-<li>状态码（<strong>Status code</strong>）：来告知对应请求执行成功或失败，以及失败的原因。</li>
-<li>状态信息（<strong>Status message</strong>）：这个信息是非权威的状态码描述信息，可以由服务端自行设定。</li>
-<li>HTTP标头（<strong>Headers</strong>）：与请求标头类似。</li>
-<li>可选项，比起请求报文，响应报文中更常见地包含获取资源的主体。</li>
-</ul>
-<h2 id="HTTP-标头（header）"><a href="#HTTP-标头（header）" class="headerlink" title="HTTP 标头（header）"></a>HTTP 标头（header）</h2><h3 id="常见的-request-中的标头"><a href="#常见的-request-中的标头" class="headerlink" title="常见的 request 中的标头"></a>常见的 request 中的标头</h3><h4 id="Accept"><a href="#Accept" class="headerlink" title="Accept"></a>Accept</h4><ul>
-<li><code>Accept: text/html</code> 浏览器可以接受服务器回发的类型为<code>text/html</code>。</li>
-<li><code>Accecpt: */*</code> 浏览器可以接受所有类型（通常是这个）。</li>
-</ul>
-<h4 id="Accept-Encoding"><a href="#Accept-Encoding" class="headerlink" title="Accept-Encoding"></a>Accept-Encoding</h4><ul>
-<li><code>Accept-Encoding: gzip, deflate </code>浏览器申明自己接收的编码方法，通常指定压缩方法，是否支持压缩，支持什么压缩方法（gzip, deflate）。</li>
-</ul>
-<h4 id="Accept-Language"><a href="#Accept-Language" class="headerlink" title="Accept-Language"></a>Accept-Language</h4><ul>
-<li><code>Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2</code> 浏览器申明自己接收的语言。（q代表权重，数值越大则代表越优先选择）</li>
-</ul>
-<h4 id="Connection"><a href="#Connection" class="headerlink" title="Connection"></a>Connection</h4><ul>
-<li><code>Connection: keep-alive</code> 当一个网页打开完成后，客户端和服务端之间用于传输 HTTP 数据的 TCP 连接不会关闭，如果客户端再次访问这个服务器的网页，会继续使用这一条已经建立的连接。</li>
-<li><code>Connection: close</code> 代表一个 Request 完成后，客户端和服务端之间用于传输 HTTP 数据的 TCP 连接关闭，当客户端再次发送 Request，需要重新建立 TCP 连接。</li>
-</ul>
-<h4 id="Host（发送请求时，该header是必须的）"><a href="#Host（发送请求时，该header是必须的）" class="headerlink" title="Host（发送请求时，该header是必须的）"></a>Host（发送请求时，该header是必须的）</h4><ul>
-<li><code>Host: www.example.com</code> 主要用于指定被请求资源的 Internet 主机和端口号，它通常从 HTTP URL中提取出来。</li>
-</ul>
-<h4 id="Referer"><a href="#Referer" class="headerlink" title="Referer"></a>Referer</h4><ul>
-<li><code>Referer: &lt;url&gt;</code> 包含了当前请求页面的来源页面的地址，即表示当前页面是通过此来源页面里的链接进入的。</li>
-</ul>
-<h4 id="User-Agent"><a href="#User-Agent" class="headerlink" title="User-Agent"></a>User-Agent</h4><ul>
-<li><code>User-Agent: &lt;product&gt; / &lt;product-version&gt; &lt;comment&gt;</code> 包含了一个特征字符串，用来让网络协议的对端来识别发起请求的用户代理软件的应用类型、操作系统、软件开发商以及版本号。</li>
-</ul>
-<h4 id="Cache-Control"><a href="#Cache-Control" class="headerlink" title="Cache-Control"></a>Cache-Control</h4><ul>
-<li><code>Cache-Control: private</code> 默认为private，响应只能够作为私有的缓存，不能在用户间共享</li>
-<li><code>Cache-Control: public</code> 响应会被缓存，并且在多用户之间共享。正常情况，如果要求 HTTP 认证，响应就会自动设置为 private。</li>
-<li><code>Cache-Control: no-cache</code> 响应不会被缓存，而是实时向服务器请求资源。</li>
-<li><code>Cache-Control: max-age=10</code> 设置缓存的最大有效时间，但是这个参数定义的时间大小。单位：秒。</li>
-<li><code>Cache-Control: no-store</code> 任何条件下，响应都不会被缓存，并且不会被写入到客户端的磁盘里。</li>
-</ul>
-<h4 id="Cookie"><a href="#Cookie" class="headerlink" title="Cookie"></a>Cookie</h4><p>含有先前由服务端通过<code>Set-Cookie</code>投放或者 JavaScript 的<code>Document.cookie</code>设置的，然后存储到客户端的 HTTP cookie。</p>
-<h4 id="Range（用于断点续传）"><a href="#Range（用于断点续传）" class="headerlink" title="Range（用于断点续传）"></a>Range（用于断点续传）</h4><ul>
-<li><code>Range: bytes=0-5</code> 指定第一个字节的位置和最后一个字节的位置。用户告诉服务器自己想取对象的哪部分。</li>
-</ul>
-<h3 id="常见的-response-中的标头"><a href="#常见的-response-中的标头" class="headerlink" title="常见的 response 中的标头"></a>常见的 response 中的标头</h3><h4 id="Cache-Control（对应请求的Cache-Control）"><a href="#Cache-Control（对应请求的Cache-Control）" class="headerlink" title="Cache-Control（对应请求的Cache-Control）"></a>Cache-Control（对应请求的Cache-Control）</h4><ul>
-<li><code>Cache-Control: private</code> 默认为private，响应只能够作为私有的缓存，不能在用户间共享</li>
-<li><code>Cache-Control: public</code> 响应会被缓存，并且在多用户之间共享。正常情况，如果要求 HTTP 认证，响应就会自动设置为 private。</li>
-<li><code>Cache-Control: no-cache</code> 响应不会被缓存，而是实时向服务器请求资源。</li>
-<li><code>Cache-Control: max-age=10</code> 设置缓存的最大有效时间，但是这个参数定义的时间大小。单位：秒。</li>
-<li><code>Cache-Control: no-store</code> 任何条件下，响应都不会被缓存，并且不会被写入到客户端的磁盘里。</li>
-</ul>
-<h4 id="Content-Type"><a href="#Content-Type" class="headerlink" title="Content-Type"></a>Content-Type</h4><ul>
-<li><code>Content-Type: text/html;charset=UTF-8</code> 告诉客户端，资源文件的类型，还有字符编码，客户端通过<code>utf-8</code>对资源进行解码，然后对资源进行 html 解析。通常我们会看到有些网站是乱码的，往往就是服务端没有返回正确的编码。</li>
-</ul>
-<h4 id="Content-Encoding"><a href="#Content-Encoding" class="headerlink" title="Content-Encoding"></a>Content-Encoding</h4><ul>
-<li><code>Content-Encoding: gzip</code> 告诉客户端，服务端发送的资源是采用 gzip 编码的，客户端收到该消息后，应该采用 gzip 对资源进行解码。</li>
-</ul>
-<h4 id="Date"><a href="#Date" class="headerlink" title="Date"></a>Date</h4><ul>
-<li><code>Date: Tue, 03 Apr 2018 03:52:28 GMT</code> 这个是服务端发送资源时的服务器时间，GMT是格林尼治所在地的标准时间。</li>
-</ul>
-<h4 id="Server"><a href="#Server" class="headerlink" title="Server"></a>Server</h4><ul>
-<li><code>Server: Tengine/1.4.6</code> 这个是服务器和相对应的版本，只是告诉客户端服务器信息。</li>
-</ul>
-<h4 id="Transfer-Encoding"><a href="#Transfer-Encoding" class="headerlink" title="Transfer-Encoding"></a>Transfer-Encoding</h4><ul>
-<li><code>Transfer-Encoding：chunked</code> 告诉客户端，服务端发送的资源是分块发送的。一般分块发送的资源都是服务器动态生成的，在发送时还不知道发送资源的大小，所以采用分块发送，每一块都是独立的，独立的块都能标示自己的长度，最后一块都是<strong>0长度</strong>的，当客户端读到这个0长度的块时，就可以确定资源已经传输完了。</li>
-</ul>
-<h4 id="Expires"><a href="#Expires" class="headerlink" title="Expires"></a>Expires</h4><ul>
-<li><code>Expires: Sun, 1 Jan 2000 01:00:00 GMT</code> 这个响应头也跟缓存有关，告诉客户端在这个时间前，可以直接访问缓存副本，但是客户端和服务端的时间不一定会都是相同的，如果时间不同就会导致问题。</li>
-</ul>
-<h4 id="Last-Modified"><a href="#Last-Modified" class="headerlink" title="Last-Modified"></a>Last-Modified</h4><ul>
-<li><code>Last-Modified: Dec, 26 Dec 2015 17:30:00 GMT</code> 所请求的对象的最后修改日期。</li>
-</ul>
-<h4 id="Connection-1"><a href="#Connection-1" class="headerlink" title="Connection"></a>Connection</h4><ul>
-<li><code>Connection: keep-alive</code> 回应客户端的<code>Connection: keep-alive</code>，告诉客户端服务器的 TCP 连接也是一个厂链接，客户端可以继续使用这个 TCP 连接发送 HTTP 请求。</li>
-</ul>
-<h4 id="ETag"><a href="#ETag" class="headerlink" title="ETag"></a>ETag</h4><ul>
-<li><code>ETag: &quot;737060cd8c284d8af7ad3082f209582d&quot;</code> 就是一个对象（比如URL）的标志值，就一个对象而言，比如一个 html 文件，如果被修改了，其 ETag 也应该会被修改，主要供缓存来识别文件是否被修改。</li>
-</ul>
-<h4 id="Refresh"><a href="#Refresh" class="headerlink" title="Refresh"></a>Refresh</h4><ul>
-<li><code>Refresh: 5; url=http://www.baidu.com</code> 用于重定向，或者当一个新的资源被创建时。默认会在5秒后刷新重定向。</li>
-</ul>
-<h4 id="Content-Range"><a href="#Content-Range" class="headerlink" title="Content-Range"></a>Content-Range</h4><ul>
-<li><code>Content-Range: bytes 200-1000/67589 </code> 显示的是一个数据片段在整个文件中的位置</li>
-</ul>
-<h2 id="无状态、cookie、session、Token"><a href="#无状态、cookie、session、Token" class="headerlink" title="无状态、cookie、session、Token"></a>无状态、cookie、session、Token</h2><h3 id="什么是无状态"><a href="#什么是无状态" class="headerlink" title="什么是无状态"></a>什么是无状态</h3><p>在同一个连接中，两个执行成功的请求之间是没有关系的。这就会带来一个问题，用户没有办法在同一个网站中进行连续的交互。比如在一个电商网站里，用户想分两次想把某个商品加入到购物车中，这两次添加商品的操作是没有关联的，服务端其实是没办法知道这两次添加商品其实都是同一个用户在同一次添加的。</p>
-<p>使用 HTTP Cookie 可以解决这个问题。</p>
-<h4 id="无状态的好处"><a href="#无状态的好处" class="headerlink" title="无状态的好处"></a>无状态的好处</h4><p>减少服务端的存储开销：服务端不需要存储请求的状态信息。</p>
-<h4 id="无状态的坏处"><a href="#无状态的坏处" class="headerlink" title="无状态的坏处"></a>无状态的坏处</h4><p>服务器没有记忆能力，无法完成一些需要关联性的操作。如同一用户两次往购物车添加商品。</p>
-<h3 id="Cookie-1"><a href="#Cookie-1" class="headerlink" title="Cookie"></a>Cookie</h3><p>HTTP Cookie 是服务器发送到用户浏览器并<strong>保存在本地的一小块数据</strong>。浏览器会存储 cookie 并在下次向同一服务器再发起请求时携带并发送到服务器上。通常，它用于告知服务端<strong>两个请求是否来自同一浏览器</strong>——如保持用户登录状态。Cookie使基于无状态的HTTP协议记录稳定的状态信息成为了可能。</p>
-<p>服务器使用<code>Set-Cookie</code>向client发送Cookie信息，可能像这样：</p>
-<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">Set-Cookie</span><span class="punctuation">: </span>&lt;cookie-name&gt;=&lt;cookie-value&gt;</span><br></pre></td></tr></table></figure>
-
-
-
-<p>事例表明服务器告知客户端存储一对cookie：</p>
-<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">HTTP/1.0</span> <span class="number">200</span> OK</span><br><span class="line"><span class="attribute">Content-type</span><span class="punctuation">: </span>text/html</span><br><span class="line"><span class="attribute">Set-Cookie</span><span class="punctuation">: </span>yummy_cookie=choco</span><br><span class="line"><span class="attribute">Set-Cookie</span><span class="punctuation">: </span>tasty_cookie=strawberry</span><br></pre></td></tr></table></figure>
-
-
-
-<p>接下来，对该服务器发起的每一次新请求，浏览器都会将之前保存的Cookie信息通过header再发送给服务器：</p>
-<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">GET</span> <span class="string">/sample_page.html</span> <span class="meta">HTTP/1.1</span></span><br><span class="line"><span class="attribute">Host</span><span class="punctuation">: </span>www.example.org</span><br><span class="line"><span class="attribute">Cookie</span><span class="punctuation">: </span>yummy_cookie=choco; tasty_cookie=strawberry</span><br></pre></td></tr></table></figure>
-
-
-
-<h4 id="限制访问Cookie"><a href="#限制访问Cookie" class="headerlink" title="限制访问Cookie"></a>限制访问Cookie</h4><p>有两种方法可以确保<code>Cookie</code>被安全发送，并且不会被意外的参与者或脚本访问：<code>Secure</code>属性和<code>HttpOnly</code>属性。</p>
-<p><strong>Secure</strong>：有此标记的Cookie只应通过被HTTPS协议加密过的请求发送给服务器。它永远不会使用不安全的HTTP发送（本地主机除外），不安全的站点（在URL中带有<code>http:</code>）无法使用带有<code>Secure</code>属性的cookie。但是，<code>Secure</code>不会阻止对cookie中敏感信息的访问。例如，有权访问客户端硬盘的人可以读取和修改它。</p>
-<p><strong>HttpOnly</strong>：JavaScript的<code>Document.cookie</code>API无法访问带有<code>HttpOnly</code>属性的cookie；此类cookie仅作用于服务器。</p>
-<h3 id="Session"><a href="#Session" class="headerlink" title="Session"></a>Session</h3><p>基于cookie实现的，session存储在服务器端，sessionId会被存储到客户端的cookie中。</p>
-<ol>
-<li>用户第一次请求服务器的时候，服务器根据用户提交的相关信息，创建对应的Session。</li>
-<li>请求返回时将此Session的唯一标识信息SessionId返回给浏览器</li>
-<li>浏览器接收到服务器返回的 SessionID 信息后，会将此信息存入到 Cookie 中，同时 Cookie 记录此 SessionID 属于哪个域名</li>
-<li>当用户第二次访问服务器的时候，请求会自动判断此域名下是否存在 Cookie 信息，如果存在自动将 Cookie 信息也发送给服务端，服务端会从 Cookie 中获取 SessionID，再根据 SessionID 查找对应的 Session 信息，如果没有找到说明用户没有登录或者登录失效，如果找到 Session 证明用户已经登录可执行后面操作。</li>
-</ol>
-<h4 id="安全性不同"><a href="#安全性不同" class="headerlink" title="安全性不同"></a>安全性不同</h4><p>Session 比 Cookie 安全，Session 是存储在服务器端的，Cookie 是存储在客户端的。</p>
-<h4 id="存值的数据类型不同"><a href="#存值的数据类型不同" class="headerlink" title="存值的数据类型不同"></a>存值的数据类型不同</h4><p>Cookie 只支持存字符串数据，想要设置其他类型的数据，需要将其转换成字符串，Session 可以存任意数据类型。</p>
-<h4 id="有效期不同"><a href="#有效期不同" class="headerlink" title="有效期不同"></a>有效期不同</h4><p>Cookie 可设置为长时间保持，比如我们经常使用的默认登录功能，Session 一般失效时间较短，客户端关闭（默认情况下）或者 Session 超时都会失效。</p>
-<h4 id="存储大小不同"><a href="#存储大小不同" class="headerlink" title="存储大小不同"></a>存储大小不同</h4><p> 单个 Cookie 保存的数据不能超过 4K，Session 可存储数据远高于 Cookie，但是当访问量过多，会占用过多的服务器资源。</p>
-<h3 id="Token"><a href="#Token" class="headerlink" title="Token"></a>Token</h3><p>token的身份验证流程：</p>
-<ol>
-<li>client使用用户名和密码请求登录</li>
-<li>server收到请求，去验证用户名与密码</li>
-<li>验证成功后，server会签发一个token并下发给client</li>
-<li>client接收到token，会将token存储起来，如：存到cookie或localStorage</li>
-<li>client每次向server发送请求资源都携带token</li>
-<li>server接收到来自client的token并且验证它。</li>
-</ol>
-<blockquote>
-<p><strong>Tips</strong></p>
-<p>服务端不需要存储token，只需要使用固定的算法解析token。利用解析Token的资源换取存储Token的存储空间。以时间换空间，减轻服务器的压力。</p>
-</blockquote>
-<h2 id="状态码"><a href="#状态码" class="headerlink" title="状态码"></a>状态码</h2><h3 id="常见的状态码"><a href="#常见的状态码" class="headerlink" title="常见的状态码"></a>常见的状态码</h3><table>
-<thead>
-<tr>
-<th>状态码</th>
-<th>英文名称</th>
-<th>中文描述</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>200</td>
-<td>OK</td>
-<td>请求成功</td>
-</tr>
-<tr>
-<td>301</td>
-<td>Moved Permanently</td>
-<td>资源（网页等）被永久转移到其他URL</td>
-</tr>
-<tr>
-<td>400</td>
-<td>Bad Request</td>
-<td>客户端请求的语法错误，服务器无法解析</td>
-</tr>
-<tr>
-<td>404</td>
-<td>Not Found</td>
-<td>请求的资源（网页等）不存在</td>
-</tr>
-<tr>
-<td>500</td>
-<td>Internal Server Error</td>
-<td>服务器内部错误</td>
-</tr>
-</tbody></table>
-<h3 id="状态码分类"><a href="#状态码分类" class="headerlink" title="状态码分类"></a>状态码分类</h3><table>
-<thead>
-<tr>
-<th>分类</th>
-<th>描述</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>1xx</td>
-<td><strong>信息</strong>，服务器收到请求，需要请求者继续进行操作</td>
-</tr>
-<tr>
-<td>2xx</td>
-<td><strong>成功</strong>，操作被成功接受并处理</td>
-</tr>
-<tr>
-<td>3xx</td>
-<td><strong>重定向</strong>，需要进一步的操作以完成请求</td>
-</tr>
-<tr>
-<td>4xx</td>
-<td><strong>客户端错误</strong>，请求包含语法错误或无法完成请求</td>
-</tr>
-<tr>
-<td>5xx</td>
-<td><strong>服务器错误</strong>，服务器在处理请求的过程中发生了错误</td>
-</tr>
-</tbody></table>
-<h2 id="浏览器同源策略"><a href="#浏览器同源策略" class="headerlink" title="浏览器同源策略"></a>浏览器同源策略</h2><h3 id="同源的定义"><a href="#同源的定义" class="headerlink" title="同源的定义"></a>同源的定义</h3><p>如果两个URL的<strong>协议</strong>，<strong>端口</strong>和<strong>主机</strong>都相同的，那么这两个URL同源。</p>
-<h2 id="跨域资源共享-CORS"><a href="#跨域资源共享-CORS" class="headerlink" title="跨域资源共享 CORS"></a>跨域资源共享 CORS</h2><p>一种基于HTTP头的机制，该机制通过<strong>允许服务器</strong>标示除了它自己以外的其它源（域、协议或端口），使得浏览器允许这些源访问加载自己的资源。</p>
-<p>对那些可能对服务器数据产生副作用的 HTTP 请求方法（特别是 <a target="_blank" rel="noopener" href="https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Methods/GET"><code>GET</code></a> 以外的 HTTP 请求，或者搭配某些 <a target="_blank" rel="noopener" href="https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Basics_of_HTTP/MIME_types">MIME 类型</a>的 <a target="_blank" rel="noopener" href="https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Methods/POST"><code>POST</code></a> 请求），浏览器必须首先使用 <a target="_blank" rel="noopener" href="https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Methods/OPTIONS"><code>OPTIONS</code></a> 方法发起一个<strong>预检请求（preflight request）</strong>，从而获知服务端是否允许该跨源请求。服务器确认允许之后，才发起实际的 HTTP 请求。在预检请求的返回中，服务器端也可以通知客户端，是否需要携带身份凭证（例如 <a target="_blank" rel="noopener" href="https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Cookies">Cookie</a> 和 <a target="_blank" rel="noopener" href="https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Authentication">HTTP 认证</a>相关数据）。</p>
-<h3 id="预检请求preflight-request"><a href="#预检请求preflight-request" class="headerlink" title="预检请求preflight request"></a>预检请求preflight request</h3><p>“需预检的请求”要求必须首先使用<code>OPTIONS</code>发起一个预检请求到服务器，以获知服务器是否允许该实际请求。“预检请求”的使用，可以避免跨域请求对服务器的用户数据产生未预期的影响。</p>
-<h3 id="附带身份凭证的请求"><a href="#附带身份凭证的请求" class="headerlink" title="附带身份凭证的请求"></a>附带身份凭证的请求</h3><p>在响应附带身份凭证的请求时：</p>
-<ul>
-<li>服务器<strong>不能</strong>将<code>Access-Control-Allow-Origin</code>的值设为通配符“<code>*</code>”，而应将其设置为特定的域，如：<code>Access-Control-Allow-Origin: https://example.com</code>。</li>
-<li>服务器<strong>不能</strong>将<code>Access-Control-Allow-Headers</code>的值设为通配符“<code>*</code>”，而应将其设置为标头（headers）名称的列表，如：<code>Access-Control-Allow-Headers: X-PINGOTHER, Content-Type</code>。</li>
-<li>服务器<strong>不能</strong>将<code>Access-Control-Allow-Methods</code>的值设为通配符“<code>*</code>”，而应将其设置为特定请求方法名称的列表，如：<code>Access-Control-Allow-Methods: POST, GET</code>。</li>
-</ul>
-<h3 id="HTTP-Response-Header-字段"><a href="#HTTP-Response-Header-字段" class="headerlink" title="HTTP Response Header 字段"></a>HTTP Response Header 字段</h3><table>
-<thead>
-<tr>
-<th>header key</th>
-<th>header value</th>
-<th>describe</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>Access-Control-Allow-Origin</td>
-<td>&lt;origin&gt; | *</td>
-<td>允许浏览器访问的资源列表</td>
-</tr>
-<tr>
-<td>Access-Control-Allow-Headers</td>
-<td>&lt;header-name&gt;[, &lt;header-name&gt;]*</td>
-<td>允许浏览器访问的header列表</td>
-</tr>
-<tr>
-<td>Access-Control-Allow-Methods</td>
-<td>&lt;method&gt;[, &lt;method&gt;]*</td>
-<td>指定访问资源时允许使用的请求方法</td>
-</tr>
-<tr>
-<td>Access-Control-Max-Age</td>
-<td>&lt;delta-seconds&gt;</td>
-<td>指定preflight预检请求能够被缓存多久</td>
-</tr>
-<tr>
-<td>Access-Control-Expose-Headers</td>
-<td>&lt;header-name&gt;[, &lt;header-name&gt;]*</td>
-<td>允许浏览器访问的<strong>额外</strong>header列表</td>
-</tr>
-<tr>
-<td>Access-Control-Allow-Credentials</td>
-<td>true</td>
-<td>指定浏览器的<code>credentials</code>是否允许浏览器读取response的内容</td>
-</tr>
-</tbody></table>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="https://fangaoxs.github.io/2023/02/24/network/http/%E8%B6%85%E6%96%87%E6%9C%AC%E4%BC%A0%E8%BE%93%E5%8D%8F%E8%AE%AEhttp/" data-id="clsrb81v0001bcak6eus7cwez" data-title="由浅入深了解超文本传输协议" class="article-share-link"><span class="fa fa-share">分享</span></a>
-      
-      
-      
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/http/" rel="tag">http</a></li></ul>
 
     </footer>
   </div>
@@ -1215,7 +1079,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">归档</h3>
     <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/01/">一月 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/11/">十一月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/07/">七月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/06/">六月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/02/">二月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">一月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/12/">十二月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/10/">十月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/09/">九月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/08/">八月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/07/">七月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/05/">五月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/04/">四月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/12/">十二月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/11/">十一月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/10/">十月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/08/">八月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/06/">六月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/03/">三月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/12/">十二月 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/11/">十一月 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/10/">十月 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/08/">八月 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/07/">七月 2020</a></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/03/">三月 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/01/">一月 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/11/">十一月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/07/">七月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/06/">六月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/02/">二月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">一月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/12/">十二月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/10/">十月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/09/">九月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/08/">八月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/07/">七月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/05/">五月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/04/">四月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/12/">十二月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/11/">十一月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/10/">十月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/08/">八月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/06/">六月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/03/">三月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/12/">十二月 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/11/">十一月 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/10/">十月 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/08/">八月 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/07/">七月 2020</a></li></ul>
     </div>
   </div>
 
@@ -1226,6 +1090,10 @@
     <h3 class="widget-title">最新文章</h3>
     <div class="widget">
       <ul>
+        
+          <li>
+            <a href="/2024/03/12/back-end/go/Goroutine%E8%B0%83%E5%BA%A6%E5%99%A8GMP/">Goroutine调度器GMP</a>
+          </li>
         
           <li>
             <a href="/2024/01/31/back-end/docker/dockerfile/">dockerfile</a>
@@ -1241,10 +1109,6 @@
         
           <li>
             <a href="/2023/07/24/back-end/Java/Java%E5%AE%B9%E5%99%A8/%E9%9B%86%E5%90%88/">Java集合</a>
-          </li>
-        
-          <li>
-            <a href="/2023/07/19/back-end/DevOps/CI_CD/">CI_CD</a>
           </li>
         
       </ul>
