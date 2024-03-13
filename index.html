@@ -136,22 +136,15 @@
 
 
 
-<h2 id="场景分析"><a href="#场景分析" class="headerlink" title="场景分析"></a>场景分析</h2><h3 id="场景1：创建G"><a href="#场景1：创建G" class="headerlink" title="场景1：创建G"></a>场景1：创建G</h3><img src=".\image-20240312153221549.png" style="zoom:50%;" />
-
-<h3 id="场景2：G1执行完毕"><a href="#场景2：G1执行完毕" class="headerlink" title="场景2：G1执行完毕"></a>场景2：G1执行完毕</h3><img src=".\image-20240312153759841.png" style="zoom:50%;" />
-
-<h3 id="场景3：G2开辟过多的G"><a href="#场景3：G2开辟过多的G" class="headerlink" title="场景3：G2开辟过多的G"></a>场景3：G2开辟过多的G</h3><img src=".\image-20240312162114670.png" style="zoom:50%;" />
-
-<h3 id="场景4：G2本地满再创建G"><a href="#场景4：G2本地满再创建G" class="headerlink" title="场景4：G2本地满再创建G"></a>场景4：G2本地满再创建G</h3><img src=".\image-20240312162135419.png" style="zoom:50%;" />
-
-<h3 id="场景5：G2本地未满再创建G"><a href="#场景5：G2本地未满再创建G" class="headerlink" title="场景5：G2本地未满再创建G"></a>场景5：G2本地未满再创建G</h3><img src=".\image-20240312162155485.png" style="zoom:50%;" />
-
-<h3 id="场景6：唤醒正在休眠的M"><a href="#场景6：唤醒正在休眠的M" class="headerlink" title="场景6：唤醒正在休眠的M"></a>场景6：唤醒正在休眠的M</h3><img src=".\image-20240312162904430.png" style="zoom:75%;" />
-
+<h2 id="场景分析"><a href="#场景分析" class="headerlink" title="场景分析"></a>场景分析</h2><h3 id="场景1：创建G"><a href="#场景1：创建G" class="headerlink" title="场景1：创建G"></a>场景1：创建G</h3><p><img src="/2024/03/12/back-end/go/gmp/image-20240312153221549.png"></p>
+<h3 id="场景2：G1执行完毕"><a href="#场景2：G1执行完毕" class="headerlink" title="场景2：G1执行完毕"></a>场景2：G1执行完毕</h3><p><img src="/2024/03/12/back-end/go/gmp/image-20240312153759841.png"></p>
+<h3 id="场景3：G2开辟过多的G"><a href="#场景3：G2开辟过多的G" class="headerlink" title="场景3：G2开辟过多的G"></a>场景3：G2开辟过多的G</h3><p><img src="/2024/03/12/back-end/go/gmp/image-20240312162114670.png"></p>
+<h3 id="场景4：G2本地满再创建G"><a href="#场景4：G2本地满再创建G" class="headerlink" title="场景4：G2本地满再创建G"></a>场景4：G2本地满再创建G</h3><p><img src="/2024/03/12/back-end/go/gmp/image-20240312162135419.png"></p>
+<h3 id="场景5：G2本地未满再创建G"><a href="#场景5：G2本地未满再创建G" class="headerlink" title="场景5：G2本地未满再创建G"></a>场景5：G2本地未满再创建G</h3><p><img src="/2024/03/12/back-end/go/gmp/image-20240312162155485.png"></p>
+<h3 id="场景6：唤醒正在休眠的M"><a href="#场景6：唤醒正在休眠的M" class="headerlink" title="场景6：唤醒正在休眠的M"></a>场景6：唤醒正在休眠的M</h3><p><img src="/2024/03/12/back-end/go/gmp/image-20240312162904430.png"></p>
 <h3 id="场景7：被唤醒的M从全局队列取批量G"><a href="#场景7：被唤醒的M从全局队列取批量G" class="headerlink" title="场景7：被唤醒的M从全局队列取批量G"></a>场景7：被唤醒的M从全局队列取批量G</h3><p>从全局队列到P本地队列的<strong>负载均衡</strong></p>
 <p> <img src="/2024/03/12/back-end/go/gmp/image-20240312163750692.png"></p>
-<h3 id="场景8：M2从M1中偷取G"><a href="#场景8：M2从M1中偷取G" class="headerlink" title="场景8：M2从M1中偷取G"></a>场景8：M2从M1中偷取G</h3><img src=".\image-20240312164244697.png" style="zoom:75%;" />
-
+<h3 id="场景8：M2从M1中偷取G"><a href="#场景8：M2从M1中偷取G" class="headerlink" title="场景8：M2从M1中偷取G"></a>场景8：M2从M1中偷取G</h3><p><img src="/2024/03/12/back-end/go/gmp/image-20240312164244697.png"></p>
 <h3 id="场景9：自旋线程的最大限制"><a href="#场景9：自旋线程的最大限制" class="headerlink" title="场景9：自旋线程的最大限制"></a>场景9：自旋线程的最大限制</h3><p><img src="/2024/03/12/back-end/go/gmp/image-20240312164633519.png"></p>
 <h3 id="场景10：G发生系统调用-阻塞"><a href="#场景10：G发生系统调用-阻塞" class="headerlink" title="场景10：G发生系统调用&#x2F;阻塞"></a>场景10：G发生系统调用&#x2F;阻塞</h3><p><img src="/2024/03/12/back-end/go/gmp/image-20240312165016390.png"></p>
 <h3 id="场景11：G发生系统调用-非阻塞"><a href="#场景11：G发生系统调用-非阻塞" class="headerlink" title="场景11：G发生系统调用&#x2F;非阻塞"></a>场景11：G发生系统调用&#x2F;非阻塞</h3><p><img src="/2024/03/12/back-end/go/gmp/image-20240312170847130.png"></p>
@@ -159,7 +152,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://fangaoxs.github.io/2024/03/12/back-end/go/gmp/" data-id="clto7kdxr000ndnk6epx46lqo" data-title="Goroutine调度器GMP" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://fangaoxs.github.io/2024/03/12/back-end/go/gmp/" data-id="cltp6qsif000prsk6foa9cnmo" data-title="Goroutine调度器GMP" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -267,7 +260,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://fangaoxs.github.io/2024/01/31/back-end/docker/dockerfile/" data-id="clto7kdxo000idnk65mmdauht" data-title="dockerfile" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://fangaoxs.github.io/2024/01/31/back-end/docker/dockerfile/" data-id="cltp6qsib000irsk646u9d5ck" data-title="dockerfile" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -351,7 +344,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://fangaoxs.github.io/2023/11/07/network/caddy/http%E5%8F%8D%E5%90%91%E4%BB%A3%E7%90%86/" data-id="clto7kdy7001jdnk6ayl3f455" data-title="利用Caddy实现http反向代理" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://fangaoxs.github.io/2023/11/07/network/caddy/http%E5%8F%8D%E5%90%91%E4%BB%A3%E7%90%86/" data-id="cltp6qsir001jrsk69jpbghyd" data-title="利用Caddy实现http反向代理" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -463,7 +456,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://fangaoxs.github.io/2023/07/25/network/OIDC/%E7%BB%93%E5%90%88OIDC%E5%92%8CCookie%E5%AE%9E%E7%8E%B0SSO/" data-id="clto7kdy6001idnk6aetg3ifx" data-title="结合OIDC和Cookie实现SSO" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://fangaoxs.github.io/2023/07/25/network/OIDC/%E7%BB%93%E5%90%88OIDC%E5%92%8CCookie%E5%AE%9E%E7%8E%B0SSO/" data-id="cltp6qsir001irsk6415u8t1b" data-title="结合OIDC和Cookie实现SSO" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -972,7 +965,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://fangaoxs.github.io/2023/07/24/back-end/Java/Java%E5%AE%B9%E5%99%A8/%E9%9B%86%E5%90%88/" data-id="clto7kdyg0029dnk6bi0vg0e9" data-title="Java集合" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://fangaoxs.github.io/2023/07/24/back-end/Java/Java%E5%AE%B9%E5%99%A8/%E9%9B%86%E5%90%88/" data-id="cltp6qsj6002vrsk69a9ke1pn" data-title="Java集合" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -1025,7 +1018,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://fangaoxs.github.io/2023/07/19/back-end/DevOps/CI_CD/" data-id="clto7kdxk000ednk6do47di5y" data-title="CI_CD" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://fangaoxs.github.io/2023/07/19/back-end/DevOps/CI_CD/" data-id="cltp6qsi8000ersk60n1zdrwa" data-title="CI_CD" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -1112,7 +1105,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://fangaoxs.github.io/2023/07/19/back-end/go/gorm/" data-id="clto7kdxt000pdnk615u8anxg" data-title="GORM框架的学习" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://fangaoxs.github.io/2023/07/19/back-end/go/gorm/" data-id="cltp6qsie000nrsk6hly26rat" data-title="GORM框架的学习" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -1172,11 +1165,100 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://fangaoxs.github.io/2023/07/19/back-end/python/python3/" data-id="clto7kdxx000xdnk63rjx9rpp" data-title="初学python3" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://fangaoxs.github.io/2023/07/19/back-end/python/python3/" data-id="cltp6qsij000xrsk66apx692r" data-title="初学python3" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/python/" rel="tag">python</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-design-pattern/design-pattern/结合Java和Golang学习设计模式" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2023/07/19/design-pattern/design-pattern/%E7%BB%93%E5%90%88Java%E5%92%8CGolang%E5%AD%A6%E4%B9%A0%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" class="article-date">
+  <time class="dt-published" datetime="2023-07-19T07:30:39.000Z" itemprop="datePublished">2023-07-19</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2023/07/19/design-pattern/design-pattern/%E7%BB%93%E5%90%88Java%E5%92%8CGolang%E5%AD%A6%E4%B9%A0%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">结合Java和Golang学习设计模式</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="设计模式是什么？"><a href="#设计模式是什么？" class="headerlink" title="设计模式是什么？"></a>设计模式是什么？</h2><p>设计模式是软件设计中常见问题的<strong>典型</strong>解决方案。它们就像能根据需求进行调整的预制蓝图， 可用于解决代码中反复出现的设计问题。</p>
+<p>算法更像是菜谱： 提供达成目标的明确步骤。 而模式更像是蓝图： 你可以看到最终的结果和模式的功能， 但需要自己确定实现步骤。</p>
+<h2 id="设计模式的分类"><a href="#设计模式的分类" class="headerlink" title="设计模式的分类"></a>设计模式的分类</h2><ol>
+<li><strong>创建型模式</strong>提供<strong>创建对象</strong>的机制， 增加已有代码的灵活性和可复用性。<ul>
+<li>工厂方法（Factory Method）</li>
+<li>抽象工厂（Abstract Factoy）</li>
+<li>生成器（Builder）</li>
+<li>原型（Prototype）</li>
+<li>单例（Singleton）</li>
+</ul>
+</li>
+<li><strong>结构型模式</strong>介绍如何将对象和类组装成较大的结构， 并同时保持结构的灵活和高效。</li>
+<li><strong>行为模式</strong>负责对象间的高效沟通和职责委派</li>
+</ol>
+<h2 id="工厂方法（Factory-Method）"><a href="#工厂方法（Factory-Method）" class="headerlink" title="工厂方法（Factory Method）"></a>工厂方法（Factory Method）</h2><p>工厂模式建议使用特殊的<strong>工厂方法</strong>来代替对于对象的构造函数的直接调用。</p>
+<ol>
+<li>工厂方法返回统一的产品<code>product</code>接口：其中工厂里面根据某种条件确定返回哪种产品</li>
+<li>统一的产品<code>product</code>接口</li>
+<li>客户端执行产品<code>product</code>接口的方法。</li>
+</ol>
+<p>在工厂方法的内部依据某种条件确定需要生产的实际产品<code>product</code>，调用者其实是根据产品<code>product</code>接口来调用的，不需要关系这种产品真正内部实现，即达到了使用工厂方法对不同产品的调用。</p>
+<h3 id="Go实现简单工厂"><a href="#Go实现简单工厂" class="headerlink" title="Go实现简单工厂"></a>Go实现简单工厂</h3><p>由于 Go 中缺少类和继承等 OOP 特性， 所以无法使用 Go 来实现经典的工厂方法模式。 不过， 我们仍然能实现模式的基础版本， 即简单工厂。</p>
+<h4 id="产品接口（product）：iGun"><a href="#产品接口（product）：iGun" class="headerlink" title="产品接口（product）：iGun"></a>产品接口（product）：iGun</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> iGun <span class="keyword">interface</span> &#123;</span><br><span class="line">	getName() <span class="type">string</span> <span class="comment">// 返回武器的名称</span></span><br><span class="line">	getPower() <span class="type">int</span>   <span class="comment">// 返回武器的能量大小</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="产品接口的实现：AK和M4"><a href="#产品接口的实现：AK和M4" class="headerlink" title="产品接口的实现：AK和M4"></a>产品接口的实现：AK和M4</h4><p>AK：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> AK <span class="keyword">struct</span> &#123;</span><br><span class="line">	name  <span class="type">string</span></span><br><span class="line">	power <span class="type">int</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">newAK</span><span class="params">()</span></span> iGun &#123;</span><br><span class="line">	<span class="keyword">return</span> &amp;AK&#123;</span><br><span class="line">		name:  <span class="string">&quot;ak47&quot;</span>,</span><br><span class="line">		power: <span class="number">5</span>,</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(a AK)</span></span> getName() <span class="type">string</span> &#123;</span><br><span class="line">	<span class="keyword">return</span> a.name</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(a AK)</span></span> getPower() <span class="type">int</span> &#123;</span><br><span class="line">	<span class="keyword">return</span> a.power</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>M4：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> M4 <span class="keyword">struct</span> &#123;</span><br><span class="line">	name  <span class="type">string</span></span><br><span class="line">	power <span class="type">int</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">newM4</span><span class="params">()</span></span> iGun &#123;</span><br><span class="line">	<span class="keyword">return</span> &amp;M4&#123;</span><br><span class="line">		name:  <span class="string">&quot;m4a1&quot;</span>,</span><br><span class="line">		power: <span class="number">1</span>,</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(m M4)</span></span> getName() <span class="type">string</span> &#123;</span><br><span class="line">	<span class="keyword">return</span> m.name</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(m M4)</span></span> getPower() <span class="type">int</span> &#123;</span><br><span class="line">	<span class="keyword">return</span> m.power</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="工厂方法（factory）：gunFactory"><a href="#工厂方法（factory）：gunFactory" class="headerlink" title="工厂方法（factory）：gunFactory"></a>工厂方法（factory）：gunFactory</h4><p>根据调用者传入的gunType返回具体某种gun。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">getGun</span><span class="params">(gunType <span class="type">string</span>)</span></span> (iGun, <span class="type">error</span>) &#123;</span><br><span class="line">	<span class="keyword">switch</span> gunType &#123;</span><br><span class="line">	<span class="keyword">case</span> <span class="string">&quot;ak&quot;</span>:</span><br><span class="line">		<span class="keyword">return</span> newAK(), <span class="literal">nil</span></span><br><span class="line">	<span class="keyword">case</span> <span class="string">&quot;m4&quot;</span>:</span><br><span class="line">		<span class="keyword">return</span> newM4(), <span class="literal">nil</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span>, fmt.Errorf(<span class="string">&quot;wrong gun type passed&quot;</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	ak, _ := getGun(<span class="string">&quot;ak&quot;</span>)</span><br><span class="line">	m4, _ := getGun(<span class="string">&quot;m4&quot;</span>)</span><br><span class="line"></span><br><span class="line">	fmt.Printf(<span class="string">&quot;ak = %#v\n&quot;</span>, ak)</span><br><span class="line">	fmt.Printf(<span class="string">&quot;m4 = %#v\n&quot;</span>, m4)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="抽象工厂（Abstract-Factory）"><a href="#抽象工厂（Abstract-Factory）" class="headerlink" title="抽象工厂（Abstract Factory）"></a>抽象工厂（Abstract Factory）</h2><p><strong>抽象工厂模式</strong>是一种创建型设计模式， 它能创建一系列相关的对象， 而无需指定其具体类。</p>
+<h2 id="生成器（Builder）"><a href="#生成器（Builder）" class="headerlink" title="生成器（Builder）"></a>生成器（Builder）</h2><p><strong>生成器模式</strong>是一种创建型设计模式， 使你能够分步骤创建复杂对象。 该模式允许你使用相同的创建代码生成不同类型和形式的对象。常见的使用场景是使用多个<code>build()</code>来构建某一对象</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">BuildCPU()</span><br><span class="line">BuildScreen()</span><br><span class="line">BuildBattery()</span><br></pre></td></tr></table></figure>
+
+<h2 id="原型（Prototype）"><a href="#原型（Prototype）" class="headerlink" title="原型（Prototype）"></a>原型（Prototype）</h2><p><strong>原型模式</strong>是一种创建型设计模式， 使你能够复制已有对象， 而又无需使代码依赖它们所属的类。</p>
+<h2 id="单例（Singleton）"><a href="#单例（Singleton）" class="headerlink" title="单例（Singleton）"></a>单例（Singleton）</h2><p><strong>单例模式</strong>是一种创建型设计模式， 让你能够保证一个类只有一个实例， 并提供一个访问该实例的全局节点。</p>
+<h2 id="代理（Proxy）"><a href="#代理（Proxy）" class="headerlink" title="代理（Proxy）"></a>代理（Proxy）</h2><p><strong>代理模式</strong>是一种结构型设计模式， 让你能够提供对象的替代品或其占位符。 代理控制着对于原对象的访问， 并允许在将请求提交给对象前后进行一些处理。</p>
+<h2 id="适配器（Adapter）"><a href="#适配器（Adapter）" class="headerlink" title="适配器（Adapter）"></a>适配器（Adapter）</h2><p><strong>适配器模式</strong>是一种结构型设计模式， 它能使接口不兼容的对象能够相互合作。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://fangaoxs.github.io/2023/07/19/design-pattern/design-pattern/%E7%BB%93%E5%90%88Java%E5%92%8CGolang%E5%AD%A6%E4%B9%A0%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" data-id="cltp6qsil0015rsk643i5aekh" data-title="结合Java和Golang学习设计模式" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Golang/" rel="tag">Golang</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Java/" rel="tag">Java</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" rel="tag">设计模式</a></li></ul>
 
     </footer>
   </div>
@@ -1419,100 +1501,11 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://fangaoxs.github.io/2023/07/19/front-end/uni-app/uni-app/" data-id="clto7kdy00015dnk6fh4k2jre" data-title="uni-app学习笔记" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="https://fangaoxs.github.io/2023/07/19/front-end/uni-app/uni-app/" data-id="cltp6qsin0019rsk60y0v5k2c" data-title="uni-app学习笔记" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/javascript/" rel="tag">javascript</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/uni-app/" rel="tag">uni-app</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/vue/" rel="tag">vue</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-design-pattern/design-pattern/结合Java和Golang学习设计模式" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
-  <div class="article-meta">
-    <a href="/2023/07/19/design-pattern/design-pattern/%E7%BB%93%E5%90%88Java%E5%92%8CGolang%E5%AD%A6%E4%B9%A0%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" class="article-date">
-  <time class="dt-published" datetime="2023-07-19T07:30:39.000Z" itemprop="datePublished">2023-07-19</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="p-name article-title" href="/2023/07/19/design-pattern/design-pattern/%E7%BB%93%E5%90%88Java%E5%92%8CGolang%E5%AD%A6%E4%B9%A0%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">结合Java和Golang学习设计模式</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="e-content article-entry" itemprop="articleBody">
-      
-        <h2 id="设计模式是什么？"><a href="#设计模式是什么？" class="headerlink" title="设计模式是什么？"></a>设计模式是什么？</h2><p>设计模式是软件设计中常见问题的<strong>典型</strong>解决方案。它们就像能根据需求进行调整的预制蓝图， 可用于解决代码中反复出现的设计问题。</p>
-<p>算法更像是菜谱： 提供达成目标的明确步骤。 而模式更像是蓝图： 你可以看到最终的结果和模式的功能， 但需要自己确定实现步骤。</p>
-<h2 id="设计模式的分类"><a href="#设计模式的分类" class="headerlink" title="设计模式的分类"></a>设计模式的分类</h2><ol>
-<li><strong>创建型模式</strong>提供<strong>创建对象</strong>的机制， 增加已有代码的灵活性和可复用性。<ul>
-<li>工厂方法（Factory Method）</li>
-<li>抽象工厂（Abstract Factoy）</li>
-<li>生成器（Builder）</li>
-<li>原型（Prototype）</li>
-<li>单例（Singleton）</li>
-</ul>
-</li>
-<li><strong>结构型模式</strong>介绍如何将对象和类组装成较大的结构， 并同时保持结构的灵活和高效。</li>
-<li><strong>行为模式</strong>负责对象间的高效沟通和职责委派</li>
-</ol>
-<h2 id="工厂方法（Factory-Method）"><a href="#工厂方法（Factory-Method）" class="headerlink" title="工厂方法（Factory Method）"></a>工厂方法（Factory Method）</h2><p>工厂模式建议使用特殊的<strong>工厂方法</strong>来代替对于对象的构造函数的直接调用。</p>
-<ol>
-<li>工厂方法返回统一的产品<code>product</code>接口：其中工厂里面根据某种条件确定返回哪种产品</li>
-<li>统一的产品<code>product</code>接口</li>
-<li>客户端执行产品<code>product</code>接口的方法。</li>
-</ol>
-<p>在工厂方法的内部依据某种条件确定需要生产的实际产品<code>product</code>，调用者其实是根据产品<code>product</code>接口来调用的，不需要关系这种产品真正内部实现，即达到了使用工厂方法对不同产品的调用。</p>
-<h3 id="Go实现简单工厂"><a href="#Go实现简单工厂" class="headerlink" title="Go实现简单工厂"></a>Go实现简单工厂</h3><p>由于 Go 中缺少类和继承等 OOP 特性， 所以无法使用 Go 来实现经典的工厂方法模式。 不过， 我们仍然能实现模式的基础版本， 即简单工厂。</p>
-<h4 id="产品接口（product）：iGun"><a href="#产品接口（product）：iGun" class="headerlink" title="产品接口（product）：iGun"></a>产品接口（product）：iGun</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> iGun <span class="keyword">interface</span> &#123;</span><br><span class="line">	getName() <span class="type">string</span> <span class="comment">// 返回武器的名称</span></span><br><span class="line">	getPower() <span class="type">int</span>   <span class="comment">// 返回武器的能量大小</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h4 id="产品接口的实现：AK和M4"><a href="#产品接口的实现：AK和M4" class="headerlink" title="产品接口的实现：AK和M4"></a>产品接口的实现：AK和M4</h4><p>AK：</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> AK <span class="keyword">struct</span> &#123;</span><br><span class="line">	name  <span class="type">string</span></span><br><span class="line">	power <span class="type">int</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">newAK</span><span class="params">()</span></span> iGun &#123;</span><br><span class="line">	<span class="keyword">return</span> &amp;AK&#123;</span><br><span class="line">		name:  <span class="string">&quot;ak47&quot;</span>,</span><br><span class="line">		power: <span class="number">5</span>,</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(a AK)</span></span> getName() <span class="type">string</span> &#123;</span><br><span class="line">	<span class="keyword">return</span> a.name</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(a AK)</span></span> getPower() <span class="type">int</span> &#123;</span><br><span class="line">	<span class="keyword">return</span> a.power</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<p>M4：</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> M4 <span class="keyword">struct</span> &#123;</span><br><span class="line">	name  <span class="type">string</span></span><br><span class="line">	power <span class="type">int</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">newM4</span><span class="params">()</span></span> iGun &#123;</span><br><span class="line">	<span class="keyword">return</span> &amp;M4&#123;</span><br><span class="line">		name:  <span class="string">&quot;m4a1&quot;</span>,</span><br><span class="line">		power: <span class="number">1</span>,</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(m M4)</span></span> getName() <span class="type">string</span> &#123;</span><br><span class="line">	<span class="keyword">return</span> m.name</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(m M4)</span></span> getPower() <span class="type">int</span> &#123;</span><br><span class="line">	<span class="keyword">return</span> m.power</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<h4 id="工厂方法（factory）：gunFactory"><a href="#工厂方法（factory）：gunFactory" class="headerlink" title="工厂方法（factory）：gunFactory"></a>工厂方法（factory）：gunFactory</h4><p>根据调用者传入的gunType返回具体某种gun。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">getGun</span><span class="params">(gunType <span class="type">string</span>)</span></span> (iGun, <span class="type">error</span>) &#123;</span><br><span class="line">	<span class="keyword">switch</span> gunType &#123;</span><br><span class="line">	<span class="keyword">case</span> <span class="string">&quot;ak&quot;</span>:</span><br><span class="line">		<span class="keyword">return</span> newAK(), <span class="literal">nil</span></span><br><span class="line">	<span class="keyword">case</span> <span class="string">&quot;m4&quot;</span>:</span><br><span class="line">		<span class="keyword">return</span> newM4(), <span class="literal">nil</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span>, fmt.Errorf(<span class="string">&quot;wrong gun type passed&quot;</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<h4 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	ak, _ := getGun(<span class="string">&quot;ak&quot;</span>)</span><br><span class="line">	m4, _ := getGun(<span class="string">&quot;m4&quot;</span>)</span><br><span class="line"></span><br><span class="line">	fmt.Printf(<span class="string">&quot;ak = %#v\n&quot;</span>, ak)</span><br><span class="line">	fmt.Printf(<span class="string">&quot;m4 = %#v\n&quot;</span>, m4)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="抽象工厂（Abstract-Factory）"><a href="#抽象工厂（Abstract-Factory）" class="headerlink" title="抽象工厂（Abstract Factory）"></a>抽象工厂（Abstract Factory）</h2><p><strong>抽象工厂模式</strong>是一种创建型设计模式， 它能创建一系列相关的对象， 而无需指定其具体类。</p>
-<h2 id="生成器（Builder）"><a href="#生成器（Builder）" class="headerlink" title="生成器（Builder）"></a>生成器（Builder）</h2><p><strong>生成器模式</strong>是一种创建型设计模式， 使你能够分步骤创建复杂对象。 该模式允许你使用相同的创建代码生成不同类型和形式的对象。常见的使用场景是使用多个<code>build()</code>来构建某一对象</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">BuildCPU()</span><br><span class="line">BuildScreen()</span><br><span class="line">BuildBattery()</span><br></pre></td></tr></table></figure>
-
-<h2 id="原型（Prototype）"><a href="#原型（Prototype）" class="headerlink" title="原型（Prototype）"></a>原型（Prototype）</h2><p><strong>原型模式</strong>是一种创建型设计模式， 使你能够复制已有对象， 而又无需使代码依赖它们所属的类。</p>
-<h2 id="单例（Singleton）"><a href="#单例（Singleton）" class="headerlink" title="单例（Singleton）"></a>单例（Singleton）</h2><p><strong>单例模式</strong>是一种创建型设计模式， 让你能够保证一个类只有一个实例， 并提供一个访问该实例的全局节点。</p>
-<h2 id="代理（Proxy）"><a href="#代理（Proxy）" class="headerlink" title="代理（Proxy）"></a>代理（Proxy）</h2><p><strong>代理模式</strong>是一种结构型设计模式， 让你能够提供对象的替代品或其占位符。 代理控制着对于原对象的访问， 并允许在将请求提交给对象前后进行一些处理。</p>
-<h2 id="适配器（Adapter）"><a href="#适配器（Adapter）" class="headerlink" title="适配器（Adapter）"></a>适配器（Adapter）</h2><p><strong>适配器模式</strong>是一种结构型设计模式， 它能使接口不兼容的对象能够相互合作。</p>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="https://fangaoxs.github.io/2023/07/19/design-pattern/design-pattern/%E7%BB%93%E5%90%88Java%E5%92%8CGolang%E5%AD%A6%E4%B9%A0%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" data-id="clto7kdy10017dnk6hbv1ak87" data-title="结合Java和Golang学习设计模式" class="article-share-link"><span class="fa fa-share">分享</span></a>
-      
-      
-      
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Golang/" rel="tag">Golang</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Java/" rel="tag">Java</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" rel="tag">设计模式</a></li></ul>
 
     </footer>
   </div>
